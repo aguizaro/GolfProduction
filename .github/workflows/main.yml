@@ -1,4 +1,4 @@
-name: Build (With Tests)
+name: Test and Build Selected Platforms + Deploy webGL build
 
 on:
   push:
@@ -34,11 +34,57 @@ jobs:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           unityVersion: 2023.2.5f1
           testMode: playmode
+          artifactsPath: test-results
+      #Output
+      - name: Upload test results
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: test-results
+          path: ./test-results
 
-  build:
-    name: Build and Deploy to GitHub Pages
+  buildWebGL:
+    name: Build for WebGL
     runs-on: ubuntu-latest
-    #needs: test
+    needs: test
+    steps:
+      # Checkout
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      # Cache
+      - uses: actions/cache@v3
+        with:
+          path: ./Library
+          key: Library-${{ hashFiles('./Assets/**', './Packages/**', './ProjectSettings/**') }}
+          restore-keys: |
+            Library-
+      # Build
+      - name: Build WebGL project
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: WebGL
+          projectPath: ./
+          unityVersion: 2023.2.5f1
+          allowDirtyBuild: true
+          buildName: LatestBuild
+      # Output
+      - name: Upload build to artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: WebGLBuild
+          path: ./build/WebGL/LatestBuild
+
+  buildWindows:
+    name: Build for Windows
+    runs-on: windows-latest
+    needs: test
     steps:
       # Checkout
       - name: Checkout repository
@@ -60,21 +106,71 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
-          targetPlatform: WebGL
+          targetPlatform: StandaloneWindows64
           projectPath: ./
           unityVersion: 2023.2.5f1
           allowDirtyBuild: true
           buildName: LatestBuild
-      # Deploy
+      # Output
+      - name: Upload build to artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: WindowsBuild
+          path: ./build/StandaloneWindows64
+
+  buildMac:
+    name: Build for Mac
+    runs-on: macos-latest
+    needs: test
+    steps:
+      # Checkout
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      # Cache
+      - uses: actions/cache@v3
+        with:
+          path: ./Library
+          key: Library-${{ hashFiles('./Assets/**', './Packages/**', './ProjectSettings/**') }}
+          restore-keys: |
+            Library-
+      # Build
+      - name: Build project
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: StandaloneOSX
+          projectPath: ./
+          unityVersion: 2023.2.5f1
+          allowDirtyBuild: true
+          buildName: LatestBuild
+      # Output
+      - name: Upload build to artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: MacBuild
+          path: ./build/StandaloneOSX
+  #Deploy webGL build
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: buildWebGL
+    steps:
+      #Download build
+      - name: Download build
+        uses: actions/download-artifact@v3
+        with:
+          name: WebGLBuild
+          path: ./build/WebGL/LatestBuild
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build/WebGL/LatestBuild
           publish_branch: webGL
-      # Output
-      - name: Upload build to artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: Build
-          path: ./build/WebGL/LatestBuild
