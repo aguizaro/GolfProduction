@@ -210,6 +210,14 @@ PrefabInstance:
       propertyPath: m_ImplicitTensor
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 374274725277632648, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 877538137710083350, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1289741983693891641, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
       propertyPath: targetLimb
       value: 
@@ -229,6 +237,14 @@ PrefabInstance:
     - target: {fileID: 1636059402129918756, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
       propertyPath: m_LocalScale.z
       value: 0.08189173
+      objectReference: {fileID: 0}
+    - target: {fileID: 1936619712754796777, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2096465715073215507, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2481240117571320906, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
       propertyPath: m_AngularXMotion
@@ -262,6 +278,14 @@ PrefabInstance:
       propertyPath: m_ImplicitTensor
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2788412878175539621, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2851682989632323043, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2872453968886562224, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
       propertyPath: targetLimb
       value: 
@@ -276,12 +300,24 @@ PrefabInstance:
       objectReference: {fileID: 1668954358}
     - target: {fileID: 3462086650520531888, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
       propertyPath: mirror
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3462086650520531888, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
       propertyPath: targetLimb
       value: 
-      objectReference: {fileID: 1103967828}
+      objectReference: {fileID: 832674347}
+    - target: {fileID: 3491033753122654507, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3625808901075809587, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3905041818931963913, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4183696512809943494, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
       propertyPath: m_Mass
       value: 0.0000001
@@ -297,6 +333,14 @@ PrefabInstance:
     - target: {fileID: 4253472586510898533, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
       propertyPath: strafeSpeed
       value: 70
+      objectReference: {fileID: 0}
+    - target: {fileID: 4607746377200175855, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4759870197412489051, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4873394308754113115, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
       propertyPath: m_LocalPosition.x
@@ -338,9 +382,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4969203737901394073, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5002757591004805224, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
       propertyPath: targetLimb
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5177242807358066091, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5325912956908039272, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
       propertyPath: targetLimb
@@ -366,28 +418,40 @@ PrefabInstance:
       propertyPath: targetLimb
       value: 
       objectReference: {fileID: 1920145558}
+    - target: {fileID: 5469638011358481705, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5500882699792091802, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
       propertyPath: targetLimb
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 5547379416337031240, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
       propertyPath: mirror
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5547379416337031240, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
       propertyPath: targetLimb
       value: 
-      objectReference: {fileID: 832674347}
+      objectReference: {fileID: 1103967828}
     - target: {fileID: 5594213417632981250, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
       propertyPath: targetLimb
       value: 
       objectReference: {fileID: 1114941315}
+    - target: {fileID: 5869949628000430755, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6015862604134525879, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
       propertyPath: m_Mass
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6015862604134525879, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
       propertyPath: m_ImplicitTensor
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6018250723954531771, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6237078414749172238, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
@@ -454,9 +518,21 @@ PrefabInstance:
       propertyPath: m_Mass
       value: 0.1
       objectReference: {fileID: 0}
+    - target: {fileID: 7301088530300097669, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7346771442725373523, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7434491250934490703, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
       propertyPath: targetLimb
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 7628672365154986591, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7753750011575350327, guid: 3f6ad173d547d0d468bec31a66226af0, type: 3}
       propertyPath: targetLimb
