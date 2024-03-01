@@ -39,7 +39,7 @@ public class UIManager : MonoBehaviour
     private void JoinLobby() => _lobbyManager.Join(joinCode: _inputField.text);
 
 
-    public void DeactivateUI() => _UItoDeactivate.SetActive(false);
+    public void DeactivateUI() { _UItoDeactivate.SetActive(false); Debug.Log("Deactivated Lobby UI: " + _UItoDeactivate.activeSelf); }
     public void DisplayCode(string code) => _joinCodeText.text = code;
     public void DisplayLobbyName(string name) => _lobbyNameText.text = name;
     public async void DisplaySignedIn() => _signedInText.text = await _lobbyManager.GetPlayerName();

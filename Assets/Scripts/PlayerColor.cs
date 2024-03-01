@@ -54,6 +54,8 @@ public class PlayerColor : NetworkBehaviour
             Debug.Log("Non-Owner reading _netColor " + _netColor.Value);
             _renderer.material.color = _netColor.Value;
         }
+
+        base.OnNetworkSpawn();
     }
 
     [ServerRpc]

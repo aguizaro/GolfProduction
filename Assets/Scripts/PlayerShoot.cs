@@ -5,7 +5,7 @@ using UnityEngine;
 public class PlayerShoot : NetworkBehaviour
 {
     [SerializeField] private GameObject _projectile;
-    [SerializeField] private float _projectileSpeed = 700;
+    [SerializeField] private float _projectileSpeed = 20;
     [SerializeField] private float _cooldown = 0.5f;
     [SerializeField] private float _spawnDist = 1f;
 
@@ -14,11 +14,6 @@ public class PlayerShoot : NetworkBehaviour
     private bool _fired;
 
 
-    private void Start()
-    {
-        
-    }
-
     private void Update()
     {
         if (!IsOwner) return;
@@ -26,7 +21,7 @@ public class PlayerShoot : NetworkBehaviour
         if (Input.GetMouseButton(0) && _lastFired + _cooldown < Time.time)
         {
             _lastFired = Time.time;
-            var dir = transform.forward;
+            var dir = transform.forward + transform.up/2;
 
             // Send off the request to be executed on all clients
             RequestFireServerRpc(dir);
@@ -52,7 +47,7 @@ public class PlayerShoot : NetworkBehaviour
     private void ExecuteShoot(Vector3 dir)
     {
         var projectile = Instantiate(_projectile, transform.position + transform.forward * _spawnDist, Quaternion.identity);
-        projectile.GetComponent<Rigidbody>().AddRelativeForce((dir * _projectileSpeed));
+        projectile.GetComponent<Rigidbody>().AddRelativeForce((dir * _projectileSpeed), ForceMode.Impulse);
         //AudioSource.PlayClipAtPoint(_spawnClip, transform.position);
 
     }

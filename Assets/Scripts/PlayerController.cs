@@ -6,6 +6,9 @@ using UnityEngine;
 /// </summary>
 public class PlayerController : NetworkBehaviour
 {
+    private Rigidbody _rb;
+    private Camera _cam;
+
     private void Awake()
     {
         _rb = GetComponent<Rigidbody>();
@@ -26,7 +29,7 @@ public class PlayerController : NetworkBehaviour
     private void FixedUpdate()
     {
         HandleMovement();
-        HandleRotation();
+        //HandleRotation();
     }
 
     #region Movement
@@ -34,7 +37,7 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float _acceleration = 80;
     [SerializeField] private float _maxVelocity = 10;
     private Vector3 _input;
-    private Rigidbody _rb;
+    
 
     private void HandleMovement()
     {
@@ -44,7 +47,7 @@ public class PlayerController : NetworkBehaviour
 
     #endregion
 
-    #region Rotation
+    /*#region Rotation
 
     [SerializeField] private float _rotationSpeed = 450;
     private Plane _groundPlane = new(Vector3.up, Vector3.zero);
@@ -65,5 +68,5 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    #endregion
+    #endregion*/
 }
