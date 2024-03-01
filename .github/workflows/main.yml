@@ -1,9 +1,7 @@
 name: Test and Build Selected Platforms + Deploy webGL build
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch
 
 jobs:
   test:
