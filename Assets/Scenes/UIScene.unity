@@ -475,6 +475,7 @@ GameObject:
   - component: {fileID: 1606576232}
   - component: {fileID: 1606576231}
   - component: {fileID: 1606576230}
+  - component: {fileID: 1606576233}
   m_Layer: 0
   m_Name: LobbyManager
   m_TagString: Untagged
@@ -579,6 +580,18 @@ MonoBehaviour:
   _UIManager: {fileID: 4300147152962470403}
   encryption: 1
   maxLobbySize: 10
+--- !u!114 &1606576233
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1606576227}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 869dfa9317f3d4642897a5a443da804d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1963442864
 GameObject:
   m_ObjectHideFlags: 0
@@ -867,6 +880,10 @@ PrefabInstance:
     - target: {fileID: 2486028092803417898, guid: 0c5023e9d937d41ac9b0f7d05667380e, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 3570354597
+      objectReference: {fileID: 0}
+    - target: {fileID: 2486028092803417898, guid: 0c5023e9d937d41ac9b0f7d05667380e, type: 3}
+      propertyPath: SynchronizeTransform
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5400048341638431021, guid: 0c5023e9d937d41ac9b0f7d05667380e, type: 3}
       propertyPath: m_LocalPosition.x

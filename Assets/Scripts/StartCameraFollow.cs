@@ -11,10 +11,6 @@ public class StartCameraFollow : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         if (!IsOwner) isActive = false;
-
-        transform.position = new Vector3(Random.Range(311, 317), 103.163002f, Random.Range(85, 96)); //set starting position
-        Debug.Log("Client: " + OwnerClientId + " starting position" + transform.position);
-        base.OnNetworkSpawn();
     }
 
     private void LateUpdate()

@@ -148,7 +148,8 @@ public class LobbyManager : MonoBehaviour
                 foreach (Player p in found.Players)
                 {
                     Debug.Log($"Player ID: {p.Id}");
-                    if (p.Data != null) {
+                    if (p.Data != null)
+                    {
                         foreach (var data in p.Data)
                         {
                             Debug.Log($"Player data - {data.Key} : {data.Value} ");
@@ -215,7 +216,7 @@ public class LobbyManager : MonoBehaviour
 
 
     // Join --------------------------------------------------------------------------------------------------------------
-    public async void Join(string joinCode= null, string lobbyID = null)
+    public async void Join(string joinCode = null, string lobbyID = null)
     {
         try
         {
@@ -231,7 +232,7 @@ public class LobbyManager : MonoBehaviour
             if (ConnectedLobby == null) throw new LobbyServiceException(new LobbyExceptionReason(), "Lobby Error: No Lobby connected");
 
             _UIManager.DeactivateUI();
-            
+
 
             Debug.Log("Connected lobby code: " + ConnectedLobby.LobbyCode);
         }
@@ -506,7 +507,7 @@ public class LobbyManager : MonoBehaviour
         _UIManager.DisplayLobbyName(ConnectedLobby.Name);
 
         //_currentMapInstance = Instantiate(_gameMap);
-        
+
     }
 
     private void EndGame()

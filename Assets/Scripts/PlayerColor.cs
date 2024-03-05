@@ -65,8 +65,6 @@ public class PlayerColor : NetworkBehaviour
         Debug.Log("Server set netColor to: " + _netColor.Value);
     }
 
-   
-
     private Color GetNextColor()
     {
         return _colors[_index++ % _colors.Length];

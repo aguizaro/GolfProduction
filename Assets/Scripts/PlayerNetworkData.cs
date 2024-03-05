@@ -4,6 +4,27 @@ using UnityEngine;
 using Unity.Netcode;
 using static BasicPlayerController;
 using Unity.Netcode.Components;
+using Unity.VisualScripting;
+
+
+// Storing player data over the network ------------------------------------------------------------------------------------------------------------
+public struct PlayerData : INetworkSerializable
+{
+    public Vector3 playerPos;
+    public Quaternion playerRot;
+    public bool isSwinging;
+    public bool isCarrying;
+    public int score;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref playerPos);
+        serializer.SerializeValue(ref playerRot);
+        serializer.SerializeValue(ref isSwinging);
+        serializer.SerializeValue(ref isCarrying);
+        serializer.SerializeValue(ref score);
+    }
+}
 
 public class PlayerNetworkData : NetworkBehaviour
 {
@@ -14,10 +35,12 @@ public class PlayerNetworkData : NetworkBehaviour
     Dictionary<ulong, PlayerData> serverSidePlayerStates = new();
     private bool isActive = false;
 
-
     public override void OnNetworkSpawn()
     {
-        if (IsServer) { isActive = true; }
+        if (IsServer)
+        {
+            isActive = true;
+        }
     }
 
     // only owners should use this to send data to the server
@@ -45,7 +68,7 @@ public class PlayerNetworkData : NetworkBehaviour
         //if the non-server runs this 
 
         // return player state if found in dict, otherwise return default player state
-        return (serverSidePlayerStates.TryGetValue(ownerclientID, out PlayerData data)) ? data : new PlayerData
+        return serverSidePlayerStates.TryGetValue(ownerclientID, out PlayerData data) ? data : new PlayerData
         {
             playerPos = Vector3.zero,
             playerRot = Quaternion.identity,

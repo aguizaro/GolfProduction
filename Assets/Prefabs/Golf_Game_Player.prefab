@@ -138,7 +138,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 12
-  turnSpeed: 70
   rotationSpeed: 1000
 --- !u!114 &6468636949830378481
 MonoBehaviour:

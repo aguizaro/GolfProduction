@@ -17,12 +17,12 @@ public class CustomClientNetworkTransform : NetworkTransform
     protected override void OnAuthorityPushTransformState(ref NetworkTransformState networkTransformState)
     {
         // Log the position and rotation every time it's updated
-        Debug.Log("Auth Push\nPosition: " + networkTransformState.GetPosition() + " Rotation: " + networkTransformState.GetRotation().eulerAngles);
+        Debug.Log("client: " + OwnerClientId + " OnAuthorityPushTransformState\nPosition: " + networkTransformState.GetPosition() + " Rotation: " + networkTransformState.GetRotation().eulerAngles);
     }
 
     protected override void OnNetworkTransformStateUpdated(ref NetworkTransformState oldState, ref NetworkTransformState newState)
     {
-        Debug.Log("State Updated\nPosition: " + newState.GetPosition() + " Rotation: " + newState.GetRotation().eulerAngles);
+        Debug.Log("client: " + OwnerClientId + " OnNetworkTransformStateUpdated\nPosition: " + newState.GetPosition() + " Rotation: " + newState.GetRotation().eulerAngles);
     }
 
 
