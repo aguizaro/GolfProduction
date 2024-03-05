@@ -1,39 +1,45 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class PauseManager : MonoBehaviour, IDataPersistence
+public class PauseManager : MonoBehaviour
 {
     // TODO: Implement a boolean toggle to say whether to start from the pause menu or the options menu
 
-    public DataPersistenceManager dataManager;
-
     // Options Menu Variables
-    float tempValue = 0;
+    float volume = 0;
+
+    // Options Menu References
+    public Slider volumeSlider;
+
 
     public void Awake()
     {
-        dataManager.LoadGameData();
+        LoadSettings();
     }
 
-    public void LoadData(GameData data)
+    public void LoadSettings()
     {
-        this.tempValue = data.tempValue;
-    }
+        // Load settings data
+        SettingsData sData = DataManager.instance.GetSettingsData();
 
-    public void SaveData(ref GameData data)
-    {
-        data.tempValue = this.tempValue;
-    }
-
-    public void SetTempSlider(float value)
-    {
-        this.tempValue = value;
+        volume = sData.volume;
+        volumeSlider.value = volume;
     }
 
     public void ApplySettings()
     {
-        dataManager.SaveGameData();
+        SettingsData sData = DataManager.instance.GetSettingsData();
+        sData.volume = volume;
+
+        DataManager.instance.SetSettingsData(sData);
+    }
+
+    // Volume updates as slider is moved
+    public void SetTempSlider(float value)
+    {
+        this.volume = value;
     }
 
     public void ExitMenu()

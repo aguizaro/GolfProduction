@@ -17,4 +17,13 @@ public class GameData
         this.tempValue = 0;
     }
 
+    // GameData duplicator method
+    public GameData Copy()
+    {
+        return new GameData
+        {
+            language = this.language,
+            tempValue = this.tempValue,
+        };
+    }
 }
