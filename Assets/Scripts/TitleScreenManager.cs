@@ -11,9 +11,9 @@ public class TitleScreenManager : MonoBehaviour
     // Main Title Screen Objects
     public GameObject mainTitleScreenCanvas;
     public Button mainStartButton;
-    public Button mainOptionsButton;
+    public Button mainSettingsButton;
 
-    public GameObject optionsMenuPrefab;
+    public GameObject settingsMenuPrefab;
 
     // Start is called before the first frame update
     public void StartGame()
@@ -21,9 +21,9 @@ public class TitleScreenManager : MonoBehaviour
         SceneManager.LoadScene(serverMenuPath);
     }
 
-    public void OptionsMenu()
+    public void SettingsMenu()
     {
-        GameObject optionsMenu = Instantiate(optionsMenuPrefab, transform.position, Quaternion.identity);
-        //optionsMenu.GetComponent<PauseManager>().parent = gameObject;
+        GameObject settingsMenu = Instantiate(settingsMenuPrefab, transform.position, Quaternion.identity);
+        settingsMenu.GetComponent<PauseManager>().EnableSettingsMode();
     }
 }

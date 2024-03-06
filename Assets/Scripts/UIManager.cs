@@ -5,14 +5,29 @@ using UnityEngine;
 using UnityEngine.UI;
 
 
+public enum UIState
+{
+    Title,
+    Lobby,
+    Pause
+}
+
 public class UIManager : MonoBehaviour
 {
+    // Title Screen UI Elements
+    [Header("Title Screen UI Elements")]
+    [SerializeField] private GameObject _titleScreenUI;
 
-    [SerializeField] private GameObject _UItoDeactivate;
+    [SerializeField] private Button _titleStartButton;
+    [SerializeField] private Button _titleSettingsButton;
+
+    // Lobby UI Elements
+    [Header("Lobby UI Elements")]
+    [SerializeField] private GameObject _lobbyUI;
     [SerializeField] private GameObject[] _lobbyEntries;
-    [SerializeField] private TMP_Text _joinCodeText;
+    [SerializeField] private TMP_Text _lobbyJoinCodeText;
     [SerializeField] private TMP_Text _lobbyNameText;
-    [SerializeField] private TMP_Text _signedInText;
+    [SerializeField] private TMP_Text _lobbySignedInText;
 
 
     [SerializeField] private TMP_InputField _inputField;
@@ -26,6 +41,10 @@ public class UIManager : MonoBehaviour
 
     private void Awake()
     {
+        // Title Button Events
+        _titleStartButton.onClick.AddListener(TitleStart);
+
+        // Lobby Button Events
         _createButton.onClick.AddListener(CreateLobby);
         _joinButton.onClick.AddListener(JoinLobby);
         _playButton.onClick.AddListener(PlayNow);
@@ -34,21 +53,43 @@ public class UIManager : MonoBehaviour
         RefreshDisplayList();
     }
 
+    private void Start() => EnableUI(UIState.Title);
+
+    // Title Screen Methods
+    private void TitleStart() => EnableUI(UIState.Lobby);
+
+    // Lobby UI Methods
     private void PlayNow() => _lobbyManager.PlayNow();
     private void CreateLobby() => _lobbyManager.Create(_inputField.text, 6);
     private void JoinLobby() => _lobbyManager.Join(joinCode: _inputField.text);
 
 
-    public void DeactivateUI() { _UItoDeactivate.SetActive(false); Debug.Log("Deactivated Lobby UI: " + _UItoDeactivate.activeSelf); }
-    public void DisplayCode(string code) => _joinCodeText.text = code;
+    public void DeactivateUI() { _lobbyUI.SetActive(false); Debug.Log("Deactivated Lobby UI: " + _lobbyUI.activeSelf); }
+    public void DisplayCode(string code) => _lobbyJoinCodeText.text = code;
     public void DisplayLobbyName(string name) => _lobbyNameText.text = name;
-    public async void DisplaySignedIn() => _signedInText.text = await _lobbyManager.GetPlayerName();
+    public async void DisplaySignedIn() => _lobbySignedInText.text = await _lobbyManager.GetPlayerName();
 
     public string GetInputText() { return _inputField.text; }
     public void DisableUIText()
     {
-        _joinCodeText.text = "";
+        _lobbyJoinCodeText.text = "";
         _lobbyNameText.text = "";
+    }
+
+    public void EnableUI(UIState state)
+    {
+        _titleScreenUI.SetActive(false);
+        _lobbyUI.SetActive(false);
+
+        switch(state)
+        {
+            case UIState.Title:
+                _titleScreenUI.SetActive(true);
+                break;
+            case UIState.Lobby:
+                _lobbyUI.SetActive(true);
+                break;
+        }
     }
 
     public async void RefreshDisplayList()

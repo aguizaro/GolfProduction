@@ -15,7 +15,6 @@ public class SettingsData
     public float cameraSensitivity;
     public float volume;
 
-    // Class constructor defines initial default values
     public SettingsData() 
     {
         // Initialize Game Settings Data
@@ -26,7 +25,6 @@ public class SettingsData
         this.volume = 0;
     }
 
-    // SettingsData duplicator method
     public SettingsData Copy()
     {
         return new SettingsData

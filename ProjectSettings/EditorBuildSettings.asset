@@ -8,5 +8,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/UIScene.unity
     guid: 2945360b2da9a427e9c4f4b9a18c4b5b
+  - enabled: 1
+    path: Assets/Scenes/TitleScreen.unity
+    guid: bc05916d3563512439ebb04ff38b56b7
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0
