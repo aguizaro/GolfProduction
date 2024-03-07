@@ -82,7 +82,7 @@ public class BasicPlayerController : NetworkBehaviour
         }
 
         if (UIManager.isPaused) { return; }
-        else { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; }
+        else { if (!UIManager.instance.titleScreenMode) {Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; } }
 
         float moveHorizontal = Input.GetAxis("Horizontal");
         float moveVertical = Input.GetAxis("Vertical");

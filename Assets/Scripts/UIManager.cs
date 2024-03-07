@@ -39,6 +39,10 @@ public class UIManager : MonoBehaviour
     [SerializeField] private LobbyManager _lobbyManager;
     private const int maxDisplayLen = 5; //5 lobby slots at a time
 
+    // Game UI Elements
+    [Header("Game UI Elements")]
+    [SerializeField] private TMP_Text _gamePlayerStrokesText;
+
     // Pause UI Elements
     [Header("Pause UI Elements")]
     [SerializeField] private GameObject _pauseScreenUI;
@@ -66,7 +70,7 @@ public class UIManager : MonoBehaviour
     private bool oneHandMode = false;
     private int language = 0;
 
-    private bool titleScreenMode = true;
+    public bool titleScreenMode = true;
     public static bool isPaused { get; set; } = false;
 
     private void Awake()
@@ -128,6 +132,8 @@ public class UIManager : MonoBehaviour
     public void ReturnToTitle() {
         _lobbyManager.OnApplicationQuitCallback();
         titleScreenMode = true;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
         DisablePause();
         EnableUI(UIState.Title);
     }
