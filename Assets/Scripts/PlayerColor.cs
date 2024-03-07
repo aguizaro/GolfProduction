@@ -36,7 +36,7 @@ public class PlayerColor : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        Debug.Log("onNetSpawn, value of _netColot : " + _netColor.Value);
+        Debug.Log("onNetSpawn, value of _netColor : " + _netColor.Value);
 
         // Take note, RPCs are queued up to run.
         // If we tried to immediately set our color locally after calling this RPC it wouldn't have propagated

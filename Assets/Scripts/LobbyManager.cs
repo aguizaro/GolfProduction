@@ -16,6 +16,8 @@ using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 using UnityEngine;
 using Unity.Networking.Transport.Relay;
+using System.Text.RegularExpressions;
+
 
 
 #if UNITY_EDITOR
@@ -60,12 +62,13 @@ public class LobbyManager : MonoBehaviour
     private GameObject _currentMapInstance;
     private string _encrptionType => (encryption == EncryptionType.DTLS) ? "dtls" : "wss";
 
+    private float lobbyUpdateTimer = 1.8f; //pull updates every x seconds to avoid rate limiting
 
-
+    private bool isPinging = false; // this bool tracks if the host is currently pinging the lobby
 
 
     // Authentication --------------------------------------------------------------------------------------------------------------
-    private async Task Authenticate()
+    private async Task Authenticate(string playerName = null)
     {
         var options = new InitializationOptions();
 
@@ -76,21 +79,24 @@ public class LobbyManager : MonoBehaviour
         Debug.Log(ClonesManager.IsClone() ? "user: " + "Clone" : "user: Primary");
 
 #endif
+        // Set the profile name to the player's name if it's valid, otherwise use a random Unity provided name
+        string profileName = (string.IsNullOrEmpty(playerName) || !Regex.Match(playerName, "^[a-zA-Z0-9_-]{1,30}$").Success) ? null : playerName;
+        if (profileName != null) options.SetProfile(profileName);
 
         await UnityServices.InitializeAsync(options);
 
-        if (!AuthenticationService.Instance.IsSignedIn)
-        {
-            await AuthenticationService.Instance.SignInAnonymouslyAsync();
-            _playerId = AuthenticationService.Instance.PlayerId;
+        if (AuthenticationService.Instance.IsSignedIn) return; //already signed in
 
-            _playerName = await AuthenticationService.Instance.GetPlayerNameAsync();
-            _UIManager.DisplaySignedIn();
-            Debug.Log("Signed in as: " + _playerName);
-        }
+        await AuthenticationService.Instance.SignInAnonymouslyAsync();
+        _playerId = AuthenticationService.Instance.PlayerId;
+        _playerName = await AuthenticationService.Instance.GetPlayerNameAsync();
+
+        _UIManager.DisplaySignedIn();
+        Debug.Log("Signed in as: " + _playerName);
 
 
     }
+    // Player Operations --------------------------------------------------------------------------------------------------------------
 
     // returns name of currently signed in player
     public async Task<string> GetPlayerName()
@@ -104,6 +110,45 @@ public class LobbyManager : MonoBehaviour
         {
             Debug.LogWarning("Error Authenticating when getting player Name" + e.Message);
             return null;
+        }
+    }
+
+    // checks if the player has authenticated and creates a player object with the player's name, otherwise authenticates and returns player
+    private async Task<Player> CreatePlayer()
+    {
+        try
+        {
+            if (_playerId == null) await Authenticate();
+            return new Player
+            {
+                Data = new Dictionary<string, PlayerDataObject> {
+                { "PlayerName", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, _playerName) }
+            }
+            };
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"Failed to create player: {e.Message}");
+            return null;
+        }
+    }
+
+    private async void UpdatePlayerName(string newName)
+    {
+        try
+        {
+            await LobbyService.Instance.UpdatePlayerAsync(ConnectedLobby.Id, AuthenticationService.Instance.PlayerId, new UpdatePlayerOptions
+            {
+                Data = new Dictionary<string, PlayerDataObject>
+                {
+                    { "PlayerName", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, newName) }
+                }
+            });
+
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogWarning($"Failed to update player name: {e.Message}");
         }
     }
 
@@ -138,28 +183,12 @@ public class LobbyManager : MonoBehaviour
 
             QueryResponse lobbies = await Lobbies.Instance.QueryLobbiesAsync(options);
 
-            Debug.Log($"lobby response: count: {lobbies.Results.Count}");
-
+            // iterate through found lobbies and display each in respective lobbyEntry slot
             List<LobbyEntry> _foundLobbies = new List<LobbyEntry>();
             foreach (Lobby found in lobbies.Results)
             {
                 Debug.Log($"Found:\nName: {found.Name}\n  ID: {found.Data[LobbyTypeKey].Value}\n  Available Slots: {found.AvailableSlots}\n Host ID:{found.HostId}");
                 _foundLobbies.Add(new LobbyEntry(found.Name, found.Id, found.Data[LobbyTypeKey].Value, found.AvailableSlots, found.Players));
-                foreach (Player p in found.Players)
-                {
-                    Debug.Log($"Player ID: {p.Id}");
-                    if (p.Data != null)
-                    {
-                        foreach (var data in p.Data)
-                        {
-                            Debug.Log($"Player data - {data.Key} : {data.Value} ");
-                        }
-                    }
-                }
-                foreach (var data in found.Data)
-                {
-                    Debug.Log($"Lobby data - {data.Key} : {data.Value} ");
-                }
             }
 
             return _foundLobbies;
@@ -184,7 +213,7 @@ public class LobbyManager : MonoBehaviour
             Debug.Log("Singed in as: " + await AuthenticationService.Instance.GetPlayerNameAsync());
 
             string defaultName = "QuickLobby " + (DateTime.Now).ToString("MMdd_HHmmss");
-            ConnectedLobby = await TryQuick() ?? await CreateLobby(defaultName, maxLobbySize);
+            ConnectedLobby = await TryQuick() ?? await CreateLobby(defaultName, maxLobbySize); //redundant assignment of ConnectedLobby - this assignment is only to allow null coalescing operator
 
             if (ConnectedLobby == null) throw new LobbyServiceException(new LobbyExceptionReason(), "Lobby Error: No Lobby connected");
 
@@ -214,7 +243,6 @@ public class LobbyManager : MonoBehaviour
     }
 
 
-
     // Join --------------------------------------------------------------------------------------------------------------
     public async void Join(string joinCode = null, string lobbyID = null)
     {
@@ -242,15 +270,22 @@ public class LobbyManager : MonoBehaviour
         }
 
     }
-    // join lobby using code and start game
-    private async Task JoinGameWithcode(string joinCode)
+    // join lobby using code and playerName + start game
+    private async Task JoinGameWithcode(string joinCode, string playerName = null)
     {
         try
         {
-            Debug.Log("Joining WITH CODE");
-            ConnectedLobby = await LobbyService.Instance.JoinLobbyByCodeAsync(joinCode);
+
+            JoinLobbyByCodeOptions options = new JoinLobbyByCodeOptions
+            {
+                Player = await CreatePlayer()
+            };
+
+            ConnectedLobby = await LobbyService.Instance.JoinLobbyByCodeAsync(joinCode, options);
 
             if (ConnectedLobby == null) throw new LobbyServiceException(new LobbyExceptionReason(), "No Lobby Found using code: " + joinCode);
+
+            StartCoroutine(PullUpdatesCoroutine(lobbyUpdateTimer));
 
             // If we found one, grab the relay allocation details
 
@@ -263,6 +298,7 @@ public class LobbyManager : MonoBehaviour
             Debug.Log("Starting Client");
             // Join the game room as a client
             NetworkManager.Singleton.StartClient();
+            StartCoroutine(WaitForNetworkConnection());
 
             // Initialize Game
             Debug.Log("starting game");
@@ -275,14 +311,21 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    private async Task JoinGameWithID(string lobbyId)
+    // join lobby using ID and playerName + start game
+    private async Task JoinGameWithID(string lobbyId, string playerName = null)
     {
         try
         {
-            Debug.Log("Joining WITH ID");
-            ConnectedLobby = await LobbyService.Instance.JoinLobbyByIdAsync(lobbyId);
+            JoinLobbyByIdOptions options = new JoinLobbyByIdOptions
+            {
+                Player = await CreatePlayer()
+            };
+
+            ConnectedLobby = await LobbyService.Instance.JoinLobbyByIdAsync(lobbyId, options);
 
             if (ConnectedLobby == null) throw new LobbyServiceException(new LobbyExceptionReason(), "No Lobby Found using ID: " + lobbyId);
+
+            StartCoroutine(PullUpdatesCoroutine(lobbyUpdateTimer));
 
             // If we found one, grab the relay allocation details
 
@@ -299,6 +342,7 @@ public class LobbyManager : MonoBehaviour
             Debug.Log("Starting Client");
             // Join the game room as a client
             NetworkManager.Singleton.StartClient();
+            StartCoroutine(WaitForNetworkConnection());
 
             // Initialize Game
             StartGame();
@@ -317,8 +361,15 @@ public class LobbyManager : MonoBehaviour
     {
         try
         {
+            QuickJoinLobbyOptions options = new QuickJoinLobbyOptions
+            {
+                Player = await CreatePlayer()
+            };
+
             ConnectedLobby = await LobbyService.Instance.QuickJoinLobbyAsync();
-            StartCoroutine(PullUpdatesCoroutine(ConnectedLobby.Id, 1));
+            if (ConnectedLobby == null) throw new LobbyServiceException(new LobbyExceptionReason(), "No Lobby Found");
+
+            StartCoroutine(PullUpdatesCoroutine(lobbyUpdateTimer));
 
             string relayJoinCode = ConnectedLobby.Data[RelayJoinCodeKey].Value;
             JoinAllocation joinAllocation = await JoinRelay(relayJoinCode);
@@ -327,6 +378,7 @@ public class LobbyManager : MonoBehaviour
             NetworkManager.Singleton.GetComponent<UnityTransport>().UseWebSockets = true;
 
             NetworkManager.Singleton.StartClient();
+            StartCoroutine(WaitForNetworkConnection());
 
         }
         catch (LobbyServiceException e)
@@ -366,24 +418,12 @@ public class LobbyManager : MonoBehaviour
         try
         {
 
-            Debug.Log("Started Create Lobby");
             // Create a relay allocation and generate a join code to share with the lobby
             Allocation allocation = await AllocateRelay(Math.Min(maxLobbySize, maxPlayers));
 
-            Debug.Log("Created Alloc: " + allocation.AllocationId);
-
-            bool t = NetworkManager.Singleton.enabled;
-
-            Debug.Log(t);
-
             // configure unity tranport to use websockets for webGL support
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(allocation, "wss"));
-
-            Debug.Log("Set RelayServer Data");
-
             NetworkManager.Singleton.GetComponent<UnityTransport>().UseWebSockets = true;
-
-            Debug.Log("Set WSS");
 
             string relayJoinCode = await GetRelayJoinCode(allocation);
             string lobbyType = "Golf Lobby";
@@ -394,8 +434,9 @@ public class LobbyManager : MonoBehaviour
                 IsPrivate = false,
                 Data = new Dictionary<string, DataObject> {
                     { RelayJoinCodeKey, new DataObject(DataObject.VisibilityOptions.Member, relayJoinCode) },
-                    { LobbyTypeKey, new DataObject(DataObject.VisibilityOptions.Public, lobbyType) }
-                }
+                    { LobbyTypeKey, new DataObject(DataObject.VisibilityOptions.Public, lobbyType) },
+                },
+                Player = await CreatePlayer()
             };
 
             string defaultName = "MyLobby " + (DateTime.Now).ToString("MMdd_HHmmss");
@@ -404,12 +445,14 @@ public class LobbyManager : MonoBehaviour
             ConnectedLobby = await LobbyService.Instance.CreateLobbyAsync(name, maxPlayers, options);
 
             Debug.Log("Created public Lobby with lobbyCode " + ConnectedLobby.LobbyCode);
+            if (ConnectedLobby == null) throw new LobbyServiceException(new LobbyExceptionReason(), "Lobby Error: No Lobby connected");
 
-            // Send a heartbeat every 15 seconds to keep the room alive
-            StartCoroutine(HeartbeatLobbyCoroutine(ConnectedLobby.Id, 15));
+            // Send a heartbeat every 10 seconds to keep the room alive
+            StartCoroutine(HeartbeatLobbyCoroutine(ConnectedLobby.Id, 10));
+            StartCoroutine(PullUpdatesCoroutine(lobbyUpdateTimer));
 
-            // Pull updates from the lobby every second
-            StartCoroutine(PullUpdatesCoroutine(ConnectedLobby.Id, 1));
+            // Pull updates every x seconds to avoid rate limiting
+
 
             // Start the room. I'm doing this immediately, but maybe you want to wait for the lobby to fill up
             NetworkManager.Singleton.StartHost();
@@ -473,6 +516,18 @@ public class LobbyManager : MonoBehaviour
 
     // Coroutines --------------------------------------------------------------------------------------------------------------
 
+    private IEnumerator WaitForNetworkConnection()
+    {
+        Debug.Log("Wait for Network connection");
+
+        while (!NetworkManager.Singleton.IsConnectedClient)
+        {
+            yield return new WaitForEndOfFrame();
+        }
+        // do something here to indicate that the client is connected and start making calls to the server -------
+
+        Debug.Log("Connected to Network");
+    }
 
     private static IEnumerator HeartbeatLobbyCoroutine(string lobbyId, float waitTimeSeconds)
     {
@@ -480,17 +535,36 @@ public class LobbyManager : MonoBehaviour
         while (true)
         {
             Lobbies.Instance.SendHeartbeatPingAsync(lobbyId);
+            Debug.Log("Heartbeat Ping Sent by " + NetworkManager.Singleton.LocalClientId);
             yield return delay;
         }
     }
 
-    private static IEnumerator PullUpdatesCoroutine(string lobbyId, float waitTimeSeconds)
+    // not a coroutine, but a method that calls itself every waitTimeSeconds in the update loop
+    private IEnumerator PullUpdatesCoroutine(float waitTimeSeconds)
     {
         var delay = new WaitForSecondsRealtime(waitTimeSeconds);
         while (true)
         {
-            LobbyService.Instance.GetLobbyAsync(lobbyId);
+            GetLobbyUpdates();
             yield return delay;
+        }
+    }
+
+    private async void GetLobbyUpdates()
+    {
+        try
+        {
+            var lobby = await Lobbies.Instance.GetLobbyAsync(ConnectedLobby.Id);
+            if (lobby != null)
+            {
+                ConnectedLobby = lobby;
+                Debug.Log($"Updated Lobby: {lobby.Name}");
+            }
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogWarning($"Failed to update lobby: {e.Message}");
         }
     }
 
@@ -507,29 +581,118 @@ public class LobbyManager : MonoBehaviour
         _UIManager.DisplayLobbyName(ConnectedLobby.Name);
 
         //_currentMapInstance = Instantiate(_gameMap);
-
     }
 
     private void EndGame()
     {
         _UIManager.DisableUIText();
-        if (_currentMapInstance != null) Destroy(_currentMapInstance);
     }
 
-    private void OnDestroy()
+
+    // Leave Lobby --------------------------------------------------------------------------------------------------------------
+
+    // removes current player (self) from lobby
+    public void LeaveLobby()
     {
         try
         {
-            StopAllCoroutines();
-            if (ConnectedLobby != null)
+            if (ConnectedLobby == null) return;
+            Lobbies.Instance.RemovePlayerAsync(ConnectedLobby.Id, _playerId);
+            ConnectedLobby = null;
+            Debug.Log("Left Lobby");
+
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogWarning($"Failed to leave lobby: {e.Message}");
+        }
+    }
+
+    // method for host to kick players
+    private void ServerKickPlayer(string playerId)
+    {
+        if (ConnectedLobby.HostId == _playerId)
+        {
+            Lobbies.Instance.RemovePlayerAsync(ConnectedLobby.Id, playerId);
+            ConnectedLobby = null;
+        }
+    }
+
+
+    // Application Quit --------------------------------------------------------------------------------------------------------------
+
+    //  try to migrate host otherwise delete lobby if you are the host, otherwise leave the lobby on application quit
+    private void OnApplicationQuitCallback()
+    {
+
+        if (ConnectedLobby != null)
+        {
+            if (ConnectedLobby.HostId == _playerId)
             {
-                if (ConnectedLobby.HostId == _playerId) Lobbies.Instance.DeleteLobbyAsync(ConnectedLobby.Id);
-                else Lobbies.Instance.RemovePlayerAsync(ConnectedLobby.Id, _playerId);
+                Debug.LogWarning("Host has left the lobby, deleting lobby");
+                DeleteLobby();
+            }
+            else
+            {
+                Debug.LogWarning("Client Leaving Lobby");
+                LeaveLobby();
             }
         }
-        catch (Exception e)
+    }
+
+    // unity handles host migration automatically, just need to leave the lobby right ??????
+    /*private void OnApplicationQuit()
+    {
+        //onApplicationQuitCallback();
+        LeaveLobby();
+        Debug.Log("Application Quit");
+    }*/
+
+    private void OnDestroy()
+    {
+        Debug.LogWarning("OnDestroy");
+        OnApplicationQuitCallback();
+
+    }
+
+
+    // method for host to delete the current lobby
+    private async void DeleteLobby()
+    {
+        try
         {
-            Debug.Log($"Error shutting down lobby: {e}");
+            if (ConnectedLobby == null) return;
+
+            StopAllCoroutines();
+
+            if (ConnectedLobby.HostId == _playerId) await Lobbies.Instance.DeleteLobbyAsync(ConnectedLobby.Id);
+            ConnectedLobby = null;
+
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogWarning($"Failed to delete lobby: {e.Message}");
+        }
+    }
+
+    // Update Loop --------------------------------------------------------------------------------------------------------------
+
+
+    public bool me = false;
+    private void Update()
+    {
+        if (ConnectedLobby != null && ConnectedLobby.HostId == _playerId)
+        {
+            if (!me)
+            {
+                me = true;
+                Debug.LogWarning("I am the new host: " + NetworkManager.Singleton.LocalClientId);
+            }
+
+        }
+        else
+        {
+
         }
     }
 }

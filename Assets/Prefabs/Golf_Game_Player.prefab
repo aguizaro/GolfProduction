@@ -176,8 +176,8 @@ Rigidbody:
   m_GameObject: {fileID: 5214912640851036473}
   serializedVersion: 4
   m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
+  m_Drag: 0.5
+  m_AngularDrag: 0.5
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -271,10 +271,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19f6cdbc0b67342dfae0708718e3fe2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _projectile: {fileID: 3665726570761771704, guid: 3d0ef90e59c624be5bf18a934047635a, type: 3}
+  _projectilePrefab: {fileID: 3665726570761771704, guid: 3d0ef90e59c624be5bf18a934047635a, type: 3}
   _projectileSpeed: 20
   _cooldown: 0.5
   _spawnDist: 1
+  playerClubRange: 4
 --- !u!23 &5951056698983759621 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: -7635826562936255635, guid: 68b036ed0c773c64883cfd2d6135a9db, type: 3}

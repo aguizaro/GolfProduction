@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,7 +23,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button _refreshButton;
 
     [SerializeField] private LobbyManager _lobbyManager;
-    private const int maxDisplayLen= 5; //5 lobby slots at a time
+    private const int maxDisplayLen = 5; //5 lobby slots at a time
 
     private void Awake()
     {
@@ -51,48 +52,66 @@ public class UIManager : MonoBehaviour
         _lobbyNameText.text = "";
     }
 
-    public async void RefreshDisplayList()
+    public async void RefreshDisplayList() // I added redundant checks here because sometimes lobby entry is found right before its deleted
     {
-        ClearDisplayList();
-        List<LobbyEntry> foundLobbies = await _lobbyManager.FindOpenLobbies();
-
-        Debug.Log($"Found Lobbies: {foundLobbies.Count}");
-
-        // iterate through found lobbies and display each in respective lobbyEntry slot
-        int i = 0; 
-        foreach(LobbyEntry entry in foundLobbies)
+        try
         {
-            Debug.Log($"Found {entry.Name} with code: {entry.LobbyType} with {entry.SpotsAvailable} spots left");
-            if (i < maxDisplayLen)
+            ClearDisplayList();
+            List<LobbyEntry> foundLobbies = await _lobbyManager.FindOpenLobbies();
+            if (foundLobbies.Count == 0)
             {
-                _lobbyEntries[i].SetActive(true);
-                _lobbyEntries[i].transform.Find("LobbyName").GetComponent<TMP_Text>().text = entry.Name; // display lobby name
-                _lobbyEntries[i].transform.Find("SpotsAvailable").GetComponent<TMP_Text>().text = $"Spots Available: {entry.SpotsAvailable}"; // display lobby availability
-
-                // display each player
-                int playerIndex = 0;    
-                string delim = "";
-                foreach (var p in entry.Players)
-                {
-                    _lobbyEntries[i].transform.Find("Players").GetComponent<TMP_Text>().text += $"{delim}Player{++playerIndex}: {p.Id}";
-                    delim = "\n";
-                }
-
-                _lobbyEntries[i].transform.Find("JoinLobbyButton").GetComponent<Button>().onClick.AddListener(() => _lobbyManager.Join(lobbyID: entry.Id)); // join lobby, on button click
+                Debug.Log("No lobbies found");
+                return;
             }
 
-            i++;
+            // iterate through found lobbies and display each in respective lobbyEntry slot
+            int i = 0;
+            foreach (LobbyEntry entry in foundLobbies)
+            {
+                Debug.Log($"Found {entry.Name} with code: {entry.LobbyType} with {entry.SpotsAvailable} spots left");
+                if (i < maxDisplayLen)
+                {
+                    if (entry != null)
+                    {
+                        _lobbyEntries[i].SetActive(true);
+                        _lobbyEntries[i].transform.Find("LobbyName").GetComponent<TMP_Text>().text = entry.Name; // display lobby name
+                        _lobbyEntries[i].transform.Find("SpotsAvailable").GetComponent<TMP_Text>().text = $"Spots Available: {entry.SpotsAvailable}"; // display lobby availability
+                    }
+
+                    if (entry.Players.Count > 0)
+                    {
+                        // display each player
+                        int playerIndex = 0;
+                        string delim = "";
+                        foreach (var p in entry.Players)
+                        {
+                            _lobbyEntries[i].transform.Find("Players").GetComponent<TMP_Text>().text += $"{delim}Player{++playerIndex}: {p.Data["PlayerName"].Value}";
+                            delim = "\n";
+                        }
+
+                        _lobbyEntries[i].transform.Find("JoinLobbyButton").GetComponent<Button>().onClick.AddListener(() => _lobbyManager.Join(lobbyID: entry.Id)); // join lobby, on button click
+                    }
+                }
+
+                i++;
+            }
+
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("Error refreshing lobby list: " + e.Message);
         }
     }
 
     public void ClearDisplayList()
     {
         // reset lobby display list
-        foreach (GameObject entry in _lobbyEntries) {
+        foreach (GameObject entry in _lobbyEntries)
+        {
             entry.SetActive(false);
         }
 
-        
+
     }
 
 }

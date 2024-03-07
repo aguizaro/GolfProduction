@@ -580,6 +580,7 @@ MonoBehaviour:
   _UIManager: {fileID: 4300147152962470403}
   encryption: 1
   maxLobbySize: 10
+  me: 0
 --- !u!114 &1606576233
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -764,14 +765,6 @@ PrefabInstance:
     - target: {fileID: 3935555805042860810, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_IsActive
       value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6314392916283263033, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
-      propertyPath: m_ReferenceResolution.x
-      value: 1920
-      objectReference: {fileID: 0}
-    - target: {fileID: 6314392916283263033, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
-      propertyPath: m_ReferenceResolution.y
-      value: 1080
       objectReference: {fileID: 0}
     - target: {fileID: 7726233538996562752, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_Pivot.x

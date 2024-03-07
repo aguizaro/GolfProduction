@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
-using static BasicPlayerController;
 using Unity.Netcode.Components;
 using Unity.VisualScripting;
 
@@ -25,56 +24,63 @@ public struct PlayerData : INetworkSerializable
         serializer.SerializeValue(ref score);
     }
 }
+// ------------------------------------------------------------------------------------------------------------
 
 public class PlayerNetworkData : NetworkBehaviour
 {
+    private PlayerData _currentPlayerData;
 
-    //this will be a dictionary of player states for each player
-    // the key is the OwnerClientID of the player
-    //  if this instance is not the server, this dictionary will be empty and isActive false
-    Dictionary<ulong, PlayerData> serverSidePlayerStates = new();
-    private bool isActive = false;
+    private NetworkVariable<PlayerData> _networkPlayerData = new NetworkVariable<PlayerData>(new PlayerData
+    {
+        playerPos = Vector3.zero,
+        playerRot = Quaternion.identity,
+        isCarrying = false,
+        isSwinging = false,
+        score = 0,
+    }, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
 
     public override void OnNetworkSpawn()
     {
-        if (IsServer)
-        {
-            isActive = true;
-        }
+        _networkPlayerData.OnValueChanged += OnPlayerDataChanged;
+    }
+    public override void OnDestroy()
+    {
+        _networkPlayerData.OnValueChanged -= OnPlayerDataChanged;
+    }
+
+    private void OnPlayerDataChanged(PlayerData prevData, PlayerData newData)
+    {
+        _currentPlayerData = newData;
+
+        Debug.LogWarning("OnPlayerDataChanged: Player data changed for " + OwnerClientId + " to " + _currentPlayerData.playerPos);
     }
 
     // only owners should use this to send data to the server
     public void StorePlayerState(PlayerData data, ulong senderID)
     {
-        if (!isActive) return;
-
-        //check if this position is legal - not done yet
-
-        //store player data
-        if (serverSidePlayerStates.TryGetValue(senderID, out PlayerData senderData))
+        if (IsOwner)
         {
-            serverSidePlayerStates[senderID] = data; // update player state for the client that sent this data if it exists
+            Debug.Log("Storing player state for " + senderID + "\npos: " + data.playerPos + " rot: " + data.playerRot);
+            StorePlayerStateServerRpc(data, senderID);
         }
         else
         {
-            serverSidePlayerStates.Add(senderID, data); //create new entry for this player otherwise
+            _currentPlayerData = _networkPlayerData.Value;
+            Debug.LogWarning("Player data changed for " + OwnerClientId + " to " + _currentPlayerData.playerPos);
         }
+
     }
 
-
-    // non-owner instances of a player should call this to get the owner's player state
-    public PlayerData GetPlayerState(ulong ownerclientID)
+    [ServerRpc]
+    private void StorePlayerStateServerRpc(PlayerData data, ulong senderID)
     {
-        //if the non-server runs this 
+        Debug.LogWarning("StorePlayerStateServerRpc:" + OwnerClientId + " is storing player state for " + senderID + "\npos: " + data.playerPos + " rot: " + data.playerRot);
+        _networkPlayerData.Value = data;
+    }
 
-        // return player state if found in dict, otherwise return default player state
-        return serverSidePlayerStates.TryGetValue(ownerclientID, out PlayerData data) ? data : new PlayerData
-        {
-            playerPos = Vector3.zero,
-            playerRot = Quaternion.identity,
-            isCarrying = false,
-            isSwinging = false,
-            score = 0
-        };
+    public PlayerData GetPlayerState()
+    {
+        return _currentPlayerData;
     }
 }
