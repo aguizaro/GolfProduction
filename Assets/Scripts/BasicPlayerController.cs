@@ -45,7 +45,7 @@ public class BasicPlayerController : NetworkBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        transform.position = new Vector3(Random.Range(311, 317), 103.163002f, Random.Range(85, 96)); //set starting position
+        transform.position = new Vector3(Random.Range(390, 400), 69.1f, Random.Range(318, 320)); //set starting random place near first hole
         Debug.Log("Client: " + OwnerClientId + " starting position" + transform.position);
 
         _currentPlayerState = new PlayerData
@@ -65,6 +65,10 @@ public class BasicPlayerController : NetworkBehaviour
     {
         if (!IsOwner)
         {
+            if (_playerNetworkData == null) // redundant check due to OnNetworkSpawn not reliably setting _playerNetworkData
+            {
+                _playerNetworkData = GameObject.FindWithTag("StateManager").GetComponent<PlayerNetworkData>();
+            }
             Debug.LogWarning("Non owner: " + OwnerClientId + " reading player state: " + _currentPlayerState.playerPos + " rot: " + _currentPlayerState.playerRot);
             _currentPlayerState = _playerNetworkData.GetPlayerState();
             return; //only owners can update player state

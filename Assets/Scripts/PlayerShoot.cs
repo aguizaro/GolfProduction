@@ -28,7 +28,7 @@ public class PlayerShoot : NetworkBehaviour
     [ServerRpc]
     private void RequestBallSpawnServerRpc(Vector3 dir, ulong ownerId)
     {
-        projectileInstance = Instantiate(_projectilePrefab, transform.position + transform.forward * _spawnDist, Quaternion.identity);
+        projectileInstance = Instantiate(_projectilePrefab, transform.position + transform.up / 2 + transform.forward * _spawnDist, Quaternion.identity);
         projectileInstance.GetComponent<NetworkObject>().SpawnWithOwnership(ownerId);
 
         // Inform the client about the spawned projectile
