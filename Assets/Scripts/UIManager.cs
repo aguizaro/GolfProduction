@@ -113,7 +113,7 @@ public class UIManager : MonoBehaviour
         _lobbyNameText.text = "";
     }
 
-    public async void RefreshDisplayList() // I added redundant checks here because sometimes lobby entry is found right before its deleted
+    //public async void RefreshDisplayList() // I added redundant checks here because sometimes lobby entry is found right before its deleted
     
     // Pause UI Methods
     public void EnablePause() => _pauseScreenUI.SetActive(true);
