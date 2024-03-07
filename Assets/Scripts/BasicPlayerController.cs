@@ -74,6 +74,16 @@ public class BasicPlayerController : NetworkBehaviour
             return; //only owners can update player state
         }
 
+        // Check for pause input
+        if (Input.GetKeyDown(KeyCode.Escape)) 
+        {
+            if (!UIManager.isPaused) { UIManager.isPaused = true; UIManager.instance.EnablePause(); Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
+            else { UIManager.isPaused = false; UIManager.instance.DisablePause(); Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; }
+        }
+
+        if (UIManager.isPaused) { return; }
+        else { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; }
+
         float moveHorizontal = Input.GetAxis("Horizontal");
         float moveVertical = Input.GetAxis("Vertical");
         float rotationInput = Input.GetAxis("Mouse X");

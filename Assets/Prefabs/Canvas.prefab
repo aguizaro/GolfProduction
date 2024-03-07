@@ -1415,7 +1415,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1011060381670656797}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 197.13855}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -3413,7 +3413,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2206268516023280106}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 197.13855}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -6477,9 +6477,9 @@ MonoBehaviour:
   - {fileID: 5138385120605285564}
   - {fileID: 3951507028370246894}
   - {fileID: 2860342925379563947}
-  _lobbyJoinCodeText: {fileID: 0}
+  _lobbyJoinCodeText: {fileID: 4631372587480578468}
   _lobbyNameText: {fileID: 2120251310480050906}
-  _lobbySignedInText: {fileID: 0}
+  _lobbySignedInText: {fileID: 2434721925095626334}
   _inputField: {fileID: 2217345429659787231}
   _createButton: {fileID: 7166388821660307393}
   _joinButton: {fileID: 352209366523184033}

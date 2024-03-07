@@ -622,7 +622,7 @@ public class LobbyManager : MonoBehaviour
     // Application Quit --------------------------------------------------------------------------------------------------------------
 
     //  try to migrate host otherwise delete lobby if you are the host, otherwise leave the lobby on application quit
-    private void OnApplicationQuitCallback()
+    public void OnApplicationQuitCallback()
     {
 
         if (ConnectedLobby != null)

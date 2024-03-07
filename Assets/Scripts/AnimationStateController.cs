@@ -28,6 +28,8 @@ public class AnimationStateController : NetworkBehaviour
         bool leftPressed = Input.GetKey("a");
         bool strikePressed = Input.GetKeyDown("e");
 
+        if (UIManager.isPaused) { return; }
+
         if(IsOwner){
             if (forwardPressed && !isWalking)
             {

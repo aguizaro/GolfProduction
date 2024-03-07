@@ -15,6 +15,7 @@ public class PlayerShoot : NetworkBehaviour
 
     private void Update()
     {
+        if (UIManager.isPaused) return;
         if (!IsOwner) return;
 
         if (Input.GetMouseButton(0) && _lastFired + _cooldown < Time.time)

@@ -58,12 +58,16 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Toggle _settingsOneHandToggle;
     [SerializeField] private TMP_Dropdown _settingsLanguageDropdown;
 
+    // UIManager instance
+    public static UIManager instance { get; private set; }
+
     private float settingsVolume = 0;
     private float settingsSensitivity = 5;
     private bool oneHandMode = false;
     private int language = 0;
 
     private bool titleScreenMode = true;
+    public static bool isPaused { get; set; } = false;
 
     private void Awake()
     {
@@ -79,12 +83,14 @@ public class UIManager : MonoBehaviour
 
         // Pause Button Events
         _pauseResumeButton.onClick.AddListener(DisablePause);
-        //_pauseSettingsButton.onClick.AddListener();
-        //_pauseTitleButton.onClick.AddListener();
+        _pauseSettingsButton.onClick.AddListener(PauseStartSettings);
+        _pauseTitleButton.onClick.AddListener(ReturnToTitle);
 
         // Settings Button Events
         _settingsApplyButton.onClick.AddListener(ApplySettings);
         _settingsBackButton.onClick.AddListener(DisableSettings);
+
+        instance = this;
 
         RefreshDisplayList();
     }
@@ -113,13 +119,18 @@ public class UIManager : MonoBehaviour
         _lobbyNameText.text = "";
     }
 
-    public async void RefreshDisplayList() // I added redundant checks here because sometimes lobby entry is found right before its deleted
-    
     // Pause UI Methods
-    public void EnablePause() => _pauseScreenUI.SetActive(true);
-    public void DisablePause() => _pauseScreenUI.SetActive(false);
+    public void EnablePause() { isPaused = true; _pauseScreenUI.SetActive(true); }
+    public void DisablePause() { isPaused = false; _pauseScreenUI.SetActive(false); _settingsScreenUI.SetActive(false); }
     public void EnableSettings() { LoadSettings(); _settingsScreenUI.SetActive(true); }
     public void DisableSettings() { _settingsScreenUI.SetActive(false); if (!titleScreenMode) { EnablePause(); } }
+    public void PauseStartSettings() { _pauseScreenUI.SetActive(false); EnableSettings(); }
+    public void ReturnToTitle() {
+        _lobbyManager.OnApplicationQuitCallback();
+        titleScreenMode = true;
+        DisablePause();
+        EnableUI(UIState.Title);
+    }
 
     // Settings UI Methods
     public void SetVolumeSlider(float value) => settingsVolume = value;
@@ -170,7 +181,7 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public async void RefreshDisplayList()
+    public async void RefreshDisplayList() // I added redundant checks here because sometimes lobby entry is found right before its deleted
     {
         try
         {
