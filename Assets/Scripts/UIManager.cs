@@ -9,7 +9,6 @@ public enum UIState
 {
     Title,
     Lobby,
-    Pause
 }
 
 public class UIManager : MonoBehaviour
@@ -39,10 +38,37 @@ public class UIManager : MonoBehaviour
     [SerializeField] private LobbyManager _lobbyManager;
     private const int maxDisplayLen= 5; //5 lobby slots at a time
 
+    // Pause UI Elements
+    [Header("Pause UI Elements")]
+    [SerializeField] private GameObject _pauseScreenUI;
+
+    [SerializeField] private Button _pauseResumeButton;
+    [SerializeField] private Button _pauseSettingsButton;
+    [SerializeField] private Button _pauseTitleButton;
+
+    // Settings UI Elements
+    [Header("Settings UI Elements")]
+    [SerializeField] private GameObject _settingsScreenUI;
+
+    [SerializeField] private Button _settingsApplyButton;
+    [SerializeField] private Button _settingsBackButton;
+    [SerializeField] private Slider _settingsVolumeSlider;
+    [SerializeField] private Slider _settingsSensitivitySlider;
+    [SerializeField] private Toggle _settingsOneHandToggle;
+    [SerializeField] private TMP_Dropdown _settingsLanguageDropdown;
+
+    private float settingsVolume = 0;
+    private float settingsSensitivity = 5;
+    private bool oneHandMode = false;
+    private int language = 0;
+
+    private bool titleScreenMode = true;
+
     private void Awake()
     {
         // Title Button Events
         _titleStartButton.onClick.AddListener(TitleStart);
+        _titleSettingsButton.onClick.AddListener(TitleSettings);
 
         // Lobby Button Events
         _createButton.onClick.AddListener(CreateLobby);
@@ -50,13 +76,23 @@ public class UIManager : MonoBehaviour
         _playButton.onClick.AddListener(PlayNow);
         _refreshButton.onClick.AddListener(RefreshDisplayList);
 
+        // Pause Button Events
+        _pauseResumeButton.onClick.AddListener(DisablePause);
+        //_pauseSettingsButton.onClick.AddListener();
+        //_pauseTitleButton.onClick.AddListener();
+
+        // Settings Button Events
+        _settingsApplyButton.onClick.AddListener(ApplySettings);
+        _settingsBackButton.onClick.AddListener(DisableSettings);
+
         RefreshDisplayList();
     }
 
-    private void Start() => EnableUI(UIState.Title);
+    private void Start() { DisablePause(); DisableSettings(); EnableUI(UIState.Title); }
 
     // Title Screen Methods
     private void TitleStart() => EnableUI(UIState.Lobby);
+    private void TitleSettings() => EnableSettings();
 
     // Lobby UI Methods
     private void PlayNow() => _lobbyManager.PlayNow();
@@ -64,7 +100,7 @@ public class UIManager : MonoBehaviour
     private void JoinLobby() => _lobbyManager.Join(joinCode: _inputField.text);
 
 
-    public void DeactivateUI() { _lobbyUI.SetActive(false); Debug.Log("Deactivated Lobby UI: " + _lobbyUI.activeSelf); }
+    public void DeactivateUI() { _lobbyUI.SetActive(false); Debug.Log("Deactivated Lobby UI: " + _lobbyUI.activeSelf); titleScreenMode = false; }
     public void DisplayCode(string code) => _lobbyJoinCodeText.text = code;
     public void DisplayLobbyName(string name) => _lobbyNameText.text = name;
     public async void DisplaySignedIn() => _lobbySignedInText.text = await _lobbyManager.GetPlayerName();
@@ -74,6 +110,45 @@ public class UIManager : MonoBehaviour
     {
         _lobbyJoinCodeText.text = "";
         _lobbyNameText.text = "";
+    }
+
+    // Pause UI Methods
+    public void EnablePause() => _pauseScreenUI.SetActive(true);
+    public void DisablePause() => _pauseScreenUI.SetActive(false);
+    public void EnableSettings() { LoadSettings(); _settingsScreenUI.SetActive(true); }
+    public void DisableSettings() { _settingsScreenUI.SetActive(false); if (!titleScreenMode) { EnablePause(); } }
+
+    // Settings UI Methods
+    public void SetVolumeSlider(float value) => settingsVolume = value;
+    public void SetSensitivitySlider(float value) => settingsSensitivity = value;
+    public void SetOneHandModeToggle(bool value) => oneHandMode = value;
+    public void SetLanguageDropdown(int value) => language = value;
+
+    public void LoadSettings()
+    {
+        // Load settings data
+        SettingsData sData = DataManager.instance.GetSettingsData();
+
+        settingsVolume = sData.volume;
+        settingsSensitivity = sData.cameraSensitivity;
+        oneHandMode = sData.oneHandMode;
+        language = sData.language;
+
+        _settingsVolumeSlider.value = settingsVolume;
+        _settingsSensitivitySlider.value = settingsSensitivity;
+        _settingsOneHandToggle.isOn = oneHandMode;
+        _settingsLanguageDropdown.value = language;
+    }
+
+    public void ApplySettings()
+    {
+        SettingsData sData = DataManager.instance.GetSettingsData();
+        sData.volume = settingsVolume;
+        sData.cameraSensitivity = settingsSensitivity;
+        sData.oneHandMode = oneHandMode;
+        sData.language = language;
+
+        DataManager.instance.SetSettingsData(sData);
     }
 
     public void EnableUI(UIState state)

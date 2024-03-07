@@ -8,7 +8,7 @@ public class SettingsData
     //********* Settings Data *********//
 
     // Accessibility
-    public string language;
+    public int language; // 0 - English
     public bool oneHandMode;
 
     // Game
@@ -18,10 +18,10 @@ public class SettingsData
     public SettingsData() 
     {
         // Initialize Game Settings Data
-        this.language = "English";
+        this.language = 0;
         this.oneHandMode = false;
 
-        this.cameraSensitivity = 0;
+        this.cameraSensitivity = 5;
         this.volume = 0;
     }
 
