@@ -30,6 +30,7 @@ public class PlayerNetworkData : NetworkBehaviour
 {
     private PlayerData _currentPlayerData;
 
+    // Local player data
     private NetworkVariable<PlayerData> _networkPlayerData = new NetworkVariable<PlayerData>(new PlayerData
     {
         playerPos = Vector3.zero,
@@ -39,6 +40,8 @@ public class PlayerNetworkData : NetworkBehaviour
         score = 0,
     }, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
+
+    // Update local variable when network variable updates  ------------------------------------------------------------------------------------------------------------
 
     public override void OnNetworkSpawn()
     {
@@ -53,34 +56,37 @@ public class PlayerNetworkData : NetworkBehaviour
     {
         _currentPlayerData = newData;
 
-        Debug.LogWarning("OnPlayerDataChanged: Player data changed for " + OwnerClientId + " to " + _currentPlayerData.playerPos);
+        //Debug.LogWarning("OnPlayerDataChanged: Player data changed for " + OwnerClientId + " to " + _currentPlayerData.playerPos);
     }
+
+    // public functions ------------------------------------------------------------------------------------------------------------
 
     // only owners should use this to send data to the server
     public void StorePlayerState(PlayerData data, ulong senderID)
     {
         if (IsOwner)
         {
-            Debug.Log("Storing player state for " + senderID + "\npos: " + data.playerPos + " rot: " + data.playerRot);
+            //Debug.Log("Storing player state for " + senderID + "\npos: " + data.playerPos + " rot: " + data.playerRot);
             StorePlayerStateServerRpc(data, senderID);
         }
         else
         {
             _currentPlayerData = _networkPlayerData.Value;
-            Debug.LogWarning("Player data changed for " + OwnerClientId + " to " + _currentPlayerData.playerPos);
+            //Debug.LogWarning("Player data changed for " + OwnerClientId + " to " + _currentPlayerData.playerPos);
         }
-
     }
+    // only non-owners should use this to get the latest player state
+    public PlayerData GetPlayerState()
+    {
+        return _currentPlayerData;
+    }
+
+    // server rpcs ------------------------------------------------------------------------------------------------------------
 
     [ServerRpc]
     private void StorePlayerStateServerRpc(PlayerData data, ulong senderID)
     {
-        Debug.LogWarning("StorePlayerStateServerRpc:" + OwnerClientId + " is storing player state for " + senderID + "\npos: " + data.playerPos + " rot: " + data.playerRot);
+        //Debug.LogWarning("StorePlayerStateServerRpc:" + OwnerClientId + " is storing player state for " + senderID + "\npos: " + data.playerPos + " rot: " + data.playerRot);
         _networkPlayerData.Value = data;
-    }
-
-    public PlayerData GetPlayerState()
-    {
-        return _currentPlayerData;
     }
 }

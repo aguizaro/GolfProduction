@@ -64,9 +64,6 @@ public class LobbyManager : MonoBehaviour
 
     private float lobbyUpdateTimer = 1.8f; //pull updates every x seconds to avoid rate limiting
 
-    private bool isPinging = false; // this bool tracks if the host is currently pinging the lobby
-
-
     // Authentication --------------------------------------------------------------------------------------------------------------
     private async Task Authenticate(string playerName = null)
     {
@@ -210,8 +207,6 @@ public class LobbyManager : MonoBehaviour
         {
             await Authenticate();
 
-            Debug.Log("Singed in as: " + await AuthenticationService.Instance.GetPlayerNameAsync());
-
             string defaultName = "QuickLobby " + (DateTime.Now).ToString("MMdd_HHmmss");
             ConnectedLobby = await TryQuick() ?? await CreateLobby(defaultName, maxLobbySize); //redundant assignment of ConnectedLobby - this assignment is only to allow null coalescing operator
 
@@ -235,9 +230,6 @@ public class LobbyManager : MonoBehaviour
     {
         await QuickJoinLobby();
         if (ConnectedLobby == null || !NetworkManager.Singleton.IsClient) return null;
-
-        // Initialize Game
-        StartGame();
 
         return ConnectedLobby;
     }
@@ -298,11 +290,7 @@ public class LobbyManager : MonoBehaviour
             Debug.Log("Starting Client");
             // Join the game room as a client
             NetworkManager.Singleton.StartClient();
-            StartCoroutine(WaitForNetworkConnection());
-
-            // Initialize Game
-            Debug.Log("starting game");
-            StartGame();
+            await WaitForNetworkConnection();
 
         }
         catch (LobbyServiceException e)
@@ -342,10 +330,8 @@ public class LobbyManager : MonoBehaviour
             Debug.Log("Starting Client");
             // Join the game room as a client
             NetworkManager.Singleton.StartClient();
-            StartCoroutine(WaitForNetworkConnection());
+            await WaitForNetworkConnection();
 
-            // Initialize Game
-            StartGame();
         }
         catch (LobbyServiceException e)
         {
@@ -378,7 +364,7 @@ public class LobbyManager : MonoBehaviour
             NetworkManager.Singleton.GetComponent<UnityTransport>().UseWebSockets = true;
 
             NetworkManager.Singleton.StartClient();
-            StartCoroutine(WaitForNetworkConnection());
+            await WaitForNetworkConnection();
 
         }
         catch (LobbyServiceException e)
@@ -406,7 +392,7 @@ public class LobbyManager : MonoBehaviour
         }
         catch (Exception e)
         {
-            Debug.Log(e);
+            Debug.LogError(e);
             return;
         }
     }
@@ -451,20 +437,15 @@ public class LobbyManager : MonoBehaviour
             StartCoroutine(HeartbeatLobbyCoroutine(ConnectedLobby.Id, 10));
             StartCoroutine(PullUpdatesCoroutine(lobbyUpdateTimer));
 
-            // Pull updates every x seconds to avoid rate limiting
-
-
             // Start the room. I'm doing this immediately, but maybe you want to wait for the lobby to fill up
             NetworkManager.Singleton.StartHost();
-
-            // Initialize Game
-            StartGame();
+            await WaitForNetworkConnection();
 
             return ConnectedLobby;
         }
         catch (LobbyServiceException e)
         {
-            Debug.LogFormat($"Failed creating a lobby: {e.Message}");
+            Debug.LogError($"Failed creating a lobby: {e.Message}");
             return null;
         }
     }
@@ -516,17 +497,18 @@ public class LobbyManager : MonoBehaviour
 
     // Coroutines --------------------------------------------------------------------------------------------------------------
 
-    private IEnumerator WaitForNetworkConnection()
+    private async Task WaitForNetworkConnection()
     {
         Debug.Log("Wait for Network connection");
 
         while (!NetworkManager.Singleton.IsConnectedClient)
         {
-            yield return new WaitForEndOfFrame();
+            await Task.Yield();
         }
         // do something here to indicate that the client is connected and start making calls to the server -------
 
-        Debug.Log("Connected to Network");
+        Debug.Log("Connected to Network - Start Game");
+        StartGame();
     }
 
     private static IEnumerator HeartbeatLobbyCoroutine(string lobbyId, float waitTimeSeconds)
@@ -573,14 +555,13 @@ public class LobbyManager : MonoBehaviour
 
     private void StartGame()
     {
-        Debug.Log("STARTING GAME");
+        Debug.Log("Deactivating UI");
 
         _UIManager.DeactivateUI();
         _UIManager.DisplaySignedIn();
         _UIManager.DisplayCode(ConnectedLobby.LobbyCode);
         _UIManager.DisplayLobbyName(ConnectedLobby.Name);
 
-        //_currentMapInstance = Instantiate(_gameMap);
     }
 
     private void EndGame()
@@ -638,15 +619,8 @@ public class LobbyManager : MonoBehaviour
                 LeaveLobby();
             }
         }
+        StopAllCoroutines();
     }
-
-    // unity handles host migration automatically, just need to leave the lobby right ??????
-    /*private void OnApplicationQuit()
-    {
-        //onApplicationQuitCallback();
-        LeaveLobby();
-        Debug.Log("Application Quit");
-    }*/
 
     private void OnDestroy()
     {
@@ -676,23 +650,8 @@ public class LobbyManager : MonoBehaviour
     }
 
     // Update Loop --------------------------------------------------------------------------------------------------------------
-
-
-    public bool me = false;
     private void Update()
     {
-        if (ConnectedLobby != null && ConnectedLobby.HostId == _playerId)
-        {
-            if (!me)
-            {
-                me = true;
-                Debug.LogWarning("I am the new host: " + NetworkManager.Singleton.LocalClientId);
-            }
 
-        }
-        else
-        {
-
-        }
     }
 }

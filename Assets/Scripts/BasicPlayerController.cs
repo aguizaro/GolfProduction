@@ -4,49 +4,68 @@ using UnityEngine;
 using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine.PlayerLoop;
-
+using UnityEngine.Video;
 
 public class BasicPlayerController : NetworkBehaviour
 {
+    // Movement
+    public float moveSpeed = 2f;
+    public float sprintMultiplier = 2.5f;
+    public float rotationSpeed = 100f;
+    private bool isSprinting = false;
 
-    public float moveSpeed = 12.0f;
+
+    // Physics
+    private Rigidbody _rb;
+    private PlayerShoot _playerShoot;
+
+    // State Management
     private PlayerData _startState;
-
     private PlayerData _currentPlayerState;
-
-    // each instance of gameobject has their own _playerData network variable
-    /**private NetworkVariable<PlayerData> _playerData = new NetworkVariable<PlayerData>(new PlayerData
-    {
-        playerPos = Vector3.zero,
-        playerRot = Quaternion.identity,
-        isCarrying = false,
-        isSwinging = false,
-        score = 0,
-    }, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);*/
-    // ------------------------------------------------------------------------------------------------------------
-
-    public float rotationSpeed = 1000f;
-
     private PlayerNetworkData _playerNetworkData;
-    private Rigidbody rb;
+    private RagdollOnOff _ragdollOnOff;
+
+    // Animation
+    private Animator _animator;
+
+    // Activation
+    private bool _isActive = false;
 
 
+    // Update Loop -------------------------------------------------------------------------------------------------------------
+    void Update()
+    {
+        if (!_isActive) return; //prevent updates until player is fully activated
+
+        Animate();
+        Movement();
+    }
+
+
+    // Activation -------------------------------------------------------------------------------------------------------------
     public override void OnNetworkSpawn()
     {
+        Activate(); // activate player movment and animaitons and ragdoll
+        _playerShoot.Activate(); // activate shooting
+        _ragdollOnOff.Activate(); // activate ragdoll
+    }
+
+    public void Activate()
+    {
+        _rb = gameObject.GetComponent<Rigidbody>();
+        _animator = GetComponent<Animator>();
+        _playerShoot = GetComponent<PlayerShoot>();
+        _ragdollOnOff = GetComponent<RagdollOnOff>();
         _playerNetworkData = GameObject.FindWithTag("StateManager").GetComponent<PlayerNetworkData>();
-        rb = gameObject.GetComponent<Rigidbody>(); // grab player's rigidbody component on spawn
 
-        if (!IsOwner)
-        {
-            return;
-        }
+        if (!IsOwner) return;
 
-        // Lock and hide cursor only for the local player
+        // Lock and hide cursor only for the local player - *** maybe move this over to UIManager later ***
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
         transform.position = new Vector3(Random.Range(390, 400), 69.1f, Random.Range(318, 320)); //set starting random place near first hole
-        Debug.Log("Client: " + OwnerClientId + " starting position" + transform.position);
+        //Debug.Log("Client: " + OwnerClientId + " starting position" + transform.position);
 
         _currentPlayerState = new PlayerData
         {
@@ -59,9 +78,18 @@ public class BasicPlayerController : NetworkBehaviour
 
         _playerNetworkData.StorePlayerState(_currentPlayerState, OwnerClientId);
         _startState = _currentPlayerState;
+
+        _isActive = true;
     }
 
-    void Update()
+    public void Deactivate()
+    {
+        _isActive = false;
+    }
+
+    // Movement -------------------------------------------------------------------------------------------------------------
+
+    private void Movement()
     {
         if (!IsOwner)
         {
@@ -75,7 +103,7 @@ public class BasicPlayerController : NetworkBehaviour
         }
 
         // Check for pause input
-        if (Input.GetKeyDown(KeyCode.Escape)) 
+        if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (!UIManager.isPaused) { UIManager.isPaused = true; UIManager.instance.EnablePause(); Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
             else { UIManager.isPaused = false; UIManager.instance.DisablePause(); Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; }
@@ -84,9 +112,12 @@ public class BasicPlayerController : NetworkBehaviour
         if (UIManager.isPaused) { return; }
         else { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; }
 
+        //if (_ragdollActive) return; //prevent movement while ragdoll is active
+
         float moveHorizontal = Input.GetAxis("Horizontal");
         float moveVertical = Input.GetAxis("Vertical");
         float rotationInput = Input.GetAxis("Mouse X");
+        isSprinting = Input.GetKey(KeyCode.LeftShift) && moveVertical > 0; //sprinting only allowed when moving forward
 
         PlayerMovement(moveHorizontal, moveVertical, rotationInput);
 
@@ -97,14 +128,16 @@ public class BasicPlayerController : NetworkBehaviour
     private void PlayerMovement(float moveHorizontal, float moveVertical, float rotationInput)
     {
 
-        Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
-        movement = movement.normalized * moveSpeed * Time.deltaTime;
+        float splayerSpeed = isSprinting ? moveSpeed * sprintMultiplier : moveSpeed;
 
-        rb.MovePosition(transform.position + transform.TransformDirection(movement));
+        Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
+        movement = movement.normalized * splayerSpeed * Time.deltaTime;
+
+        _rb.MovePosition(transform.position + transform.TransformDirection(movement));
 
         float rotationAmount = rotationInput * rotationSpeed * Time.deltaTime;
         Quaternion deltaRotation = Quaternion.Euler(0f, rotationAmount, 0f);
-        rb.MoveRotation(rb.rotation * deltaRotation);
+        _rb.MoveRotation(_rb.rotation * deltaRotation);
 
         // current state of this player (owner)
         _currentPlayerState = new PlayerData
@@ -116,9 +149,88 @@ public class BasicPlayerController : NetworkBehaviour
             score = 0,
         };
 
-        Debug.LogWarning("In BasicPlayerController.cs sending to PlayerNetworkData.cs\nOwner: " + OwnerClientId + "\npos: " + _currentPlayerState.playerPos + " rot: " + _currentPlayerState.playerRot);
+        //Debug.LogWarning("In BasicPlayerController.cs sending to PlayerNetworkData.cs\nOwner: " + OwnerClientId + "\npos: " + _currentPlayerState.playerPos + " rot: " + _currentPlayerState.playerRot);
         _playerNetworkData.StorePlayerState(_currentPlayerState, OwnerClientId);
     }
+
+    // Animation -------------------------------------------------------------------------------------------------------------
+
+    void Animate()
+    {
+        bool isrunning = _animator.GetBool("isRunning");
+        bool isStrafingLeft = _animator.GetBool("isLeft");
+        bool isStrafingRight = _animator.GetBool("isRight");
+        bool isWalking = _animator.GetBool("isWalking");
+        bool isReversing = _animator.GetBool("isReversing");
+        bool forwardPressed = Input.GetKey("w");
+        bool runPressed = Input.GetKey("left shift");
+        bool backPressed = Input.GetKey("s");
+        bool rightPressed = Input.GetKey("d");
+        bool leftPressed = Input.GetKey("a");
+        bool strikePressed = Input.GetKeyDown("e");
+
+        if (UIManager.isPaused) { return; }
+
+        if (IsOwner)
+        {
+            if (forwardPressed && !isWalking)
+            {
+                _animator.SetBool("isWalking", true);
+            }
+            if (!forwardPressed && isWalking)
+            {
+                _animator.SetBool("isWalking", false);
+            }
+
+            if (backPressed && !isReversing)
+            {
+                _animator.SetBool("isReversing", true);
+            }
+            if (!backPressed && isReversing)
+            {
+                _animator.SetBool("isReversing", false);
+            }
+
+            if (!isrunning && (forwardPressed && runPressed))
+            {
+                _animator.SetBool("isRunning", true);
+            }
+            if (isrunning && (!runPressed || !forwardPressed))
+            {
+                _animator.SetBool("isRunning", false);
+            }
+
+            if (leftPressed && !isStrafingLeft)
+            {
+                _animator.SetBool("isLeft", true);
+            }
+            if (!leftPressed && isStrafingLeft)
+            {
+                _animator.SetBool("isLeft", false);
+            }
+
+            if (rightPressed && !isStrafingRight)
+            {
+                _animator.SetBool("isRight", true);
+            }
+            if (!rightPressed && isStrafingRight)
+            {
+                _animator.SetBool("isRight", false);
+            }
+
+            if (strikePressed)
+            {
+                _animator.SetBool("isStriking", true);
+            }
+            if (!strikePressed)
+            {
+                _animator.SetBool("isStriking", false);
+            }
+        }
+    }
+
+
+    // State Management -------------------------------------------------------------------------------------------------------------
 
     // Reset player state to starting state
     public void ResetPlayerState()
@@ -128,8 +240,6 @@ public class BasicPlayerController : NetworkBehaviour
         _currentPlayerState = _startState;
         _playerNetworkData.StorePlayerState(_currentPlayerState, OwnerClientId);
     }
-
-
 }
 
 

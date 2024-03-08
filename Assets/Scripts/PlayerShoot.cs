@@ -11,10 +11,18 @@ public class PlayerShoot : NetworkBehaviour
     [SerializeField] private float playerClubRange = 4f;
 
     private float _lastFired = float.MinValue;
-    private GameObject projectileInstance;
+    private GameObject _projectileInstance;
+    private bool isActive = false;
 
+    // Activation -------------------------------------------------------------------------------------------------------------
+    public void Activate() => isActive = true;
+    public void Deactivate() => isActive = false;
+
+    // Update Loop -------------------------------------------------------------------------------------------------------------
     private void Update()
     {
+        if (!isActive) return; //prevent updates until player is fully activated
+
         if (UIManager.isPaused) return;
         if (!IsOwner) return;
 
@@ -26,36 +34,38 @@ public class PlayerShoot : NetworkBehaviour
         }
     }
 
+    // Spawn and Shooting -------------------------------------------------------------------------------------------------------------
+
     [ServerRpc]
     private void RequestBallSpawnServerRpc(Vector3 dir, ulong ownerId)
     {
-        projectileInstance = Instantiate(_projectilePrefab, transform.position + transform.up / 2 + transform.forward * _spawnDist, Quaternion.identity);
-        projectileInstance.GetComponent<NetworkObject>().SpawnWithOwnership(ownerId);
+        _projectileInstance = Instantiate(_projectilePrefab, transform.position + transform.up / 2 + transform.forward * _spawnDist, Quaternion.identity);
+        _projectileInstance.GetComponent<NetworkObject>().SpawnWithOwnership(ownerId);
 
         // Inform the client about the spawned projectile
-        SpawnedProjectileClientRpc(projectileInstance.GetComponent<NetworkObject>().NetworkObjectId);
+        SpawnedProjectileClientRpc(_projectileInstance.GetComponent<NetworkObject>().NetworkObjectId);
     }
 
     [ClientRpc]
     private void SpawnedProjectileClientRpc(ulong objectId)
     {
         // Retrieve the projectile on the client side using its NetworkObjectId
-        projectileInstance = NetworkManager.Singleton.SpawnManager.SpawnedObjects[objectId].gameObject;
+        _projectileInstance = NetworkManager.Singleton.SpawnManager.SpawnedObjects[objectId].gameObject;
     }
 
     // Shoot the ball or instantiate it if it doesn't exist
     private void ExecuteShoot(Vector3 dir, ulong ownerId)
     {
-        if (projectileInstance == null)
+        if (_projectileInstance == null)
         {
             RequestBallSpawnServerRpc(dir, OwnerClientId);
             return;
         }
         else
         {
-            if (projectileInstance != null && Vector3.Distance(transform.position, projectileInstance.transform.position) < playerClubRange)
+            if (_projectileInstance != null && Vector3.Distance(transform.position, _projectileInstance.transform.position) < playerClubRange)
             {
-                projectileInstance.GetComponent<Rigidbody>().AddRelativeForce(dir * _projectileSpeed, ForceMode.Impulse);
+                _projectileInstance.GetComponent<Rigidbody>().AddRelativeForce(dir * _projectileSpeed, ForceMode.Impulse);
             }
         }
         // AudioSource.PlayClipAtPoint(_spawnClip, transform.position);
