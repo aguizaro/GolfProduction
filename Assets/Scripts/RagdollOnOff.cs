@@ -11,13 +11,14 @@ public class RagdollOnOff : NetworkBehaviour
     private Animator _playerAnimator;
     private BasicPlayerController _basicPlayerController;
     private BoxCollider _golfClubCollider;
-    //public GameObject _golfClubPrefab;
-    //private GameObject _golfClubInstance;
 
+    public float ragdollDelay = 0.5f; //Slight delay defore ragdoll mode is activated
+    public float getUpDelay = 10f;
+    private float delay;
+    private bool isRagdoll = false; //is player in ragdoll mode
 
-    public float ragdollResetTimer = 300f;
+    private bool isActive = false; //is player instance active
 
-    private bool isActive = false;
 
     // Activation -------------------------------------------------------------------------------------------------------------
     public void Activate()
@@ -28,6 +29,7 @@ public class RagdollOnOff : NetworkBehaviour
         _basicPlayerController = GetComponent<BasicPlayerController>();
         _playerAnimator = GetComponent<Animator>();
         _golfClubCollider = GetComponentInChildren<BoxCollider>();
+        delay = getUpDelay;
 
         if (IsOwner) ResetRagdoll(); // owners deactivate ragdoll using RPCs
         else RagdollModeOff(); // non owners deactivate ragdoll locally
@@ -40,18 +42,27 @@ public class RagdollOnOff : NetworkBehaviour
 
         if (!isActive) return; //prevent updates until player is fully activated
 
-        Debug.Log("before: Trigger activated for " + OwnerClientId + " " + _golfClubCollider.enabled);
-
-        if (!_golfClubCollider.enabled)
+        if (!_golfClubCollider.enabled) //not sure why box collider spawns in as not active but i force it here
         {
             _golfClubCollider.enabled = true;
             _golfClubCollider.isTrigger = true;
-            Debug.Log("after: Trigger activated for " + OwnerClientId + " " + _golfClubCollider.enabled);
         }
 
         if (!IsOwner) return;
+
+        // dev cheat keys
         if (Input.GetKey("q")) PerformRagdoll();
         if (Input.GetKey("r")) ResetRagdoll();
+
+        if (isRagdoll) //auto reset ragdoll after delay
+        {
+            delay -= Time.deltaTime;
+            if (delay <= 0)
+            {
+                delay = getUpDelay;
+                ResetRagdoll();
+            }
+        }
 
     }
 
@@ -97,6 +108,7 @@ public class RagdollOnOff : NetworkBehaviour
 
         mainCollider.enabled = false;
         playerRB.isKinematic = true;
+        isRagdoll = true;
 
     }
     // Dev Note: Don't call this function directly. Use the RPCs instead. - this will only exectute locally
@@ -115,62 +127,23 @@ public class RagdollOnOff : NetworkBehaviour
         _basicPlayerController.enabled = true;
         mainCollider.enabled = true;
         playerRB.isKinematic = false;
+        isRagdoll = false;
     }
 
     // Collision Detection ------------------------------------------------------------------------------------------------------------
-
-
-    /*private void OnCollisionEnter(Collision collision)
-    {
-        Debug.Log("Collision detected from: " + collision.gameObject.name + " " + collision.gameObject.tag);
-        if (!isActive) return;
-
-        if (!IsOwner) // non-owners perform ragdolls locally (reading)
-        {
-            RagdollModeOn();
-            //start timer
-            float timer = ragdollResetTimer;
-            while (timer > 0)
-            {
-                timer -= Time.deltaTime;
-            }
-            RagdollModeOff();
-            return;
-
-        }
-        // Owners perform ragdolls using RPCs (writing)
-        if (collision.gameObject.tag == "PlayerCollision")
-        {
-            //ragdoll mode on
-            PerformRagdoll();
-            //start timer
-            float timer = ragdollResetTimer;
-            while (timer > 0)
-            {
-                timer -= Time.deltaTime;
-            }
-            ResetRagdoll();
-        }
-    }*/
-
-    // collision
     private void OnTriggerStay(Collider other)
     {
-        Debug.Log("Trigger detected from: " + other.gameObject.name + " " + other.gameObject.tag);
-
+        if (isRagdoll) return; // don't detect collisions while in ragdoll mode
         if (other.gameObject.CompareTag("Player"))
         {
-            Debug.Log("Player " + other.gameObject.GetComponent<NetworkObject>().OwnerClientId + " is in the triggerVolume of player " + OwnerClientId);
             if (other.gameObject.GetComponent<Animator>().GetBool("isStriking") == true)
             {
-                Debug.Log("Player " + other.gameObject.GetComponent<NetworkObject>().OwnerClientId + " has struck player " + OwnerClientId);
-
                 if (!IsOwner) return;
                 PerformRagdoll();
-
             }
         }
     }
+
 
 
     // Remote Procedure Calls ------------------------------------------------------------------------------------------------------------

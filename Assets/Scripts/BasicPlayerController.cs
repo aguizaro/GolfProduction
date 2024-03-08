@@ -60,10 +60,6 @@ public class BasicPlayerController : NetworkBehaviour
 
         if (!IsOwner) return;
 
-        // Lock and hide cursor only for the local player - *** maybe move this over to UIManager later ***
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-
         transform.position = new Vector3(Random.Range(390, 400), 69.1f, Random.Range(318, 320)); //set starting random place near first hole
         //Debug.Log("Client: " + OwnerClientId + " starting position" + transform.position);
 
@@ -110,7 +106,7 @@ public class BasicPlayerController : NetworkBehaviour
         }
 
         if (UIManager.isPaused) { return; }
-        else { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; }
+        //else { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; }
 
         //if (_ragdollActive) return; //prevent movement while ragdoll is active
 
@@ -162,11 +158,11 @@ public class BasicPlayerController : NetworkBehaviour
         bool isStrafingRight = _animator.GetBool("isRight");
         bool isWalking = _animator.GetBool("isWalking");
         bool isReversing = _animator.GetBool("isReversing");
-        bool forwardPressed = Input.GetKey("w");
-        bool runPressed = Input.GetKey("left shift");
-        bool backPressed = Input.GetKey("s");
-        bool rightPressed = Input.GetKey("d");
-        bool leftPressed = Input.GetKey("a");
+        bool forwardPressed = Input.GetKey("w") || Input.GetKey("up");
+        bool runPressed = Input.GetKey("left shift") || Input.GetKey("right shift");
+        bool backPressed = Input.GetKey("s") || Input.GetKey("down");
+        bool rightPressed = Input.GetKey("d") || Input.GetKey("right");
+        bool leftPressed = Input.GetKey("a") || Input.GetKey("left");
         bool strikePressed = Input.GetKeyDown("e");
 
         if (UIManager.isPaused) { return; }

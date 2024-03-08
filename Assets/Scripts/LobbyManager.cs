@@ -56,13 +56,20 @@ public class LobbyManager : MonoBehaviour
 
     private const string RelayJoinCodeKey = "RelayJoinCode";
     private const string LobbyTypeKey = "LobbyType";
-    private string _playerId;
+
     private string _playerName;
+    private string _playerId;
+    private ulong _localClientId;
+
+    private const string playerNameKey = "PlayerName";
+    private const string playerIdKey = "PlayerId";
+    private const string localClientIdKey = "LocalClientId";
+
     public Lobby ConnectedLobby;
-    private GameObject _currentMapInstance;
     private string _encrptionType => (encryption == EncryptionType.DTLS) ? "dtls" : "wss";
 
-    private float lobbyUpdateTimer = 1.8f; //pull updates every x seconds to avoid rate limiting
+    private ILobbyEvents ConnectedLobbyyEvents;
+    private bool gameIsActive = false;
 
     // Authentication --------------------------------------------------------------------------------------------------------------
     private async Task Authenticate(string playerName = null)
@@ -87,11 +94,28 @@ public class LobbyManager : MonoBehaviour
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
         _playerId = AuthenticationService.Instance.PlayerId;
         _playerName = await AuthenticationService.Instance.GetPlayerNameAsync();
+        _localClientId = NetworkManager.Singleton.LocalClientId;
 
         _UIManager.DisplaySignedIn();
         Debug.Log("Signed in as: " + _playerName);
 
+        ConnectionNotificationManager.Singleton.OnClientConnectionNotification += HandleClientConnectionNotification;
 
+    }
+
+    // Connection Notifications --------------------------------------------------------------------------------------------------------------
+    private void HandleClientConnectionNotification(ulong clientId, ConnectionNotificationManager.ConnectionStatus status)
+    {
+        if (status == ConnectionNotificationManager.ConnectionStatus.Connected)
+        {
+            Debug.LogWarning($"Client {clientId} connected!");
+            // Perform actions when a client connects, e.g., update UI, spawn player, etc.
+        }
+        else if (status == ConnectionNotificationManager.ConnectionStatus.Disconnected)
+        {
+            Debug.LogWarning($"Client {clientId} disconnected!");
+            // Perform actions when a client disconnects, e.g., remove player, update UI, etc.
+        }
     }
     // Player Operations --------------------------------------------------------------------------------------------------------------
 
@@ -119,7 +143,9 @@ public class LobbyManager : MonoBehaviour
             return new Player
             {
                 Data = new Dictionary<string, PlayerDataObject> {
-                { "PlayerName", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, _playerName) }
+                { playerNameKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, _playerName) },
+                { playerIdKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Private, _playerId) },
+                { localClientIdKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Private, _localClientId.ToString()) }
             }
             };
         }
@@ -138,7 +164,7 @@ public class LobbyManager : MonoBehaviour
             {
                 Data = new Dictionary<string, PlayerDataObject>
                 {
-                    { "PlayerName", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, newName) }
+                    { playerNameKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, newName) }
                 }
             });
 
@@ -274,10 +300,8 @@ public class LobbyManager : MonoBehaviour
             };
 
             ConnectedLobby = await LobbyService.Instance.JoinLobbyByCodeAsync(joinCode, options);
-
+            await SubscribeToLobbyEvents();
             if (ConnectedLobby == null) throw new LobbyServiceException(new LobbyExceptionReason(), "No Lobby Found using code: " + joinCode);
-
-            StartCoroutine(PullUpdatesCoroutine(lobbyUpdateTimer));
 
             // If we found one, grab the relay allocation details
 
@@ -310,10 +334,8 @@ public class LobbyManager : MonoBehaviour
             };
 
             ConnectedLobby = await LobbyService.Instance.JoinLobbyByIdAsync(lobbyId, options);
-
+            await SubscribeToLobbyEvents();
             if (ConnectedLobby == null) throw new LobbyServiceException(new LobbyExceptionReason(), "No Lobby Found using ID: " + lobbyId);
-
-            StartCoroutine(PullUpdatesCoroutine(lobbyUpdateTimer));
 
             // If we found one, grab the relay allocation details
 
@@ -353,9 +375,9 @@ public class LobbyManager : MonoBehaviour
             };
 
             ConnectedLobby = await LobbyService.Instance.QuickJoinLobbyAsync();
+            await SubscribeToLobbyEvents();
             if (ConnectedLobby == null) throw new LobbyServiceException(new LobbyExceptionReason(), "No Lobby Found");
 
-            StartCoroutine(PullUpdatesCoroutine(lobbyUpdateTimer));
 
             string relayJoinCode = ConnectedLobby.Data[RelayJoinCodeKey].Value;
             JoinAllocation joinAllocation = await JoinRelay(relayJoinCode);
@@ -425,17 +447,15 @@ public class LobbyManager : MonoBehaviour
                 Player = await CreatePlayer()
             };
 
-            string defaultName = "MyLobby " + (DateTime.Now).ToString("MMdd_HHmmss");
+            string defaultName = "MyLobby " + DateTime.Now.ToString("MMdd_HHmmss");
             string name = (lobbyName != null && lobbyName.Length > 0) ? lobbyName : defaultName;
 
             ConnectedLobby = await LobbyService.Instance.CreateLobbyAsync(name, maxPlayers, options);
-
-            Debug.Log("Created public Lobby with lobbyCode " + ConnectedLobby.LobbyCode);
+            await SubscribeToLobbyEvents();
             if (ConnectedLobby == null) throw new LobbyServiceException(new LobbyExceptionReason(), "Lobby Error: No Lobby connected");
 
-            // Send a heartbeat every 10 seconds to keep the room alive
+            // pings to keep the room alive
             StartCoroutine(HeartbeatLobbyCoroutine(ConnectedLobby.Id, 10));
-            StartCoroutine(PullUpdatesCoroutine(lobbyUpdateTimer));
 
             // Start the room. I'm doing this immediately, but maybe you want to wait for the lobby to fill up
             NetworkManager.Singleton.StartHost();
@@ -447,6 +467,70 @@ public class LobbyManager : MonoBehaviour
         {
             Debug.LogError($"Failed creating a lobby: {e.Message}");
             return null;
+        }
+    }
+
+    // Lobby Events --------------------------------------------------------------------------------------------------------------
+
+    // Subscribe to lobby events
+    private async Task SubscribeToLobbyEvents()
+    {
+        var callbacks = new LobbyEventCallbacks();
+        callbacks.LobbyChanged += OnLobbyChanged;
+        callbacks.KickedFromLobby += OnKickedFromLobby;
+        callbacks.LobbyEventConnectionStateChanged += OnLobbyEventConnectionStateChanged;
+        try
+        {
+            if (ConnectedLobbyyEvents != null) return;
+            ConnectedLobbyyEvents = await Lobbies.Instance.SubscribeToLobbyEventsAsync(ConnectedLobby.Id, callbacks);
+
+            Debug.Log("Subscribed to lobby events");
+        }
+        catch (LobbyServiceException ex)
+        {
+            switch (ex.Reason)
+            {
+                case LobbyExceptionReason.AlreadySubscribedToLobby: Debug.LogWarning($"Already subscribed to lobby[{ConnectedLobby.Id}]. We did not need to try and subscribe again. Exception Message: {ex.Message}"); break;
+                case LobbyExceptionReason.SubscriptionToLobbyLostWhileBusy: Debug.LogError($"Subscription to lobby events was lost while it was busy trying to subscribe. Exception Message: {ex.Message}"); throw;
+                case LobbyExceptionReason.LobbyEventServiceConnectionError: Debug.LogError($"Failed to connect to lobby events. Exception Message: {ex.Message}"); throw;
+                default: throw;
+            }
+        }
+    }
+
+    private async void OnLobbyChanged(ILobbyChanges changes)
+    {
+        if (changes.LobbyDeleted)
+        {
+            await OnApplicationQuitCallback();
+            return;
+        }
+
+        changes.ApplyToLobby(ConnectedLobby);
+
+        if (changes.Name.Changed)
+        {
+            // Do something specific due to this change
+        }
+        // Refresh the UI in some way
+    }
+
+    private async void OnKickedFromLobby()
+    {
+        await OnApplicationQuitCallback();
+        return;
+        // Refresh the UI in some way
+    }
+
+    private void OnLobbyEventConnectionStateChanged(LobbyEventConnectionState state)
+    {
+        switch (state)
+        {
+            case LobbyEventConnectionState.Unsubscribed: /* Update the UI if necessary, as the subscription has been stopped. */ break;
+            case LobbyEventConnectionState.Subscribing: /* Update the UI if necessary, while waiting to be subscribed. */ break;
+            case LobbyEventConnectionState.Subscribed: /* Update the UI if necessary, to show subscription is working. */ break;
+            case LobbyEventConnectionState.Unsynced: /* Update the UI to show connection problems. Lobby will attempt to reconnect automatically. */ break;
+            case LobbyEventConnectionState.Error: /* Update the UI to show the connection has errored. Lobby will not attempt to reconnect as something has gone wrong. */ break;
         }
     }
 
@@ -522,40 +606,17 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    // not a coroutine, but a method that calls itself every waitTimeSeconds in the update loop
-    private IEnumerator PullUpdatesCoroutine(float waitTimeSeconds)
-    {
-        var delay = new WaitForSecondsRealtime(waitTimeSeconds);
-        while (true)
-        {
-            GetLobbyUpdates();
-            yield return delay;
-        }
-    }
-
-    private async void GetLobbyUpdates()
-    {
-        try
-        {
-            var lobby = await Lobbies.Instance.GetLobbyAsync(ConnectedLobby.Id);
-            if (lobby != null)
-            {
-                ConnectedLobby = lobby;
-                Debug.Log($"Updated Lobby: {lobby.Name}");
-            }
-        }
-        catch (LobbyServiceException e)
-        {
-            Debug.LogWarning($"Failed to update lobby: {e.Message}");
-        }
-    }
-
 
     // Gameplay --------------------------------------------------------------------------------------------------------------
 
     private void StartGame()
     {
         Debug.Log("Deactivating UI");
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        gameIsActive = true;
 
         _UIManager.DeactivateUI();
         _UIManager.DisplaySignedIn();
@@ -566,21 +627,47 @@ public class LobbyManager : MonoBehaviour
 
     private void EndGame()
     {
+        Debug.Log("in End Game");
+
+        NetworkManager.Singleton.Shutdown();
+        Debug.Log("Disconnected from Relay Server");
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        gameIsActive = false;
+        ConnectionNotificationManager.Singleton.OnClientConnectionNotification += HandleClientConnectionNotification;
+
+
+        Debug.Log("cursor state: " + Cursor.lockState.ToString());
+        Debug.Log("cursor visible: " + Cursor.visible.ToString());
+
         _UIManager.DisableUIText();
+        _UIManager.ReturnToTitle();
+
+
     }
 
 
     // Leave Lobby --------------------------------------------------------------------------------------------------------------
 
     // removes current player (self) from lobby
-    public void LeaveLobby()
+    public async Task LeaveLobby()
     {
         try
         {
             if (ConnectedLobby == null) return;
-            Lobbies.Instance.RemovePlayerAsync(ConnectedLobby.Id, _playerId);
+            StopAllCoroutines();
+            if (ConnectedLobbyyEvents != null) await ConnectedLobbyyEvents.UnsubscribeAsync();
+
+            await Lobbies.Instance.RemovePlayerAsync(ConnectedLobby.Id, _playerId);
             ConnectedLobby = null;
+
             Debug.Log("Left Lobby");
+
+            //NetworkManager.Singleton.Shutdown();
+            //while (NetworkManager.Singleton.ShutdownInProgress) ;
+            //Debug.Log("Disconnected from Relay Server");
 
         }
         catch (LobbyServiceException e)
@@ -589,21 +676,43 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    // method for host to kick players
-    private void ServerKickPlayer(string playerId)
+    // method for host to kick players -- not tested
+    private void ServerKickPlayer(ulong ownerclientid)
     {
         if (ConnectedLobby.HostId == _playerId)
         {
-            Lobbies.Instance.RemovePlayerAsync(ConnectedLobby.Id, playerId);
-            ConnectedLobby = null;
+            // disconnect the client from the relay server
+            NetworkManager.Singleton.DisconnectClient(ownerclientid);
         }
     }
 
 
     // Application Quit --------------------------------------------------------------------------------------------------------------
 
-    //  try to migrate host otherwise delete lobby if you are the host, otherwise leave the lobby on application quit
-    public void OnApplicationQuitCallback()
+    private void OnDestroy()
+    {
+        Debug.LogWarning("OnDestroy called");
+        PlayerExit();
+
+    }
+
+    private async void PlayerExit()
+    {
+        try
+        {
+            Debug.Log("Player Exit");
+            await OnApplicationQuitCallback();
+
+            EndGame();
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("Error Exiting: " + e.Message);
+        }
+    }
+
+
+    public async Task OnApplicationQuitCallback()
     {
 
         if (ConnectedLobby != null)
@@ -611,36 +720,31 @@ public class LobbyManager : MonoBehaviour
             if (ConnectedLobby.HostId == _playerId)
             {
                 Debug.LogWarning("Host has left the lobby, deleting lobby");
-                DeleteLobby();
+                await DeleteLobby();
             }
             else
             {
                 Debug.LogWarning("Client Leaving Lobby");
-                LeaveLobby();
+                await LeaveLobby();
             }
         }
-        StopAllCoroutines();
-    }
-
-    private void OnDestroy()
-    {
-        Debug.LogWarning("OnDestroy");
-        OnApplicationQuitCallback();
 
     }
-
 
     // method for host to delete the current lobby
-    private async void DeleteLobby()
+    private async Task DeleteLobby()
     {
         try
         {
             if (ConnectedLobby == null) return;
 
             StopAllCoroutines();
+            if (ConnectedLobbyyEvents != null) await ConnectedLobbyyEvents.UnsubscribeAsync();
 
-            if (ConnectedLobby.HostId == _playerId) await Lobbies.Instance.DeleteLobbyAsync(ConnectedLobby.Id);
+            if (ConnectedLobby.HostId == _playerId) await LobbyService.Instance.DeleteLobbyAsync(ConnectedLobby.Id);
             ConnectedLobby = null;
+
+            Debug.Log("Deleted Lobby");
 
         }
         catch (LobbyServiceException e)
@@ -652,6 +756,14 @@ public class LobbyManager : MonoBehaviour
     // Update Loop --------------------------------------------------------------------------------------------------------------
     private void Update()
     {
+        if (gameIsActive)
+        {
+            if (Input.GetKeyDown(KeyCode.X))
+            {
+                PlayerExit();
+            }
+        }
+
 
     }
 }

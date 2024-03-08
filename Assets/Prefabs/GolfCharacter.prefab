@@ -447,8 +447,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 8.58, y: 5, z: 6}
-  m_Center: {x: 1.56, y: 7, z: 3.86}
+  m_Size: {x: 15.5, y: 5, z: 12.05}
+  m_Center: {x: 0.6, y: 7, z: 0.5}
 --- !u!114 &7072200755999996481
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -615,7 +615,8 @@ MonoBehaviour:
   mainCollider: {fileID: -7954830342355126766}
   playerRB: {fileID: 4649621009289334031}
   playerRig: {fileID: 420073679474077443}
-  ragdollResetTimer: 300
+  ragdollDelay: 0.5
+  getUpDelay: 8
 --- !u!1 &799593922335037580
 GameObject:
   m_ObjectHideFlags: 0
