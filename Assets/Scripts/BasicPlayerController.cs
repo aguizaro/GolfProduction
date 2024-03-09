@@ -33,7 +33,7 @@ public class BasicPlayerController : NetworkBehaviour
 
 
     // Update Loop -------------------------------------------------------------------------------------------------------------
-    void Update()
+    void FixedUpdate()
     {
         if (!_isActive) return; //prevent updates until player is fully activated
 
@@ -106,7 +106,7 @@ public class BasicPlayerController : NetworkBehaviour
         }
 
         if (UIManager.isPaused) { return; }
-        //else { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; }
+        else { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; }
 
         //if (_ragdollActive) return; //prevent movement while ragdoll is active
 
@@ -152,6 +152,8 @@ public class BasicPlayerController : NetworkBehaviour
     // Animation -------------------------------------------------------------------------------------------------------------
 
     void Animate()
+    // few issues with the animator -> cant transition from running to swinging and sometimes swings dont register if anotther animation is playing
+    // might need some tweaks to the animator FSM
     {
         bool isrunning = _animator.GetBool("isRunning");
         bool isStrafingLeft = _animator.GetBool("isLeft");

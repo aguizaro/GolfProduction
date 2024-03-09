@@ -80,7 +80,7 @@ public class LobbyManager : MonoBehaviour
         // Remove this if you don't have ParrelSync installed. 
         // It's used to differentiate the clients, otherwise lobby will count them as the same
         options.SetProfile(ClonesManager.IsClone() ? "Clone" : "Primary");
-        Debug.Log(ClonesManager.IsClone() ? "user: " + "Clone" : "user: Primary");
+        //Debug.Log(ClonesManager.IsClone() ? "user: " + "Clone" : "user: Primary");
 
 #endif
         // Set the profile name to the player's name if it's valid, otherwise use a random Unity provided name
@@ -320,6 +320,7 @@ public class LobbyManager : MonoBehaviour
         catch (LobbyServiceException e)
         {
             Debug.LogWarning($"Failed to join lobby: {e.Message}");
+            if (NetworkManager.Singleton.IsClient && ConnectedLobby != null) await LeaveLobby();
         }
     }
 
@@ -358,6 +359,7 @@ public class LobbyManager : MonoBehaviour
         catch (LobbyServiceException e)
         {
             Debug.LogWarning($"Failed to join lobby: {e.Message}");
+            if (NetworkManager.Singleton.IsClient && ConnectedLobby != null) await LeaveLobby();
         }
     }
 
@@ -392,7 +394,7 @@ public class LobbyManager : MonoBehaviour
         catch (LobbyServiceException e)
         {
             Debug.LogWarning($"Failed to quick join lobby: {e.Message}");
-            ConnectedLobby = null;
+            if (NetworkManager.Singleton.IsClient && ConnectedLobby != null) await LeaveLobby();
         }
     }
 

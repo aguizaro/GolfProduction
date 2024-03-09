@@ -443,12 +443,12 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 15.5, y: 5, z: 12.05}
-  m_Center: {x: 0.6, y: 7, z: 0.5}
+  m_Size: {x: 13, y: 9.4, z: 13.22}
+  m_Center: {x: 0.6, y: 5.21, z: 1.3}
 --- !u!114 &7072200755999996481
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -487,7 +487,7 @@ Rigidbody:
   serializedVersion: 4
   m_Mass: 10
   m_Drag: 1
-  m_AngularDrag: 0.05
+  m_AngularDrag: 10
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -502,7 +502,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 2
-  m_Constraints: 112
+  m_Constraints: 80
   m_CollisionDetection: 3
 --- !u!114 &8306750990183899985
 MonoBehaviour:
@@ -596,10 +596,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _projectilePrefab: {fileID: 3665726570761771704, guid: 3d0ef90e59c624be5bf18a934047635a, type: 3}
-  _projectileSpeed: 10
+  _projectileForce: 20
   _cooldown: 0.5
   _spawnDist: 1
   playerClubRange: 4
+  verticalAngle: 0.5
 --- !u!114 &7363029190862775147
 MonoBehaviour:
   m_ObjectHideFlags: 0

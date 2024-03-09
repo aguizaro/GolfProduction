@@ -37,7 +37,7 @@ public class RagdollOnOff : NetworkBehaviour
 
 
     // Update Loop -------------------------------------------------------------------------------------------------------------
-    void Update()
+    void FixedUpdate()
     {
 
         if (!isActive) return; //prevent updates until player is fully activated
@@ -133,10 +133,24 @@ public class RagdollOnOff : NetworkBehaviour
     // Collision Detection ------------------------------------------------------------------------------------------------------------
     private void OnTriggerStay(Collider other)
     {
+        RagdollTrigger(other);
+    }
+    private void OnTriggerEnter(Collider other)
+    {
+        RagdollTrigger(other);
+    }
+    private void OnTriggerExit(Collider other)
+    {
+        RagdollTrigger(other);
+    }
+
+    // called by trigger events
+    private void RagdollTrigger(Collider other)
+    {
         if (isRagdoll) return; // don't detect collisions while in ragdoll mode
         if (other.gameObject.CompareTag("Player"))
         {
-            if (other.gameObject.GetComponent<Animator>().GetBool("isStriking") == true)
+            if (!isRagdoll && other.gameObject.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
             {
                 if (!IsOwner) return;
                 PerformRagdoll();
@@ -174,5 +188,13 @@ public class RagdollOnOff : NetworkBehaviour
         RagdollModeOff();
     }
 
+
+    // public functions ------------------------------------------------------------------------------------------------------------
+
+    // public function to check if ragdoll mode is active
+    public bool IsRagdoll()
+    {
+        return isRagdoll;
+    }
 
 }
