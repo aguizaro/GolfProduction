@@ -162,6 +162,47 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
+    "com.unity.render-pipelines.core": {
+      "version": "16.0.5",
+      "depth": 1,
+      "source": "builtin",
+      "dependencies": {
+        "com.unity.mathematics": "1.2.4",
+        "com.unity.ugui": "2.0.0",
+        "com.unity.modules.physics": "1.0.0",
+        "com.unity.modules.terrain": "1.0.0",
+        "com.unity.modules.jsonserialize": "1.0.0",
+        "com.unity.rendering.light-transport": "1.0.0"
+      }
+    },
+    "com.unity.render-pipelines.universal": {
+      "version": "16.0.5",
+      "depth": 0,
+      "source": "builtin",
+      "dependencies": {
+        "com.unity.mathematics": "1.2.1",
+        "com.unity.burst": "1.8.9",
+        "com.unity.render-pipelines.core": "16.0.5",
+        "com.unity.shadergraph": "16.0.5"
+      }
+    },
+    "com.unity.rendering.light-transport": {
+      "version": "1.0.0",
+      "depth": 2,
+      "source": "builtin",
+      "dependencies": {
+        "com.unity.collections": "1.4.0",
+        "com.unity.mathematics": "1.2.4",
+        "com.unity.render-pipelines.core": "16.0.1"
+      }
+    },
+    "com.unity.searcher": {
+      "version": "4.9.2",
+      "depth": 2,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
     "com.unity.services.authentication": {
       "version": "3.0.0",
       "depth": 1,
@@ -249,6 +290,25 @@
       "depth": 2,
       "source": "registry",
       "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.shadergraph": {
+      "version": "16.0.5",
+      "depth": 1,
+      "source": "builtin",
+      "dependencies": {
+        "com.unity.render-pipelines.core": "16.0.5",
+        "com.unity.searcher": "4.9.2"
+      }
+    },
+    "com.unity.terrain-tools": {
+      "version": "5.1.1",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.modules.terrain": "1.0.0",
+        "com.unity.modules.terrainphysics": "1.0.0"
+      },
       "url": "https://packages.unity.com"
     },
     "com.unity.test-framework": {
