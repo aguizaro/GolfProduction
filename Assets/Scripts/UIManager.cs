@@ -88,7 +88,7 @@ public class UIManager : MonoBehaviour
         // Pause Button Events
         _pauseResumeButton.onClick.AddListener(DisablePause);
         _pauseSettingsButton.onClick.AddListener(PauseStartSettings);
-        _pauseTitleButton.onClick.AddListener(ReturnToTitle);
+        _pauseTitleButton.onClick.AddListener(QuitLobbyReturnToTitle);
 
         // Settings Button Events
         _settingsApplyButton.onClick.AddListener(ApplySettings);
@@ -129,8 +129,19 @@ public class UIManager : MonoBehaviour
     public void EnableSettings() { LoadSettings(); _settingsScreenUI.SetActive(true); }
     public void DisableSettings() { _settingsScreenUI.SetActive(false); if (!titleScreenMode) { EnablePause(); } }
     public void PauseStartSettings() { _pauseScreenUI.SetActive(false); EnableSettings(); }
-    public void ReturnToTitle() {
-        _lobbyManager.OnApplicationQuitCallback();
+
+    // Quit lobby and return to title screen
+    private async void QuitLobbyReturnToTitle()
+    {
+        await _lobbyManager.OnApplicationQuitCallback();
+        titleScreenMode = true;
+        DisablePause();
+        EnableUI(UIState.Title);
+    }
+
+    // returns to rile screen
+    public void ReturnToTitle()
+    {
         titleScreenMode = true;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -176,7 +187,7 @@ public class UIManager : MonoBehaviour
         _titleScreenUI.SetActive(false);
         _lobbyUI.SetActive(false);
 
-        switch(state)
+        switch (state)
         {
             case UIState.Title:
                 _titleScreenUI.SetActive(true);
