@@ -345,6 +345,7 @@ GameObject:
   - component: {fileID: 7451511943648236842}
   - component: {fileID: -3407844358631336923}
   - component: {fileID: 7363029190862775147}
+  - component: {fileID: 1651457965969626016}
   m_Layer: 0
   m_Name: GolfCharacter
   m_TagString: Player
@@ -405,7 +406,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3746147730
+  GlobalObjectIdHash: 171685441
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 1
@@ -618,6 +619,18 @@ MonoBehaviour:
   playerRig: {fileID: 420073679474077443}
   ragdollDelay: 0.5
   getUpDelay: 8
+--- !u!114 &1651457965969626016
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 420073679474077443}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adeba828b0fa7e04d9e0081757082430, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &799593922335037580
 GameObject:
   m_ObjectHideFlags: 0
