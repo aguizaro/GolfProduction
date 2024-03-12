@@ -140,6 +140,7 @@ public class LobbyManager : MonoBehaviour
         try
         {
             if (_playerId == null) await Authenticate();
+            GameManager.instance.AddPlayer(_playerId);
             return new Player
             {
                 Data = new Dictionary<string, PlayerDataObject> {

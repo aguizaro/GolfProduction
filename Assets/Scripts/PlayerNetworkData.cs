@@ -13,6 +13,8 @@ public struct PlayerData : INetworkSerializable
     public Quaternion playerRot;
     public bool isSwinging;
     public bool isCarrying;
+    public int completedHoles;
+    public int strokes;
     public int score;
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
@@ -21,14 +23,35 @@ public struct PlayerData : INetworkSerializable
         serializer.SerializeValue(ref playerRot);
         serializer.SerializeValue(ref isSwinging);
         serializer.SerializeValue(ref isCarrying);
+        serializer.SerializeValue(ref completedHoles);
+        serializer.SerializeValue(ref strokes);
         serializer.SerializeValue(ref score);
     }
 }
+
+public struct PlayerParams : INetworkSerializable
+{
+    public Vector3 playerPos;
+    public Quaternion playerRot;
+    public bool isSwinging;
+    //public bool isCarrying;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref playerPos);
+        serializer.SerializeValue(ref playerRot);
+        serializer.SerializeValue(ref isSwinging);
+        //serializer.SerializeValue(ref isCarrying);
+    }
+}
+
 // ------------------------------------------------------------------------------------------------------------
 
 public class PlayerNetworkData : NetworkBehaviour
 {
+    public bool test = false;
     private PlayerData _currentPlayerData;
+    private Dictionary<ulong, PlayerData> _players = new Dictionary<ulong, PlayerData>();
 
     // Local player data
     private NetworkVariable<PlayerData> _networkPlayerData = new NetworkVariable<PlayerData>(new PlayerData
@@ -37,6 +60,8 @@ public class PlayerNetworkData : NetworkBehaviour
         playerRot = Quaternion.identity,
         isCarrying = false,
         isSwinging = false,
+        completedHoles = 0,
+        strokes = 0,
         score = 0,
     }, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
@@ -62,12 +87,23 @@ public class PlayerNetworkData : NetworkBehaviour
     // public functions ------------------------------------------------------------------------------------------------------------
 
     // only owners should use this to send data to the server
-    public void StorePlayerState(PlayerData data, ulong senderID)
+    public void StorePlayerState(PlayerParams data, ulong senderID)
     {
         if (IsOwner)
         {
+            PlayerData newData = new PlayerData()
+            {
+                playerPos = data.playerPos,
+                playerRot = data.playerRot,
+                isCarrying = false,
+                isSwinging = data.isSwinging,
+                completedHoles = _networkPlayerData.Value.completedHoles,
+                strokes = _networkPlayerData.Value.strokes,
+                score = _networkPlayerData.Value.score,
+            };
             //Debug.Log("Storing player state for " + senderID + "\npos: " + data.playerPos + " rot: " + data.playerRot);
-            StorePlayerStateServerRpc(data, senderID);
+            StorePlayerStateServerRpc(newData, senderID);
+            StoreToPlayerDictionary(newData, senderID);
         }
         else
         {
@@ -75,10 +111,37 @@ public class PlayerNetworkData : NetworkBehaviour
             //Debug.LogWarning("Player data changed for " + OwnerClientId + " to " + _currentPlayerData.playerPos);
         }
     }
+
+    public void IncrementStrokeCount(ulong senderID)
+    {
+        IncrementStrokeCountServerRpc(senderID);
+    }
+
+    public void UpdateCompletedHoleCount(int holeCount, ulong senderID)
+    {
+        UpdateCompletedHoleCountServerRpc(holeCount, senderID);
+    }
+
     // only non-owners should use this to get the latest player state
     public PlayerData GetPlayerState()
     {
         return _currentPlayerData;
+    }
+
+    public PlayerParams GetPlayerParams()
+    {
+        return new PlayerParams()
+            {
+                playerPos = _currentPlayerData.playerPos,
+                playerRot = _currentPlayerData.playerRot,
+                isSwinging = _currentPlayerData.isSwinging
+            };
+    }
+
+    public void StoreToPlayerDictionary(PlayerData data, ulong senderID) 
+    { 
+        if (_players.ContainsKey(senderID)) { _players[senderID] = data; }
+        else { _players.Add(senderID, data); }
     }
 
     // server rpcs ------------------------------------------------------------------------------------------------------------
@@ -88,5 +151,37 @@ public class PlayerNetworkData : NetworkBehaviour
     {
         //Debug.LogWarning("StorePlayerStateServerRpc:" + OwnerClientId + " is storing player state for " + senderID + "\npos: " + data.playerPos + " rot: " + data.playerRot);
         _networkPlayerData.Value = data;
+    }
+
+    [ServerRpc]
+    public void IncrementStrokeCountServerRpc(ulong senderID)
+    {
+        PlayerData updatedData = new PlayerData() {
+            playerPos = _networkPlayerData.Value.playerPos,
+            playerRot = _networkPlayerData.Value.playerRot,
+            isCarrying = _networkPlayerData.Value.isCarrying,
+            isSwinging = _networkPlayerData.Value.isSwinging,
+            completedHoles = _networkPlayerData.Value.completedHoles,
+            strokes = _networkPlayerData.Value.strokes + 1,
+            score = _networkPlayerData.Value.score
+        };
+
+        _networkPlayerData.Value = updatedData;
+    }
+
+    [ServerRpc]
+    public void UpdateCompletedHoleCountServerRpc(int holeCount, ulong senderID)
+    {
+        PlayerData updatedData = new PlayerData() {
+            playerPos = _networkPlayerData.Value.playerPos,
+            playerRot = _networkPlayerData.Value.playerRot,
+            isCarrying = _networkPlayerData.Value.isCarrying,
+            isSwinging = _networkPlayerData.Value.isSwinging,
+            completedHoles = holeCount,
+            strokes = _networkPlayerData.Value.strokes,
+            score = _networkPlayerData.Value.score
+        };
+
+        _networkPlayerData.Value = updatedData;
     }
 }

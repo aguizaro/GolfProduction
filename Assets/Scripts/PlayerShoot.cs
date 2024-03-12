@@ -11,12 +11,16 @@ public class PlayerShoot : NetworkBehaviour
     [SerializeField] private float playerClubRange = 4f;
     [SerializeField] private float verticalAngle = 0.50f;
 
+    private PlayerNetworkData _playerNetworkData;
     private float _lastFired = float.MinValue;
     private RagdollOnOff _ragdollOnOff;
     private GameObject _projectileInstance;
     private Rigidbody _projectileRb;
     private bool isActive = false;
     private bool _projectileMoving = false;
+
+    // On Start -------------------------------------------------------------------------------------------------------------
+    public override void OnNetworkSpawn() { _playerNetworkData = GameObject.Find("ServerStateManager").GetComponent<PlayerNetworkData>(); }
 
     // Activation -------------------------------------------------------------------------------------------------------------
     public void Activate() { isActive = true; _ragdollOnOff = GetComponent<RagdollOnOff>(); }
@@ -96,6 +100,9 @@ public class PlayerShoot : NetworkBehaviour
 
                 // Display a raycast for debugging
                 Debug.DrawRay(_projectileInstance.transform.position, dir * _projectileForce, Color.red, 100f);
+
+                // Increment the number of strokes
+                _playerNetworkData.IncrementStrokeCount(ownerId);
             }
         }
         // AudioSource.PlayClipAtPoint(_spawnClip, transform.position);

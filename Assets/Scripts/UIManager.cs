@@ -260,4 +260,9 @@ public class UIManager : MonoBehaviour
 
     }
 
+    public void UpdateStrokesUI(int strokes)
+    {
+        _gamePlayerStrokesText.text = "Strokes: " + strokes;
+    }
+
 }
