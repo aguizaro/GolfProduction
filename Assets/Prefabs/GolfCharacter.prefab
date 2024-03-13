@@ -631,6 +631,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: adeba828b0fa7e04d9e0081757082430, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerTransform: {fileID: 0}
+  swingCamera: {fileID: 0}
+  playerAnimator: {fileID: 0}
+  ballPrefab: {fileID: 0}
 --- !u!1 &799593922335037580
 GameObject:
   m_ObjectHideFlags: 0
@@ -716,7 +720,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: -3033667219593020291, guid: 68b036ed0c773c64883cfd2d6135a9db, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1617,7 +1621,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: -3033667219593020291, guid: 68b036ed0c773c64883cfd2d6135a9db, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2773,6 +2777,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: -0.522
       objectReference: {fileID: 0}
+    - target: {fileID: 4418273424792762907, guid: c7e67803eb93f48e3ae7cefc71713163, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: -3033667219593020291, guid: 68b036ed0c773c64883cfd2d6135a9db, type: 3}
     - target: {fileID: 5587058772437339562, guid: c7e67803eb93f48e3ae7cefc71713163, type: 3}
       propertyPath: m_Name
       value: golfClub

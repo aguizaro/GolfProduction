@@ -92,8 +92,8 @@ public class SwingManager : NetworkBehaviour
             ballNetworkObject.Spawn();
         }
 
-        RemoveForces(); //  prevent ball from rolling
-        stopRotation();
+        //RemoveForces(); //  prevent ball from rolling
+        //stopRotation();
         
         // Inform the client about the spawned projectile
         SpawnBallOnClientRpc(newBall.GetComponent<NetworkObject>().NetworkObjectId);
