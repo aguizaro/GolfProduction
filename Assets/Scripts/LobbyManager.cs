@@ -52,7 +52,7 @@ public class LobbyManager : MonoBehaviour
     [SerializeField] private UIManager _UIManager;
 
     [SerializeField] EncryptionType encryption = EncryptionType.WSS;
-    [SerializeField] int maxLobbySize = 10;
+    [SerializeField] int maxLobbySize = 5;
 
     private const string RelayJoinCodeKey = "RelayJoinCode";
     private const string LobbyTypeKey = "LobbyType";
@@ -406,7 +406,7 @@ public class LobbyManager : MonoBehaviour
         {
             await Authenticate();
 
-            await CreateLobby(lobbyName, lobbySize);
+            await CreateLobby(lobbyName, Math.Clamp(lobbySize, 2, maxLobbySize)); //clamp lobby size to 2-5
 
             if (ConnectedLobby == null) throw new LobbyServiceException(new LobbyExceptionReason(), "Lobby Error: No Lobby connected");
 
@@ -629,16 +629,16 @@ public class LobbyManager : MonoBehaviour
 
     private void EndGame()
     {
-        Debug.Log("in End Game");
+        Debug.Log("in End Game: NetworkManager Instance: " + NetworkManager.Singleton);
 
-        NetworkManager.Singleton.Shutdown();
-        Debug.Log("Disconnected from Relay Server");
+        //NetworkManager.Singleton.Shutdown();
+        //Debug.Log("Disconnected from Relay Server");
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
         gameIsActive = false;
-        ConnectionNotificationManager.Singleton.OnClientConnectionNotification += HandleClientConnectionNotification;
+        ConnectionNotificationManager.Singleton.OnClientConnectionNotification -= HandleClientConnectionNotification;
 
 
         Debug.Log("cursor state: " + Cursor.lockState.ToString());

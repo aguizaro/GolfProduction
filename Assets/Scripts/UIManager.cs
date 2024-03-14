@@ -103,7 +103,7 @@ public class UIManager : MonoBehaviour
 
     // Lobby UI Methods
     private void PlayNow() => _lobbyManager.PlayNow();
-    private void CreateLobby() => _lobbyManager.Create(_inputField.text, 6);
+    private void CreateLobby() => _lobbyManager.Create(_inputField.text, 5);
     private void JoinLobby() => _lobbyManager.Join(joinCode: _inputField.text);
 
 
@@ -223,6 +223,7 @@ public class UIManager : MonoBehaviour
                         // display each player
                         int playerIndex = 0;
                         string delim = "";
+                        _lobbyEntries[i].transform.Find("Players").GetComponent<TMP_Text>().text = ""; // clear previous player list
                         foreach (var p in entry.Players)
                         {
                             _lobbyEntries[i].transform.Find("Players").GetComponent<TMP_Text>().text += $"{delim}Player{++playerIndex}: {p.Data["PlayerName"].Value}";

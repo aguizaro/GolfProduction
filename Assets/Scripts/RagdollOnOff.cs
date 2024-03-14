@@ -166,12 +166,14 @@ public class RagdollOnOff : NetworkBehaviour
     public void RagdollModeOnServerRpc()
     {
         Debug.Log("RagdollModeOnServerRpc called for " + OwnerClientId);
+        RagdollModeOnClientRpc();
         RagdollModeOn();
     }
 
     [ServerRpc]
     public void RagdollModeOffServerRpc()
     {
+        RagdollModeOffClientRpc();
         RagdollModeOff();
     }
 
