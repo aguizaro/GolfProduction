@@ -34,6 +34,7 @@ public struct PlayerParams : INetworkSerializable
     public Vector3 playerPos;
     public Quaternion playerRot;
     public bool isSwinging;
+    public int strokes;
     //public bool isCarrying;
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
@@ -41,6 +42,7 @@ public struct PlayerParams : INetworkSerializable
         serializer.SerializeValue(ref playerPos);
         serializer.SerializeValue(ref playerRot);
         serializer.SerializeValue(ref isSwinging);
+        serializer.SerializeValue(ref strokes);
         //serializer.SerializeValue(ref isCarrying);
     }
 }
@@ -98,9 +100,12 @@ public class PlayerNetworkData : NetworkBehaviour
                 isCarrying = false,
                 isSwinging = data.isSwinging,
                 completedHoles = _networkPlayerData.Value.completedHoles,
-                strokes = _networkPlayerData.Value.strokes,
+                strokes = data.strokes,
                 score = _networkPlayerData.Value.score,
             };
+
+            Debug.Log("Stroke in data: " + data.strokes);
+            Debug.Log("Strokes in network data: " + newData.strokes);
             //Debug.Log("Storing player state for " + senderID + "\npos: " + data.playerPos + " rot: " + data.playerRot);
             StorePlayerStateServerRpc(newData, senderID);
             StoreToPlayerDictionary(newData, senderID);
@@ -114,6 +119,7 @@ public class PlayerNetworkData : NetworkBehaviour
 
     public void IncrementStrokeCount(ulong senderID)
     {
+        if (!IsOwner) return;
         IncrementStrokeCountServerRpc(senderID);
     }
 
@@ -167,6 +173,8 @@ public class PlayerNetworkData : NetworkBehaviour
         };
 
         _networkPlayerData.Value = updatedData;
+
+        Debug.Log("In Server RPC: " + _networkPlayerData.Value.strokes);
     }
 
     [ServerRpc]

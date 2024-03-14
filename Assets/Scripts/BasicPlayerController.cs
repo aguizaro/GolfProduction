@@ -21,7 +21,7 @@ public class BasicPlayerController : NetworkBehaviour
 
     // State Management
     private PlayerParams _startState;
-    private PlayerParams _currentPlayerState;
+    public PlayerParams _currentPlayerState;
     private PlayerNetworkData _playerNetworkData;
     private RagdollOnOff _ragdollOnOff;
 
@@ -48,6 +48,11 @@ public class BasicPlayerController : NetworkBehaviour
         Activate(); // activate player movment and animaitons and ragdoll
         _playerShoot.Activate(); // activate shooting
         _ragdollOnOff.Activate(); // activate ragdoll
+        _playerShoot.SpawnProjectile(OwnerClientId); // Immediate spawn ball
+
+        // Attempt to change position
+        //Vector3 playerSpawnPos = new Vector3(400, 69, 310);
+        //transform.position = playerSpawnPos;
     }
 
     public void Activate()
@@ -141,6 +146,7 @@ public class BasicPlayerController : NetworkBehaviour
             playerRot = transform.rotation,
             //isCarrying = false, // check for this later
             isSwinging = false,
+            strokes = _currentPlayerState.strokes,
         };
 
         //Debug.LogWarning("In BasicPlayerController.cs sending to PlayerNetworkData.cs\nOwner: " + OwnerClientId + "\npos: " + _currentPlayerState.playerPos + " rot: " + _currentPlayerState.playerRot);

@@ -22,7 +22,8 @@ public class HoleFlagPoleManager : NetworkBehaviour
     {
         if (other.CompareTag("Ball"))
         {
-            if (IsServer) 
+            //if (IsServer) 
+            if (IsOwner)
             {
                 PlayerData oldData = _playerNetworkData.GetPlayerState();
                 oldData.completedHoles++;

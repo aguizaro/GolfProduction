@@ -140,7 +140,6 @@ public class LobbyManager : MonoBehaviour
         try
         {
             if (_playerId == null) await Authenticate();
-            GameManager.instance.AddPlayer(_playerId);
             return new Player
             {
                 Data = new Dictionary<string, PlayerDataObject> {
@@ -712,6 +711,12 @@ public class LobbyManager : MonoBehaviour
         {
             Debug.LogWarning("Error Exiting: " + e.Message);
         }
+    }
+
+    // Public call to PlayerExit()
+    public void PlayerExitLobby()
+    {
+        PlayerExit();
     }
 
 

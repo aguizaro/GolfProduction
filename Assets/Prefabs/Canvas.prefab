@@ -1426,7 +1426,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 137, y: 25}
+  m_AnchoredPosition: {x: 137, y: 86}
   m_SizeDelta: {x: 160, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &5699079321793671982
@@ -6487,7 +6487,7 @@ MonoBehaviour:
   _playButton: {fileID: 2557332171678219687}
   _refreshButton: {fileID: 5746294642800213011}
   _lobbyManager: {fileID: 0}
-  _gamePlayerStrokesText: {fileID: 0}
+  _gamePlayerStrokesText: {fileID: 8068449098095075141}
   _pauseScreenUI: {fileID: 3976630811343960228}
   _pauseResumeButton: {fileID: 6541786038349359031}
   _pauseSettingsButton: {fileID: 8962644898431560195}
@@ -6499,6 +6499,7 @@ MonoBehaviour:
   _settingsSensitivitySlider: {fileID: 5699079321793671982}
   _settingsOneHandToggle: {fileID: 4251598789633743519}
   _settingsLanguageDropdown: {fileID: 3617788962536984438}
+  titleScreenMode: 1
 --- !u!223 &4531760643266080430
 Canvas:
   m_ObjectHideFlags: 0
@@ -11132,7 +11133,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -424, y: 14}
+  m_AnchoredPosition: {x: -424, y: 57}
   m_SizeDelta: {x: 450.42, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1590372726226435691

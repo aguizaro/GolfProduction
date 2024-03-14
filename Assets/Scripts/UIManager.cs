@@ -146,7 +146,8 @@ public class UIManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
         DisablePause();
-        EnableUI(UIState.Title);
+        _lobbyManager.PlayerExitLobby();
+        //EnableUI(UIState.Title);
     }
 
     // Settings UI Methods
