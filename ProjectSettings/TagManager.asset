@@ -7,6 +7,8 @@ TagManager:
   - Terrain
   - StateManager
   - Ball
+  - PlayerCollision
+  - HoleFlagPole
   layers:
   - Default
   - TransparentFX

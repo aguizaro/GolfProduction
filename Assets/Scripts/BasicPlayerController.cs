@@ -20,8 +20,8 @@ public class BasicPlayerController : NetworkBehaviour
     private PlayerShoot _playerShoot;
 
     // State Management
-    private PlayerData _startState;
-    private PlayerData _currentPlayerState;
+    private PlayerParams _startState;
+    public PlayerParams _currentPlayerState;
     private PlayerNetworkData _playerNetworkData;
     private RagdollOnOff _ragdollOnOff;
 
@@ -48,6 +48,11 @@ public class BasicPlayerController : NetworkBehaviour
         Activate(); // activate player movment and animaitons and ragdoll
         _playerShoot.Activate(); // activate shooting
         _ragdollOnOff.Activate(); // activate ragdoll
+        _playerShoot.SpawnProjectile(OwnerClientId); // Immediate spawn ball
+
+        // Attempt to change position
+        //Vector3 playerSpawnPos = new Vector3(400, 69, 310);
+        //transform.position = playerSpawnPos;
     }
 
     public void Activate()
@@ -63,13 +68,12 @@ public class BasicPlayerController : NetworkBehaviour
         transform.position = new Vector3(Random.Range(390, 400), 69.1f, Random.Range(318, 320)); //set starting random place near first hole
         //Debug.Log("Client: " + OwnerClientId + " starting position" + transform.position);
 
-        _currentPlayerState = new PlayerData
+        _currentPlayerState = new PlayerParams
         {
             playerPos = transform.position,
             playerRot = transform.rotation,
-            isCarrying = false, // check for this later
+            //isCarrying = false, // check for this later
             isSwinging = false,
-            score = 0,
         };
 
         _playerNetworkData.StorePlayerState(_currentPlayerState, OwnerClientId);
@@ -94,7 +98,7 @@ public class BasicPlayerController : NetworkBehaviour
                 _playerNetworkData = GameObject.FindWithTag("StateManager").GetComponent<PlayerNetworkData>();
             }
             Debug.LogWarning("Non owner: " + OwnerClientId + " reading player state: " + _currentPlayerState.playerPos + " rot: " + _currentPlayerState.playerRot);
-            _currentPlayerState = _playerNetworkData.GetPlayerState();
+            _currentPlayerState = _playerNetworkData.GetPlayerParams();
             return; //only owners can update player state
         }
 
@@ -106,7 +110,7 @@ public class BasicPlayerController : NetworkBehaviour
         }
 
         if (UIManager.isPaused) { return; }
-        else { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; }
+        else { if (!UIManager.instance.titleScreenMode) {Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; } }
 
         //if (_ragdollActive) return; //prevent movement while ragdoll is active
 
@@ -136,13 +140,13 @@ public class BasicPlayerController : NetworkBehaviour
         _rb.MoveRotation(_rb.rotation * deltaRotation);
 
         // current state of this player (owner)
-        _currentPlayerState = new PlayerData
+        _currentPlayerState = new PlayerParams
         {
             playerPos = transform.position,
             playerRot = transform.rotation,
-            isCarrying = false, // check for this later
+            //isCarrying = false, // check for this later
             isSwinging = false,
-            score = 0,
+            strokes = _currentPlayerState.strokes,
         };
 
         //Debug.LogWarning("In BasicPlayerController.cs sending to PlayerNetworkData.cs\nOwner: " + OwnerClientId + "\npos: " + _currentPlayerState.playerPos + " rot: " + _currentPlayerState.playerRot);

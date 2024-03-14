@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class PlayerShoot : NetworkBehaviour
 {
+    [SerializeField] private UIManager _uiManager;
     [SerializeField] private GameObject _projectilePrefab;
     [SerializeField] private float _projectileForce = 20f;
     [SerializeField] private float _cooldown = 0.5f;
@@ -11,12 +12,21 @@ public class PlayerShoot : NetworkBehaviour
     [SerializeField] private float playerClubRange = 4f;
     [SerializeField] private float verticalAngle = 0.50f;
 
+    private BasicPlayerController _playerController;
+    private PlayerNetworkData _playerNetworkData;
     private float _lastFired = float.MinValue;
     private RagdollOnOff _ragdollOnOff;
     private GameObject _projectileInstance;
     private Rigidbody _projectileRb;
     private bool isActive = false;
     private bool _projectileMoving = false;
+
+    // On Start -------------------------------------------------------------------------------------------------------------
+    public override void OnNetworkSpawn() { 
+        _playerController = GetComponent<BasicPlayerController>();
+        _playerNetworkData = GameObject.Find("ServerStateManager").GetComponent<PlayerNetworkData>(); 
+        _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
+    }
 
     // Activation -------------------------------------------------------------------------------------------------------------
     public void Activate() { isActive = true; _ragdollOnOff = GetComponent<RagdollOnOff>(); }
@@ -53,9 +63,12 @@ public class PlayerShoot : NetworkBehaviour
     // Spawn and Shooting RPCs -------------------------------------------------------------------------------------------------------------
 
     [ServerRpc]
-    private void RequestBallSpawnServerRpc(ulong ownerId)
+    private void RequestBallSpawnServerRpc(ulong ownerId, Vector3 position)
     {
-        _projectileInstance = Instantiate(_projectilePrefab, transform.position + transform.up / 2 + transform.forward * _spawnDist, Quaternion.identity);
+        Vector3 newPosition = transform.position + transform.up / 2 + transform.forward * _spawnDist;
+
+        if (position != null) { newPosition = position; }
+        _projectileInstance = Instantiate(_projectilePrefab, newPosition, Quaternion.identity);
         _projectileInstance.GetComponent<NetworkObject>().SpawnWithOwnership(ownerId);
         _projectileRb = _projectileInstance.GetComponent<Rigidbody>();
 
@@ -78,26 +91,39 @@ public class PlayerShoot : NetworkBehaviour
     // Shoot the ball or instantiate it if it doesn't exist
     private void ExecuteShoot(Vector3 dir, ulong ownerId)
     {
+        /*
         if (_projectileInstance == null)
         {
             RequestBallSpawnServerRpc(OwnerClientId);
             return;
         }
         else
-        {   // check if ball is close enough to player
-            if (_projectileInstance != null && Vector3.Distance(transform.position, _projectileInstance.transform.position) < playerClubRange)
-            {
-                // allow ball to roll
-                RemoveForces();
-                enableRotation();
+        {  */ 
 
-                _projectileInstance.GetComponent<Rigidbody>().AddForce(dir * _projectileForce, ForceMode.Impulse);
-                _projectileMoving = true;
+        // check if ball is close enough to player
+        if (_projectileInstance != null && Vector3.Distance(transform.position, _projectileInstance.transform.position) < playerClubRange)
+        {
+            Debug.Log("Execute");
+            // allow ball to roll
+            RemoveForces();
+            enableRotation();
 
-                // Display a raycast for debugging
-                Debug.DrawRay(_projectileInstance.transform.position, dir * _projectileForce, Color.red, 100f);
-            }
+            _projectileInstance.GetComponent<Rigidbody>().AddForce(dir * _projectileForce, ForceMode.Impulse);
+            _projectileMoving = true;
+
+            // Display a raycast for debugging
+            Debug.DrawRay(_projectileInstance.transform.position, dir * _projectileForce, Color.red, 100f);
+
+            // Increment the number of strokes
+            //_playerNetworkData.IncrementStrokeCount(ownerId);
+            _playerController._currentPlayerState.strokes++;
+            Debug.Log("Strokes in playershoot: " + _playerController._currentPlayerState.strokes);
+            _playerNetworkData.StorePlayerState(_playerController._currentPlayerState, ownerId);
+
+            Debug.Log("New strokes: " + _playerController._currentPlayerState.strokes);
+            _uiManager.UpdateStrokesUI(_playerController._currentPlayerState.strokes);
         }
+        //}
         // AudioSource.PlayClipAtPoint(_spawnClip, transform.position);
     }
 
@@ -137,5 +163,27 @@ public class PlayerShoot : NetworkBehaviour
         {
             _projectileRb.freezeRotation = false;
         }
+    }
+
+    public void SpawnProjectile(ulong ownerId)
+    {
+        if (!IsOwner) return;
+        
+        Vector3 ballSpawnPos = new Vector3(395.5f + Random.Range(-5, 5), 75f, 322.0f + Random.Range(-3, 3));
+        Debug.Log("Spawning at: " + ballSpawnPos);
+        RequestBallSpawnServerRpc(OwnerClientId, ballSpawnPos);
+    }
+
+    public void MoveProjectileToPosition(Vector3 destination)
+    {
+        if (_projectileInstance == null) return;
+
+        RemoveForces(); //  prevent ball from rolling
+        stopRotation();
+
+        Debug.Log("The given destination position: " + destination);
+
+        //  move ball to point
+        _projectileInstance.transform.position = destination;
     }
 }

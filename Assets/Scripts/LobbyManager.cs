@@ -713,6 +713,12 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    // Public call to PlayerExit()
+    public void PlayerExitLobby()
+    {
+        PlayerExit();
+    }
+
 
     public async Task OnApplicationQuitCallback()
     {
