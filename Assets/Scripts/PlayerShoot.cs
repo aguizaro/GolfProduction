@@ -103,7 +103,6 @@ public class PlayerShoot : NetworkBehaviour
         // check if ball is close enough to player
         if (_projectileInstance != null && Vector3.Distance(transform.position, _projectileInstance.transform.position) < playerClubRange)
         {
-            Debug.Log("Execute");
             // allow ball to roll
             RemoveForces();
             enableRotation();
@@ -117,10 +116,8 @@ public class PlayerShoot : NetworkBehaviour
             // Increment the number of strokes
             //_playerNetworkData.IncrementStrokeCount(ownerId);
             _playerController._currentPlayerState.strokes++;
-            Debug.Log("Strokes in playershoot: " + _playerController._currentPlayerState.strokes);
             _playerNetworkData.StorePlayerState(_playerController._currentPlayerState, ownerId);
 
-            Debug.Log("New strokes: " + _playerController._currentPlayerState.strokes);
             _uiManager.UpdateStrokesUI(_playerController._currentPlayerState.strokes);
         }
         //}

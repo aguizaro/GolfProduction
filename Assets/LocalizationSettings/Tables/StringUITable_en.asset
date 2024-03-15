@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: StringUITable_en
+  m_EditorClassIdentifier: 
+  m_LocaleId:
+    m_Code: en
+  m_SharedData: {fileID: 11400000, guid: fa09f4bfc9488034481bbcb2967f950c, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 702783283200
+    m_Localized: Start
+    m_Metadata:
+      m_Items: []
+  - m_Id: 724664967168
+    m_Localized: Settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 783343280128
+    m_Localized: Resume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 804419657728
+    m_Localized: Back to title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 901341634560
+    m_Localized: Public Lobbies
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1062390325248
+    m_Localized: Refresh
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1105042202624
+    m_Localized: SpotsAvailable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1181563084800
+    m_Localized: Enter code...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1242279829504
+    m_Localized: Join Room
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1323586412544
+    m_Localized: Create Room
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1355723169792
+    m_Localized: Play Now
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1470118617088
+    m_Localized: Join
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1517149347840
+    m_Localized: Strokes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1603744948224
+    m_Localized: Paused
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1636166918144
+    m_Localized: Camera Sensitivity
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1762407079936
+    m_Localized: Language
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1806677958656
+    m_Localized: Back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1834737852416
+    m_Localized: Apply
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

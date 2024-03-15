@@ -4,6 +4,7 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Localization.Settings;
 
 
 public enum UIState
@@ -57,9 +58,7 @@ public class UIManager : MonoBehaviour
 
     [SerializeField] private Button _settingsApplyButton;
     [SerializeField] private Button _settingsBackButton;
-    [SerializeField] private Slider _settingsVolumeSlider;
     [SerializeField] private Slider _settingsSensitivitySlider;
-    [SerializeField] private Toggle _settingsOneHandToggle;
     [SerializeField] private TMP_Dropdown _settingsLanguageDropdown;
 
     // UIManager instance
@@ -72,6 +71,7 @@ public class UIManager : MonoBehaviour
 
     public bool titleScreenMode = true;
     public static bool isPaused { get; set; } = false;
+    private bool localeActive = false;
 
     private void Awake()
     {
@@ -166,21 +166,22 @@ public class UIManager : MonoBehaviour
         oneHandMode = sData.oneHandMode;
         language = sData.language;
 
-        _settingsVolumeSlider.value = settingsVolume;
         _settingsSensitivitySlider.value = settingsSensitivity;
-        _settingsOneHandToggle.isOn = oneHandMode;
         _settingsLanguageDropdown.value = language;
     }
 
     public void ApplySettings()
     {
+        Debug.Log("Applying settings");
         SettingsData sData = DataManager.instance.GetSettingsData();
-        sData.volume = settingsVolume;
         sData.cameraSensitivity = settingsSensitivity;
-        sData.oneHandMode = oneHandMode;
         sData.language = language;
 
         DataManager.instance.SetSettingsData(sData);
+
+        Debug.Log("Is Locale active: " + localeActive);
+
+        if (!localeActive) { StartCoroutine(SetLocale(language)); }
     }
 
     public void EnableUI(UIState state)
@@ -197,6 +198,15 @@ public class UIManager : MonoBehaviour
                 _lobbyUI.SetActive(true);
                 break;
         }
+    }
+
+    IEnumerator SetLocale(int _localeID)
+    {
+        Debug.Log("Locale entered: " + _localeID);
+        localeActive = true;
+        yield return LocalizationSettings.InitializationOperation;
+        LocalizationSettings.SelectedLocale = LocalizationSettings.AvailableLocales.Locales[_localeID];
+        localeActive = false;
     }
 
     public async void RefreshDisplayList() // I added redundant checks here because sometimes lobby entry is found right before its deleted
