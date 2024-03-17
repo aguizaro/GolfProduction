@@ -26,11 +26,15 @@ public class PlayerShoot : NetworkBehaviour
     // Activation -------------------------------------------------------------------------------------------------------------
     public void Activate()
     {
+        Debug.Log("PlayerShoot activated for " + OwnerClientId + " isOwner: " + IsOwner);
+
         _playerController = GetComponent<BasicPlayerController>();
         _playerNetworkData = GameObject.FindWithTag("StateManager").GetComponent<PlayerNetworkData>();
         _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
         _ragdollOnOff = GetComponent<RagdollOnOff>();
         isActive = true;
+
+        if (IsOwner) SpawnProjectile(OwnerClientId);
     }
     public void Deactivate() => isActive = false;
 
@@ -63,6 +67,7 @@ public class PlayerShoot : NetworkBehaviour
     }
 
     // Spawn and Shooting RPCs -------------------------------------------------------------------------------------------------------------
+
 
     [ServerRpc]
     private void RequestBallSpawnServerRpc(ulong ownerId, Vector3 position)
@@ -166,10 +171,10 @@ public class PlayerShoot : NetworkBehaviour
 
     public void SpawnProjectile(ulong ownerId)
     {
-        if (!IsOwner) return;
+        if (!IsOwner) return; //redundnat check since this is a public function
 
         Vector3 ballSpawnPos = new Vector3(395.5f + Random.Range(-5, 5), 75f, 322.0f + Random.Range(-3, 3));
-        Debug.Log("Spawning at: " + ballSpawnPos);
+        Debug.Log("Spawning at: " + ballSpawnPos + "for " + ownerId);
         RequestBallSpawnServerRpc(OwnerClientId, ballSpawnPos);
     }
 

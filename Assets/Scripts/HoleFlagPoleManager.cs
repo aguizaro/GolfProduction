@@ -7,19 +7,25 @@ public class HoleFlagPoleManager : NetworkBehaviour
 {
     private Collider holeTrigger;
     private PlayerNetworkData _playerNetworkData;
+    private bool isActive = false;
 
     private void Start()
     {
         holeTrigger = GetComponent<Collider>();
     }
 
-    public override void OnNetworkSpawn()
+    public void Activate()
     {
         _playerNetworkData = GameObject.FindWithTag("StateManager").GetComponent<PlayerNetworkData>();
+        isActive = true;
+
+        Debug.Log("HoleFlagPoleManager activated for " + OwnerClientId + " isOwner: " + IsOwner);
     }
 
     private void OnTriggerEnter(Collider other)
     {
+        if (!isActive) return; //prevent updates until player is fully activated
+
         if (other.CompareTag("Ball"))
         {
             //if (IsServer) 

@@ -27,46 +27,50 @@ public class BasicPlayerController : NetworkBehaviour
 
     // Animation
     private Animator _animator;
+    private GameObject[] _flagPoles;
 
     // Activation
     private bool _isActive = false;
+
+    public override void OnNetworkSpawn()
+    {
+        _rb = gameObject.GetComponent<Rigidbody>();
+        _animator = GetComponent<Animator>();
+        _playerShoot = GetComponent<PlayerShoot>();
+        _ragdollOnOff = GetComponent<RagdollOnOff>();
+        _flagPoles = GameObject.FindGameObjectsWithTag("HoleFlagPole");
+
+        _ragdollOnOff.Activate(); // activate ragdoll
+
+        if (!IsOwner) return;
+
+        transform.position = new Vector3(Random.Range(390, 400), 69.1f, Random.Range(318, 320));
+    }
 
 
     // Update Loop -------------------------------------------------------------------------------------------------------------
     void FixedUpdate()
     {
-        if (!_isActive) return; //prevent updates until player is fully activated
+        //Debug.Log("player controller: pos: " + transform.position + " rot: " + transform.rotation.eulerAngles + " owner: " + OwnerClientId);
 
+        if (_isActive) Debug.Log("Player controller is active for " + OwnerClientId + " isOwner: " + IsOwner);
         Animate();
         Movement();
     }
 
 
     // Activation -------------------------------------------------------------------------------------------------------------
-    public override void OnNetworkSpawn()
-    {
-        Activate(); // activate player movment and animaitons and ragdoll
-        _playerShoot.Activate(); // activate shooting
-        _ragdollOnOff.Activate(); // activate ragdoll
-        _playerShoot.SpawnProjectile(OwnerClientId); // Immediate spawn ball
-
-        // Attempt to change position
-        //Vector3 playerSpawnPos = new Vector3(400, 69, 310);
-        //transform.position = playerSpawnPos;
-    }
 
     public void Activate()
     {
-        _rb = gameObject.GetComponent<Rigidbody>();
-        _animator = GetComponent<Animator>();
-        _playerShoot = GetComponent<PlayerShoot>();
-        _ragdollOnOff = GetComponent<RagdollOnOff>();
+        Debug.Log("Activating player controller for " + OwnerClientId + " isOwner: " + IsOwner);
+
         _playerNetworkData = GameObject.FindWithTag("StateManager").GetComponent<PlayerNetworkData>();
 
         if (!IsOwner) return;
 
-        transform.position = new Vector3(Random.Range(390, 400), 69.1f, Random.Range(318, 320)); //set starting random place near first hole
-        //Debug.Log("Client: " + OwnerClientId + " starting position" + transform.position);
+        //transform.position = new Vector3(Random.Range(390, 400), 69.1f, Random.Range(318, 320)); //set starting random place near first hole
+        Debug.Log("Client: " + OwnerClientId + " starting position" + transform.position);
 
         _currentPlayerState = new PlayerParams
         {
@@ -79,7 +83,19 @@ public class BasicPlayerController : NetworkBehaviour
         _playerNetworkData.StorePlayerState(_currentPlayerState, OwnerClientId);
         _startState = _currentPlayerState;
 
+        // activate player movement, animations, shooting and ragdoll
         _isActive = true;
+        //_playerShoot.Activate(); // activate shooting
+        _playerShoot.Activate(); // activate shooting on client
+
+        //_playerShoot.SpawnProjectile(OwnerClientId); // Immediate spawn ball
+
+        // activate flag poles
+        foreach (GameObject flagPole in _flagPoles)
+        {
+            flagPole.GetComponent<HoleFlagPoleManager>().Activate();
+        }
+
     }
 
     public void Deactivate()
@@ -93,6 +109,8 @@ public class BasicPlayerController : NetworkBehaviour
     {
         if (!IsOwner)
         {
+            if (!_isActive) return; //prevent updates until state manager is fully activated
+
             if (_playerNetworkData == null) // redundant check due to OnNetworkSpawn not reliably setting _playerNetworkData
             {
                 _playerNetworkData = GameObject.FindWithTag("StateManager").GetComponent<PlayerNetworkData>();
@@ -138,6 +156,8 @@ public class BasicPlayerController : NetworkBehaviour
         float rotationAmount = rotationInput * rotationSpeed * Time.deltaTime;
         Quaternion deltaRotation = Quaternion.Euler(0f, rotationAmount, 0f);
         _rb.MoveRotation(_rb.rotation * deltaRotation);
+
+        if (!_isActive) return; //prevent updates to state manager until player is fully activated
 
         // current state of this player (owner)
         _currentPlayerState = new PlayerParams

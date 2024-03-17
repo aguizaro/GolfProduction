@@ -674,7 +674,7 @@ public class LobbyManager : MonoBehaviour
     }
 
 
-    // Leave Lobby --------------------------------------------------------------------------------------------------------------
+    // Leave and Lock Lobby --------------------------------------------------------------------------------------------------------------
 
     // removes current player (self) from lobby
     public async Task LeaveLobby()
@@ -707,6 +707,27 @@ public class LobbyManager : MonoBehaviour
         {
             // disconnect the client from the relay server
             NetworkManager.Singleton.DisconnectClient(ownerclientid);
+        }
+    }
+
+    // method for host to lock the lobby
+    private async Task LockLobby()
+    {
+        try
+        {
+            if (ConnectedLobby == null) return;
+
+            ConnectedLobby = await LobbyService.Instance.UpdateLobbyAsync(ConnectedLobby.Id, new UpdateLobbyOptions
+            {
+                IsLocked = true,
+                IsPrivate = true
+            });
+
+            Debug.Log("Locked Lobby");
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogWarning($"Failed to lock lobby: {e.Message}");
         }
     }
 
