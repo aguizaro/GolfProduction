@@ -280,7 +280,6 @@ public class LobbyManager : MonoBehaviour
 
             _UIManager.DeactivateUI();
 
-
             Debug.Log("Connected lobby code: " + ConnectedLobby.LobbyCode);
         }
         catch (Exception e)
@@ -321,7 +320,6 @@ public class LobbyManager : MonoBehaviour
         catch (LobbyServiceException e)
         {
             Debug.LogWarning($"Failed to join lobby: {e.Message}");
-            if (NetworkManager.Singleton.IsClient && ConnectedLobby != null) await LeaveLobby();
         }
     }
 
@@ -360,7 +358,6 @@ public class LobbyManager : MonoBehaviour
         catch (LobbyServiceException e)
         {
             Debug.LogWarning($"Failed to join lobby: {e.Message}");
-            if (NetworkManager.Singleton.IsClient && ConnectedLobby != null) await LeaveLobby();
         }
     }
 
@@ -395,7 +392,6 @@ public class LobbyManager : MonoBehaviour
         catch (LobbyServiceException e)
         {
             Debug.LogWarning($"Failed to quick join lobby: {e.Message}");
-            if (NetworkManager.Singleton.IsClient && ConnectedLobby != null) await LeaveLobby();
         }
     }
 
@@ -469,6 +465,7 @@ public class LobbyManager : MonoBehaviour
         catch (LobbyServiceException e)
         {
             Debug.LogError($"Failed creating a lobby: {e.Message}");
+            await PlayerExit();
             return null;
         }
     }
@@ -516,7 +513,7 @@ public class LobbyManager : MonoBehaviour
 
         if (changes.LobbyDeleted)
         {
-            await OnApplicationQuitCallback();
+            await PlayerExit();
             return;
         }
 
@@ -532,7 +529,7 @@ public class LobbyManager : MonoBehaviour
     private async void OnKickedFromLobby()
     {
         Debug.LogWarning("Kicked from lobby");
-        await OnApplicationQuitCallback();
+        await PlayerExit();
         return;
         // Refresh the UI in some way
     }
@@ -652,10 +649,6 @@ public class LobbyManager : MonoBehaviour
 
     private void EndGame()
     {
-        Debug.Log("in End Game: NetworkManager Singleton: " + NetworkManager.Singleton);
-
-        //NetworkManager.Singleton.Shutdown();
-        //Debug.Log("Disconnected from Relay Server");
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -674,7 +667,7 @@ public class LobbyManager : MonoBehaviour
     }
 
 
-    // Leave and Lock Lobby --------------------------------------------------------------------------------------------------------------
+    // Leave Lobby --------------------------------------------------------------------------------------------------------------
 
     // removes current player (self) from lobby
     public async Task LeaveLobby()
@@ -697,6 +690,7 @@ public class LobbyManager : MonoBehaviour
         catch (LobbyServiceException e)
         {
             Debug.LogWarning($"Failed to leave lobby: {e.Message}");
+            EndGame();
         }
     }
 
@@ -734,13 +728,13 @@ public class LobbyManager : MonoBehaviour
 
     // Application Quit --------------------------------------------------------------------------------------------------------------
 
-    private void OnApplicationQuit()
+    private async void OnApplicationQuit()
     {
         Debug.Log("Application Quit: trying to exit");
-        PlayerExit();
+        await PlayerExit();
     }
 
-    private async void PlayerExit()
+    private async Task PlayerExit()
     {
         try
         {
@@ -756,11 +750,10 @@ public class LobbyManager : MonoBehaviour
     }
 
     // Public call to PlayerExit()
-    public void PlayerExitLobby()
+    public async void PlayerExitLobby()
     {
-        PlayerExit();
+        await PlayerExit();
     }
-
 
 
     public async Task OnApplicationQuitCallback()
@@ -813,19 +806,5 @@ public class LobbyManager : MonoBehaviour
         {
             Debug.LogWarning($"Failed to delete lobby: {e.Message}");
         }
-    }
-
-    // Update Loop --------------------------------------------------------------------------------------------------------------
-    private void Update()
-    {
-        if (gameIsActive)
-        {
-            if (Input.GetKeyDown(KeyCode.X))
-            {
-                PlayerExit();
-            }
-        }
-
-
     }
 }
