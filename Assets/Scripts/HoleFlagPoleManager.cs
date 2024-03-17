@@ -12,10 +12,10 @@ public class HoleFlagPoleManager : NetworkBehaviour
     {
         holeTrigger = GetComponent<Collider>();
     }
-    
+
     public override void OnNetworkSpawn()
     {
-        _playerNetworkData = GameObject.Find("ServerStateManager").GetComponent<PlayerNetworkData>();
+        _playerNetworkData = GameObject.FindWithTag("StateManager").GetComponent<PlayerNetworkData>();
     }
 
     private void OnTriggerEnter(Collider other)

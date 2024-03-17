@@ -5,6 +5,7 @@ using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine.PlayerLoop;
 using UnityEngine.Video;
+using Unity.Services.Lobbies.Models;
 
 public class BasicPlayerController : NetworkBehaviour
 {
@@ -13,7 +14,6 @@ public class BasicPlayerController : NetworkBehaviour
     public float sprintMultiplier = 2.5f;
     public float rotationSpeed = 100f;
     private bool isSprinting = false;
-
 
     // Physics
     private Rigidbody _rb;
@@ -110,7 +110,7 @@ public class BasicPlayerController : NetworkBehaviour
         }
 
         if (UIManager.isPaused) { return; }
-        else { if (!UIManager.instance.titleScreenMode) {Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; } }
+        else { if (!UIManager.instance.titleScreenMode) { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; } }
 
         //if (_ragdollActive) return; //prevent movement while ragdoll is active
 

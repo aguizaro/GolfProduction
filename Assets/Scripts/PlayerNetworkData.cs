@@ -51,7 +51,6 @@ public struct PlayerParams : INetworkSerializable
 
 public class PlayerNetworkData : NetworkBehaviour
 {
-    public bool test = false;
     private PlayerData _currentPlayerData;
     private Dictionary<ulong, PlayerData> _players = new Dictionary<ulong, PlayerData>();
 
@@ -137,15 +136,15 @@ public class PlayerNetworkData : NetworkBehaviour
     public PlayerParams GetPlayerParams()
     {
         return new PlayerParams()
-            {
-                playerPos = _currentPlayerData.playerPos,
-                playerRot = _currentPlayerData.playerRot,
-                isSwinging = _currentPlayerData.isSwinging
-            };
+        {
+            playerPos = _currentPlayerData.playerPos,
+            playerRot = _currentPlayerData.playerRot,
+            isSwinging = _currentPlayerData.isSwinging
+        };
     }
 
-    public void StoreToPlayerDictionary(PlayerData data, ulong senderID) 
-    { 
+    public void StoreToPlayerDictionary(PlayerData data, ulong senderID)
+    {
         if (_players.ContainsKey(senderID)) { _players[senderID] = data; }
         else { _players.Add(senderID, data); }
     }
@@ -162,7 +161,8 @@ public class PlayerNetworkData : NetworkBehaviour
     [ServerRpc]
     public void IncrementStrokeCountServerRpc(ulong senderID)
     {
-        PlayerData updatedData = new PlayerData() {
+        PlayerData updatedData = new PlayerData()
+        {
             playerPos = _networkPlayerData.Value.playerPos,
             playerRot = _networkPlayerData.Value.playerRot,
             isCarrying = _networkPlayerData.Value.isCarrying,
@@ -180,7 +180,8 @@ public class PlayerNetworkData : NetworkBehaviour
     [ServerRpc]
     public void UpdateCompletedHoleCountServerRpc(int holeCount, ulong senderID)
     {
-        PlayerData updatedData = new PlayerData() {
+        PlayerData updatedData = new PlayerData()
+        {
             playerPos = _networkPlayerData.Value.playerPos,
             playerRot = _networkPlayerData.Value.playerRot,
             isCarrying = _networkPlayerData.Value.isCarrying,

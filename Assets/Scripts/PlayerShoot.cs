@@ -22,14 +22,16 @@ public class PlayerShoot : NetworkBehaviour
     private bool _projectileMoving = false;
 
     // On Start -------------------------------------------------------------------------------------------------------------
-    public override void OnNetworkSpawn() { 
-        _playerController = GetComponent<BasicPlayerController>();
-        _playerNetworkData = GameObject.Find("ServerStateManager").GetComponent<PlayerNetworkData>(); 
-        _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
-    }
 
     // Activation -------------------------------------------------------------------------------------------------------------
-    public void Activate() { isActive = true; _ragdollOnOff = GetComponent<RagdollOnOff>(); }
+    public void Activate()
+    {
+        _playerController = GetComponent<BasicPlayerController>();
+        _playerNetworkData = GameObject.FindWithTag("StateManager").GetComponent<PlayerNetworkData>();
+        _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
+        _ragdollOnOff = GetComponent<RagdollOnOff>();
+        isActive = true;
+    }
     public void Deactivate() => isActive = false;
 
     // Update Loop -------------------------------------------------------------------------------------------------------------
@@ -98,7 +100,7 @@ public class PlayerShoot : NetworkBehaviour
             return;
         }
         else
-        {  */ 
+        {  */
 
         // check if ball is close enough to player
         if (_projectileInstance != null && Vector3.Distance(transform.position, _projectileInstance.transform.position) < playerClubRange)
@@ -165,7 +167,7 @@ public class PlayerShoot : NetworkBehaviour
     public void SpawnProjectile(ulong ownerId)
     {
         if (!IsOwner) return;
-        
+
         Vector3 ballSpawnPos = new Vector3(395.5f + Random.Range(-5, 5), 75f, 322.0f + Random.Range(-3, 3));
         Debug.Log("Spawning at: " + ballSpawnPos);
         RequestBallSpawnServerRpc(OwnerClientId, ballSpawnPos);

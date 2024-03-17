@@ -134,9 +134,7 @@ public class UIManager : MonoBehaviour
     private async void QuitLobbyReturnToTitle()
     {
         await _lobbyManager.OnApplicationQuitCallback();
-        titleScreenMode = true;
-        DisablePause();
-        EnableUI(UIState.Title);
+        ReturnToTitle();
     }
 
     // returns to rile screen
@@ -146,8 +144,7 @@ public class UIManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
         DisablePause();
-        _lobbyManager.PlayerExitLobby();
-        //EnableUI(UIState.Title);
+        EnableUI(UIState.Title);
     }
 
     // Settings UI Methods
@@ -268,7 +265,11 @@ public class UIManager : MonoBehaviour
         {
             entry.SetActive(false);
         }
+    }
 
+    public void ResetHUD()
+    {
+        _gamePlayerStrokesText.text = "Strokes: 0";
 
     }
 

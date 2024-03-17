@@ -53,6 +53,7 @@ public class LobbyManager : MonoBehaviour
 
     [SerializeField] EncryptionType encryption = EncryptionType.WSS;
     [SerializeField] int maxLobbySize = 5;
+    public GameObject _stateManagerPrefab;
 
     private const string RelayJoinCodeKey = "RelayJoinCode";
     private const string LobbyTypeKey = "LobbyType";
@@ -500,8 +501,19 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    private async Task UnsubscribeFromLobbyEvents()
+    {
+        if (ConnectedLobbyyEvents != null)
+        {
+            await ConnectedLobbyyEvents.UnsubscribeAsync();
+            ConnectedLobbyyEvents = null;
+        }
+    }
+
     private async void OnLobbyChanged(ILobbyChanges changes)
     {
+        Debug.LogWarning("Lobby changed");
+
         if (changes.LobbyDeleted)
         {
             await OnApplicationQuitCallback();
@@ -519,6 +531,7 @@ public class LobbyManager : MonoBehaviour
 
     private async void OnKickedFromLobby()
     {
+        Debug.LogWarning("Kicked from lobby");
         await OnApplicationQuitCallback();
         return;
         // Refresh the UI in some way
@@ -528,11 +541,21 @@ public class LobbyManager : MonoBehaviour
     {
         switch (state)
         {
-            case LobbyEventConnectionState.Unsubscribed: /* Update the UI if necessary, as the subscription has been stopped. */ break;
-            case LobbyEventConnectionState.Subscribing: /* Update the UI if necessary, while waiting to be subscribed. */ break;
-            case LobbyEventConnectionState.Subscribed: /* Update the UI if necessary, to show subscription is working. */ break;
-            case LobbyEventConnectionState.Unsynced: /* Update the UI to show connection problems. Lobby will attempt to reconnect automatically. */ break;
-            case LobbyEventConnectionState.Error: /* Update the UI to show the connection has errored. Lobby will not attempt to reconnect as something has gone wrong. */ break;
+            case LobbyEventConnectionState.Unsubscribed:
+                Debug.LogWarning("Lobby event connection state is unsubscribed.");
+                break;
+            case LobbyEventConnectionState.Subscribing:
+                Debug.Log("Lobby event connection state is subscribing.");
+                break;
+            case LobbyEventConnectionState.Subscribed:
+                Debug.Log("Lobby event connection state is subscribed.");
+                break;
+            case LobbyEventConnectionState.Unsynced:
+                Debug.LogWarning("Lobby event connection state is unsynced. This should not happen. Will attempt to resync.");
+                break;
+            case LobbyEventConnectionState.Error:
+                Debug.LogError("Lobby event connection state is in error. This should not happen. Conection will not be reattempted.");
+                break;
         }
     }
 
@@ -624,12 +647,12 @@ public class LobbyManager : MonoBehaviour
         _UIManager.DisplaySignedIn();
         _UIManager.DisplayCode(ConnectedLobby.LobbyCode);
         _UIManager.DisplayLobbyName(ConnectedLobby.Name);
-
+        _UIManager.ResetHUD();
     }
 
     private void EndGame()
     {
-        Debug.Log("in End Game: NetworkManager Instance: " + NetworkManager.Singleton);
+        Debug.Log("in End Game: NetworkManager Singleton: " + NetworkManager.Singleton);
 
         //NetworkManager.Singleton.Shutdown();
         //Debug.Log("Disconnected from Relay Server");
@@ -660,7 +683,6 @@ public class LobbyManager : MonoBehaviour
         {
             if (ConnectedLobby == null) return;
             StopAllCoroutines();
-            if (ConnectedLobbyyEvents != null) await ConnectedLobbyyEvents.UnsubscribeAsync();
 
             await Lobbies.Instance.RemovePlayerAsync(ConnectedLobby.Id, _playerId);
             ConnectedLobby = null;
@@ -691,18 +713,17 @@ public class LobbyManager : MonoBehaviour
 
     // Application Quit --------------------------------------------------------------------------------------------------------------
 
-    private void OnDestroy()
+    private void OnApplicationQuit()
     {
-        Debug.LogWarning("OnDestroy called");
+        Debug.Log("Application Quit: trying to exit");
         PlayerExit();
-
     }
 
     private async void PlayerExit()
     {
         try
         {
-            Debug.Log("Player Exit");
+            Debug.Log("Player Exit Called");
             await OnApplicationQuitCallback();
 
             EndGame();
@@ -720,8 +741,19 @@ public class LobbyManager : MonoBehaviour
     }
 
 
+
     public async Task OnApplicationQuitCallback()
     {
+        Debug.Log("OnApplicationQuitCallback called");
+
+        if (NetworkManager.Singleton.IsConnectedClient)
+        {
+
+            NetworkManager.Singleton.Shutdown();
+            Debug.Log("Disconnected from Relay Server");
+        }
+
+        await UnsubscribeFromLobbyEvents();
 
         if (ConnectedLobby != null)
         {
@@ -736,6 +768,7 @@ public class LobbyManager : MonoBehaviour
                 await LeaveLobby();
             }
         }
+
 
     }
 
