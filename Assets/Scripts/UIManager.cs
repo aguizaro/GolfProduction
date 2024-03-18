@@ -21,6 +21,7 @@ public class UIManager : MonoBehaviour
 
     [SerializeField] private Button _titleStartButton;
     [SerializeField] private Button _titleSettingsButton;
+    [SerializeField] private Camera _mainCamera;
 
     // Lobby UI Elements
     [Header("Lobby UI Elements")]
@@ -73,6 +74,7 @@ public class UIManager : MonoBehaviour
     public bool titleScreenMode = true;
     public static bool isPaused { get; set; } = false;
     private bool localeActive = false;
+    private Transform _cameraStartTransform;
 
     private void Awake()
     {
@@ -94,6 +96,9 @@ public class UIManager : MonoBehaviour
         // Settings Button Events
         _settingsApplyButton.onClick.AddListener(ApplySettings);
         _settingsBackButton.onClick.AddListener(DisableSettings);
+
+        //Camera Start Position
+        _cameraStartTransform = _mainCamera.transform;
 
         instance = this;
 
@@ -141,6 +146,8 @@ public class UIManager : MonoBehaviour
     // returns to rile screen
     public void ReturnToTitle()
     {
+        _mainCamera.transform.position = _cameraStartTransform.position;
+        _mainCamera.transform.rotation = _cameraStartTransform.rotation;
         titleScreenMode = true;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -270,19 +277,19 @@ public class UIManager : MonoBehaviour
 
     public void ResetHUD()
     {
-        _gamePlayerStrokesText.text = "Strokes: 0";
-        _holeCountText.text = "Hole: 1";
+        _gamePlayerStrokesText.text = "0";
+        _holeCountText.text = "1";
 
     }
 
     public void UpdateStrokesUI(int strokes)
     {
-        _gamePlayerStrokesText.text = "Strokes: " + strokes;
+        _gamePlayerStrokesText.text = strokes.ToString();
     }
 
     public void UpdateHoleCountText(int holeCount)
     {
-        _holeCountText.text = "Hole: " + holeCount;
+        _holeCountText.text = holeCount.ToString();
     }
 
 }
