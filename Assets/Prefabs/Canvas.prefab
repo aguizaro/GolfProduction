@@ -4111,7 +4111,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.30548057, b: 0.6415094, a: 1}
+  m_Color: {r: 0, g: 0.30548057, b: 0.6415094, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -6499,6 +6499,7 @@ MonoBehaviour:
   _titleScreenUI: {fileID: 3933522870122252541}
   _titleStartButton: {fileID: 6840067577552299394}
   _titleSettingsButton: {fileID: 6068835679533647102}
+  _mainCamera: {fileID: 0}
   _lobbyUI: {fileID: 4104806838317868448}
   _lobbyEntries:
   - {fileID: 1397773372820331448}
@@ -6888,7 +6889,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &87145722115085053
 Transform:
   m_ObjectHideFlags: 0
