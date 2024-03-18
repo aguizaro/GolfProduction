@@ -24,6 +24,7 @@ public class BasicPlayerController : NetworkBehaviour
     public PlayerParams _currentPlayerState;
     private PlayerNetworkData _playerNetworkData;
     private RagdollOnOff _ragdollOnOff;
+    private bool canMove = true;
 
     // Animation
     private Animator _animator;
@@ -55,7 +56,10 @@ public class BasicPlayerController : NetworkBehaviour
 
         if (_isActive) Debug.Log("Player controller is active for " + OwnerClientId + " isOwner: " + IsOwner);
         Animate();
-        Movement();
+        if(canMove)
+        {
+            Movement();
+        }
     }
 
 
@@ -184,6 +188,7 @@ public class BasicPlayerController : NetworkBehaviour
         bool isStrafingRight = _animator.GetBool("isRight");
         bool isWalking = _animator.GetBool("isWalking");
         bool isReversing = _animator.GetBool("isReversing");
+        bool isStriking = _animator.GetBool("isStriking");
         bool forwardPressed = Input.GetKey("w") || Input.GetKey("up");
         bool runPressed = Input.GetKey("left shift") || Input.GetKey("right shift");
         bool backPressed = Input.GetKey("s") || Input.GetKey("down");
@@ -213,7 +218,7 @@ public class BasicPlayerController : NetworkBehaviour
                 _animator.SetBool("isReversing", false);
             }
 
-            if (!isrunning && (forwardPressed && runPressed))
+            if (!isrunning && (forwardPressed && runPressed) && !isStriking)
             {
                 _animator.SetBool("isRunning", true);
             }
@@ -240,13 +245,35 @@ public class BasicPlayerController : NetworkBehaviour
                 _animator.SetBool("isRight", false);
             }
 
-            if (strikePressed)
+            if (strikePressed && !isStriking)
             {
                 _animator.SetBool("isStriking", true);
+                _animator.SetBool("justStriked", true);
+                DisableInput();
             }
-            if (!strikePressed)
+            
+            if (isStriking)
             {
-                _animator.SetBool("isStriking", false);
+                if(!strikePressed)
+                {
+                    _animator.SetBool("justStriked", false);
+                }
+                if (_animator.GetCurrentAnimatorStateInfo(0).IsName("Strike") && !_animator.IsInTransition(0))
+                {
+                    // Check if the current animation is the "Strike" animation and not in transition
+                    if (_animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 0.7f)
+                    {
+                        // The strike animation has finished playing
+                        _animator.SetBool("isStriking", false);
+                        EnableInput();
+                    }
+                }
+                else if (_animator.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
+                {
+                    // If the current state is "Idle", reset isStriking and enable input
+                    _animator.SetBool("isStriking", false);
+                    EnableInput();
+                }
             }
         }
     }
@@ -261,6 +288,23 @@ public class BasicPlayerController : NetworkBehaviour
 
         _currentPlayerState = _startState;
         _playerNetworkData.StorePlayerState(_currentPlayerState, OwnerClientId);
+    }
+
+    public void DisableInput()
+    {
+        _animator.SetBool("isWalking", false);
+        _animator.SetBool("isRunning", false);
+        _animator.SetBool("isLeft", false);
+        _animator.SetBool("isRight", false);
+        _animator.SetBool("isReversing", false);
+        //_animator.SetBool("isStriking", false);
+
+        canMove = false;
+    }
+
+    public void EnableInput()
+    {
+        canMove = true;
     }
 }
 
