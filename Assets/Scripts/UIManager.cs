@@ -118,6 +118,8 @@ public class UIManager : MonoBehaviour
 
 
     public void DeactivateUI() { _lobbyUI.SetActive(false); Debug.Log("Deactivated Lobby UI: " + _lobbyUI.activeSelf); titleScreenMode = false; }
+    public void DeactivateHUD() { _gamePlayerStrokesText.gameObject.SetActive(false); _holeCountText.gameObject.SetActive(false); _lobbyJoinCodeText.gameObject.SetActive(false); _lobbyNameText.gameObject.SetActive(false); }
+    public void ActivateHUD() { _gamePlayerStrokesText.gameObject.SetActive(true); _holeCountText.gameObject.SetActive(true); _lobbyJoinCodeText.gameObject.SetActive(true); _lobbyNameText.gameObject.SetActive(true); }
     public void DisplayCode(string code) => _lobbyJoinCodeText.text = code;
     public void DisplayLobbyName(string name) => _lobbyNameText.text = name;
     public async void DisplaySignedIn() => _lobbySignedInText.text = await _lobbyManager.GetPlayerName();
@@ -146,6 +148,7 @@ public class UIManager : MonoBehaviour
     // returns to rile screen
     public void ReturnToTitle()
     {
+        DeactivateHUD();
         _mainCamera.transform.position = _cameraStartTransform.position;
         _mainCamera.transform.rotation = _cameraStartTransform.rotation;
         titleScreenMode = true;

@@ -241,6 +241,7 @@ public class LobbyManager : MonoBehaviour
 
             _UIManager.DeactivateUI();
 
+
             Debug.Log("Connected lobby code: " + ConnectedLobby.LobbyCode);
 
         }
@@ -647,6 +648,7 @@ public class LobbyManager : MonoBehaviour
         gameIsActive = true;
 
         _UIManager.DeactivateUI();
+        _UIManager.ActivateHUD();
         _UIManager.DisplaySignedIn();
         _UIManager.DisplayCode(ConnectedLobby.LobbyCode);
         _UIManager.DisplayLobbyName(ConnectedLobby.Name);
@@ -667,8 +669,8 @@ public class LobbyManager : MonoBehaviour
         Debug.Log("cursor visible: " + Cursor.visible.ToString());
 
         _UIManager.DisableUIText();
+        _UIManager.DeactivateHUD();
         _UIManager.ReturnToTitle();
-
 
     }
 
