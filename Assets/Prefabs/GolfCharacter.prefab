@@ -407,7 +407,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3746147730
+  GlobalObjectIdHash: 171685441
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 1
@@ -628,15 +628,19 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 420073679474077443}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: adeba828b0fa7e04d9e0081757082430, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerTransform: {fileID: 0}
-  swingCamera: {fileID: 0}
-  playerAnimator: {fileID: 0}
-  ballPrefab: {fileID: 0}
+  playerTransform: {fileID: 6247323603675803764}
+  playerAnimator: {fileID: 7225643878605417583}
+  ballPrefab: {fileID: 3665726570761771704, guid: 3d0ef90e59c624be5bf18a934047635a, type: 3}
+  cameraFollowScript: {fileID: 4118846366210689039}
+  playerControllerScript: {fileID: 5786876800738959544}
+  startSwingMaxDistance: 2
+  swingForce: 20
+  verticalAngle: 0.5
 --- !u!114 &-3992230629983439654
 MonoBehaviour:
   m_ObjectHideFlags: 0

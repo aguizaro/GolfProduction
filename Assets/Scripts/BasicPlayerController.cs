@@ -14,6 +14,7 @@ public class BasicPlayerController : NetworkBehaviour
     public float sprintMultiplier = 4f;
     public float rotationSpeed = 100f;
     private bool isSprinting = false;
+    private float currentSpeed;
 
     // Physics
     private Rigidbody _rb;
@@ -150,10 +151,15 @@ public class BasicPlayerController : NetworkBehaviour
     private void PlayerMovement(float moveHorizontal, float moveVertical, float rotationInput)
     {
 
-        float splayerSpeed = isSprinting ? moveSpeed * sprintMultiplier : moveSpeed;
+        float targetSpeed = isSprinting ? moveSpeed * sprintMultiplier : moveSpeed;
 
-        Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
-        movement = movement.normalized * splayerSpeed * Time.deltaTime;
+        // Smoothly interpolate between current speed and target speed
+        currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, 5f * Time.deltaTime);
+
+        // Calculate movement direction
+        Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical).normalized;
+
+        movement *= currentSpeed * Time.deltaTime;
 
         _rb.MovePosition(transform.position + transform.TransformDirection(movement));
 
