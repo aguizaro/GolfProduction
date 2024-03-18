@@ -29,6 +29,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Locale
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6efab60545151a54b842dbbc037a2b35
+    m_Address: Persian (fa)
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 1
   m_Settings: {fileID: 11400000, guid: b2339409b4176714782188b18a669a72, type: 2}
   m_SchemaSet:
