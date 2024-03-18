@@ -21,7 +21,6 @@ public class PlayerShoot : NetworkBehaviour
     private bool isActive = false;
     private bool _projectileMoving = false;
 
-    // On Start -------------------------------------------------------------------------------------------------------------
 
     // Activation -------------------------------------------------------------------------------------------------------------
     public void Activate()
@@ -34,8 +33,12 @@ public class PlayerShoot : NetworkBehaviour
         _ragdollOnOff = GetComponent<RagdollOnOff>();
         isActive = true;
 
-        if (IsOwner) SpawnProjectile(OwnerClientId);
+        if (IsOwner)
+        {
+            SpawnProjectile(OwnerClientId);
+        }
     }
+
     public void Deactivate() => isActive = false;
 
     // Update Loop -------------------------------------------------------------------------------------------------------------
@@ -61,13 +64,12 @@ public class PlayerShoot : NetworkBehaviour
         if (_projectileMoving && _projectileRb.velocity.magnitude < 0.1f && _projectileRb.angularVelocity.magnitude > 0)
         {
             _projectileMoving = false;
-            Debug.Log("Ball stopped moving at " + _projectileInstance.transform.position + " when velocity droppped to " + _projectileRb.velocity.magnitude);
+            //Debug.Log("Ball stopped moving at " + _projectileInstance.transform.position + " when velocity droppped to " + _projectileRb.velocity.magnitude);
             stopRotation();
         }
     }
 
     // Spawn and Shooting RPCs -------------------------------------------------------------------------------------------------------------
-
 
     [ServerRpc]
     private void RequestBallSpawnServerRpc(ulong ownerId, Vector3 position)
@@ -79,11 +81,6 @@ public class PlayerShoot : NetworkBehaviour
         _projectileInstance.GetComponent<NetworkObject>().SpawnWithOwnership(ownerId);
         _projectileRb = _projectileInstance.GetComponent<Rigidbody>();
 
-        //  prevent ball from rolling
-        RemoveForces();
-        stopRotation();
-
-        // Inform the client about the spawned projectile
         SpawnedProjectileClientRpc(_projectileInstance.GetComponent<NetworkObject>().NetworkObjectId);
     }
 
@@ -98,15 +95,6 @@ public class PlayerShoot : NetworkBehaviour
     // Shoot the ball or instantiate it if it doesn't exist
     private void ExecuteShoot(Vector3 dir, ulong ownerId)
     {
-        /*
-        if (_projectileInstance == null)
-        {
-            RequestBallSpawnServerRpc(OwnerClientId);
-            return;
-        }
-        else
-        {  */
-
         // check if ball is close enough to player
         if (_projectileInstance != null && Vector3.Distance(transform.position, _projectileInstance.transform.position) < playerClubRange)
         {
@@ -148,8 +136,11 @@ public class PlayerShoot : NetworkBehaviour
     {
         if (_projectileInstance != null && _projectileRb != null)
         {
-            _projectileRb.velocity = Vector3.zero;
-            _projectileRb.angularVelocity = Vector3.zero;
+            if (IsOwner)
+            {
+                _projectileRb.velocity = Vector3.zero;
+                _projectileRb.angularVelocity = Vector3.zero;
+            }
         }
     }
 
@@ -157,7 +148,7 @@ public class PlayerShoot : NetworkBehaviour
     {
         if (_projectileInstance != null && _projectileRb != null)
         {
-            _projectileRb.freezeRotation = true;
+            if (IsOwner) _projectileRb.freezeRotation = true;
         }
     }
 
@@ -165,7 +156,7 @@ public class PlayerShoot : NetworkBehaviour
     {
         if (_projectileInstance != null && _projectileRb != null)
         {
-            _projectileRb.freezeRotation = false;
+            if (IsOwner) _projectileRb.freezeRotation = false;
         }
     }
 

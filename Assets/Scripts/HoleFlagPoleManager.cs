@@ -9,9 +9,15 @@ public class HoleFlagPoleManager : NetworkBehaviour
     private PlayerNetworkData _playerNetworkData;
     private bool isActive = false;
 
+    public List<Vector3> holeStartPositions;
+    private UIManager _UIManager;
+
+    private List<ulong> _playerIDs = new List<ulong>();
+
     private void Start()
     {
         holeTrigger = GetComponent<Collider>();
+        _UIManager = GameObject.Find("Canvas").GetComponent<UIManager>();
     }
 
     public void Activate()
@@ -28,17 +34,37 @@ public class HoleFlagPoleManager : NetworkBehaviour
 
         if (other.CompareTag("Ball"))
         {
-            //if (IsServer) 
-            if (IsOwner)
+            if (!_playerIDs.Contains(other.gameObject.GetComponent<NetworkObject>().OwnerClientId))
             {
                 PlayerData oldData = _playerNetworkData.GetPlayerState();
                 oldData.completedHoles++;
 
                 ulong playerID = other.gameObject.GetComponent<NetworkObject>().OwnerClientId;
                 _playerNetworkData.UpdateCompletedHoleCount(oldData.completedHoles, playerID);
+                _UIManager.UpdateHoleCountText(oldData.completedHoles + 1);
+                _playerIDs.Add(playerID);
 
-                other.gameObject.GetComponent<NetworkObject>().Despawn(); // Despawn golf ball
+                if (oldData.completedHoles == holeStartPositions.Count)
+                {
+                    Debug.Log("Game Over, you made it!");
+                    other.gameObject.SetActive(false);
+                }
+                else
+                {
+                    //stop the ball
+                    other.GetComponent<Rigidbody>().velocity = Vector3.zero;
+                    other.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
+                    //move the ball to the next start pos
+                    other.transform.position = GetNextHoleStartPosition(oldData.completedHoles);
+                    Debug.Log("Hole " + (oldData.completedHoles - 1) + " completed!\nMoving to next position " + other.transform.position);
+                }
             }
         }
+    }
+
+    private Vector3 GetNextHoleStartPosition(int holeIndex)
+    {
+        return holeStartPositions[holeIndex] + new Vector3(Random.Range(-3f, 3f), 0, Random.Range(-3f, 3f));
+
     }
 }

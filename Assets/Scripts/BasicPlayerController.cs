@@ -11,7 +11,7 @@ public class BasicPlayerController : NetworkBehaviour
 {
     // Movement
     public float moveSpeed = 2f;
-    public float sprintMultiplier = 2.5f;
+    public float sprintMultiplier = 4f;
     public float rotationSpeed = 100f;
     private bool isSprinting = false;
 

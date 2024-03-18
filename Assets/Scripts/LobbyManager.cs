@@ -606,9 +606,17 @@ public class LobbyManager : MonoBehaviour
     private async Task WaitForNetworkConnection()
     {
         Debug.Log("Wait for Network connection");
-
+        int tick = 0;
         while (!NetworkManager.Singleton.IsConnectedClient)
         {
+            Debug.Log("still waiting for connection... " + tick);
+            tick++;
+            if (tick > 2000)
+            {
+                Debug.LogWarning("Failed to connect to network");
+                await PlayerExit();
+                return;
+            }
             await Task.Yield();
         }
         // do something here to indicate that the client is connected and start making calls to the server -------
@@ -633,8 +641,6 @@ public class LobbyManager : MonoBehaviour
 
     private void StartGame()
     {
-        Debug.Log("Deactivating UI");
-
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 

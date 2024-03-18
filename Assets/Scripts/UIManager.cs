@@ -60,6 +60,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button _settingsBackButton;
     [SerializeField] private Slider _settingsSensitivitySlider;
     [SerializeField] private TMP_Dropdown _settingsLanguageDropdown;
+    [SerializeField] private TMP_Text _holeCountText;
 
     // UIManager instance
     public static UIManager instance { get; private set; }
@@ -270,12 +271,18 @@ public class UIManager : MonoBehaviour
     public void ResetHUD()
     {
         _gamePlayerStrokesText.text = "Strokes: 0";
+        _holeCountText.text = "Hole: 1";
 
     }
 
     public void UpdateStrokesUI(int strokes)
     {
         _gamePlayerStrokesText.text = "Strokes: " + strokes;
+    }
+
+    public void UpdateHoleCountText(int holeCount)
+    {
+        _holeCountText.text = "Hole: " + holeCount;
     }
 
 }

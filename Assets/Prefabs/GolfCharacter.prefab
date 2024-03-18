@@ -428,7 +428,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 1
-  sprintMultiplier: 2.5
+  sprintMultiplier: 4
   rotationSpeed: 1000
 --- !u!65 &2556599362540292874
 BoxCollider:

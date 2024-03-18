@@ -124,6 +124,7 @@ public class PlayerNetworkData : NetworkBehaviour
 
     public void UpdateCompletedHoleCount(int holeCount, ulong senderID)
     {
+        if (!IsOwner) return;
         UpdateCompletedHoleCountServerRpc(holeCount, senderID);
     }
 
