@@ -25,7 +25,7 @@ public class HoleFlagPoleManager : NetworkBehaviour
         _playerNetworkData = GameObject.FindWithTag("StateManager").GetComponent<PlayerNetworkData>();
         isActive = true;
 
-        Debug.Log("HoleFlagPoleManager activated for " + OwnerClientId + " isOwner: " + IsOwner);
+        //Debug.Log("HoleFlagPoleManager activated for " + OwnerClientId + " isOwner: " + IsOwner);
     }
 
     private void OnTriggerEnter(Collider other)

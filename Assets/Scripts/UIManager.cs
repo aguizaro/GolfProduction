@@ -118,7 +118,15 @@ public class UIManager : MonoBehaviour
 
 
     public void DeactivateUI() { _lobbyUI.SetActive(false); Debug.Log("Deactivated Lobby UI: " + _lobbyUI.activeSelf); titleScreenMode = false; }
-    public void DeactivateHUD() { _gamePlayerStrokesText.gameObject.SetActive(false); _holeCountText.gameObject.SetActive(false); _lobbyJoinCodeText.gameObject.SetActive(false); _lobbyNameText.gameObject.SetActive(false); }
+    public void DeactivateHUD()
+    {
+        // need thes checks here in case TMPro objects are destroyed during applicatino quit
+        if (_gamePlayerStrokesText == null || _holeCountText == null || _lobbyJoinCodeText == null || _lobbyNameText == null) { return; }
+        _gamePlayerStrokesText.gameObject.SetActive(false);
+        _holeCountText.gameObject.SetActive(false);
+        _lobbyJoinCodeText.gameObject.SetActive(false);
+        _lobbyNameText.gameObject.SetActive(false);
+    }
     public void ActivateHUD() { _gamePlayerStrokesText.gameObject.SetActive(true); _holeCountText.gameObject.SetActive(true); _lobbyJoinCodeText.gameObject.SetActive(true); _lobbyNameText.gameObject.SetActive(true); }
     public void DisplayCode(string code) => _lobbyJoinCodeText.text = code;
     public void DisplayLobbyName(string name) => _lobbyNameText.text = name;
@@ -127,6 +135,8 @@ public class UIManager : MonoBehaviour
     public string GetInputText() { return _inputField.text; }
     public void DisableUIText()
     {
+        // need thes checks here in case TMPro objects are destroyed during applicatino quit
+        if (_lobbyJoinCodeText == null || _lobbyNameText == null) { return; }
         _lobbyJoinCodeText.text = "";
         _lobbyNameText.text = "";
     }
@@ -141,7 +151,7 @@ public class UIManager : MonoBehaviour
     // Quit lobby and return to title screen
     private async void QuitLobbyReturnToTitle()
     {
-        await _lobbyManager.OnApplicationQuitCallback();
+        await _lobbyManager.TryQuitLobby();
         ReturnToTitle();
     }
 

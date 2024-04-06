@@ -103,8 +103,8 @@ public class PlayerNetworkData : NetworkBehaviour
                 score = _networkPlayerData.Value.score,
             };
 
-            Debug.Log("Stroke in data: " + data.strokes);
-            Debug.Log("Strokes in network data: " + newData.strokes);
+            //Debug.Log("Stroke in data: " + data.strokes);
+            //Debug.Log("Strokes in network data: " + newData.strokes);
             //Debug.Log("Storing player state for " + senderID + "\npos: " + data.playerPos + " rot: " + data.playerRot);
             StorePlayerStateServerRpc(newData, senderID);
             StoreToPlayerDictionary(newData, senderID);
