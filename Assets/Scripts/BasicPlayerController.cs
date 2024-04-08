@@ -112,6 +112,13 @@ public class BasicPlayerController : NetworkBehaviour
 
     }
 
+    public override void OnDestroy()
+    {
+        Deactivate();
+        base.OnDestroy();
+
+    }
+
 
     // Movement -------------------------------------------------------------------------------------------------------------
 
