@@ -53,7 +53,6 @@ public class LobbyManager : MonoBehaviour
 
     [SerializeField] EncryptionType encryption = EncryptionType.WSS;
     [SerializeField] int maxLobbySize = 5;
-    public GameObject _stateManagerPrefab;
 
     private const string RelayJoinCodeKey = "RelayJoinCode";
     private const string LobbyTypeKey = "LobbyType";

@@ -2,11 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
-using Unity.VisualScripting;
-using UnityEngine.PlayerLoop;
-using UnityEngine.Video;
-using Unity.Services.Lobbies.Models;
 
+
+// Needs: simple way to deactivate everything on game over / game exit, so players can play again without having to re-launch the game
 public class BasicPlayerController : NetworkBehaviour
 {
     // Movement
@@ -20,8 +18,7 @@ public class BasicPlayerController : NetworkBehaviour
     private PlayerShoot _playerShoot;
 
     // State Management
-    private PlayerParams _startState;
-    public PlayerParams _currentPlayerState;
+    public PlayerData _currentPlayerState;
     private PlayerNetworkData _playerNetworkData;
     private RagdollOnOff _ragdollOnOff;
     private bool canMove = true;
@@ -46,17 +43,19 @@ public class BasicPlayerController : NetworkBehaviour
         if (!IsOwner) return;
 
         transform.position = new Vector3(Random.Range(390, 400), 69.1f, Random.Range(318, 320));
+
+        // activate player controller - controller will activate the player movement, animations, shooting and ragdoll
+        Activate();
     }
 
 
     // Update Loop -------------------------------------------------------------------------------------------------------------
-    void FixedUpdate()
+    void Update()
     {
-        //Debug.Log("player controller: pos: " + transform.position + " rot: " + transform.rotation.eulerAngles + " owner: " + OwnerClientId);
+        if (!_isActive) return; //prevent updates until player is fully activated
 
-        if (_isActive) Debug.Log("Player controller is active for " + OwnerClientId + " isOwner: " + IsOwner);
         Animate();
-        if(canMove)
+        if (canMove)
         {
             Movement();
         }
@@ -68,44 +67,51 @@ public class BasicPlayerController : NetworkBehaviour
     public void Activate()
     {
         Debug.Log("Activating player controller for " + OwnerClientId + " isOwner: " + IsOwner);
-
-        _playerNetworkData = GameObject.FindWithTag("StateManager").GetComponent<PlayerNetworkData>();
+        _playerNetworkData = GetComponent<PlayerNetworkData>();
 
         if (!IsOwner) return;
 
-        //transform.position = new Vector3(Random.Range(390, 400), 69.1f, Random.Range(318, 320)); //set starting random place near first hole
-        Debug.Log("Client: " + OwnerClientId + " starting position" + transform.position);
-
-        _currentPlayerState = new PlayerParams
-        {
-            playerPos = transform.position,
-            playerRot = transform.rotation,
-            //isCarrying = false, // check for this later
-            isSwinging = false,
-        };
-
-        _playerNetworkData.StorePlayerState(_currentPlayerState, OwnerClientId);
-        _startState = _currentPlayerState;
-
         // activate player movement, animations, shooting and ragdoll
         _isActive = true;
-        //_playerShoot.Activate(); // activate shooting
-        _playerShoot.Activate(); // activate shooting on client
-
-        //_playerShoot.SpawnProjectile(OwnerClientId); // Immediate spawn ball
+        _playerShoot.Activate();
 
         // activate flag poles
         foreach (GameObject flagPole in _flagPoles)
         {
+            flagPole.GetComponent<HoleFlagPoleManager>().playerNetworkData = _playerNetworkData;
+            flagPole.GetComponent<HoleFlagPoleManager>().playerController = this;
+            flagPole.GetComponent<HoleFlagPoleManager>().uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
             flagPole.GetComponent<HoleFlagPoleManager>().Activate();
         }
 
+        // set initial player state
+        _currentPlayerState = new PlayerData
+        {
+            playerID = OwnerClientId,
+            playerPos = transform.position,
+            playerRot = transform.rotation,
+            currentHole = 1,
+            strokes = 0,
+            enemiesDefeated = 0,
+            score = 0
+
+        };
+        UpdatePlayerState(_currentPlayerState);
     }
+
 
     public void Deactivate()
     {
         _isActive = false;
+        foreach (GameObject flagPole in _flagPoles)
+        {
+            flagPole.GetComponent<HoleFlagPoleManager>().Deactivate();
+        }
+        _ragdollOnOff.Deactivate();
+        _playerShoot.Deactivate();
+
     }
+
 
     // Movement -------------------------------------------------------------------------------------------------------------
 
@@ -115,13 +121,7 @@ public class BasicPlayerController : NetworkBehaviour
         {
             if (!_isActive) return; //prevent updates until state manager is fully activated
 
-            if (_playerNetworkData == null) // redundant check due to OnNetworkSpawn not reliably setting _playerNetworkData
-            {
-                _playerNetworkData = GameObject.FindWithTag("StateManager").GetComponent<PlayerNetworkData>();
-            }
-            Debug.LogWarning("Non owner: " + OwnerClientId + " reading player state: " + _currentPlayerState.playerPos + " rot: " + _currentPlayerState.playerRot);
-            _currentPlayerState = _playerNetworkData.GetPlayerParams();
-            return; //only owners can update player state
+            // update local player state with network data ?
         }
 
         // Check for pause input
@@ -134,8 +134,6 @@ public class BasicPlayerController : NetworkBehaviour
         if (UIManager.isPaused) { return; }
         else { if (!UIManager.instance.titleScreenMode) { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; } }
 
-        //if (_ragdollActive) return; //prevent movement while ragdoll is active
-
         float moveHorizontal = Input.GetAxis("Horizontal");
         float moveVertical = Input.GetAxis("Vertical");
         float rotationInput = Input.GetAxis("Mouse X");
@@ -143,8 +141,6 @@ public class BasicPlayerController : NetworkBehaviour
 
         PlayerMovement(moveHorizontal, moveVertical, rotationInput);
 
-        //check if player has fallen through terrain - reset to start state
-        //if (transform.position.y <= )
     }
 
     private void PlayerMovement(float moveHorizontal, float moveVertical, float rotationInput)
@@ -163,18 +159,23 @@ public class BasicPlayerController : NetworkBehaviour
 
         if (!_isActive) return; //prevent updates to state manager until player is fully activated
 
-        // current state of this player (owner)
-        _currentPlayerState = new PlayerParams
+        // Update player state if position or rotation has changed
+        if (transform.position != _currentPlayerState.playerPos || transform.rotation != _currentPlayerState.playerRot)
         {
-            playerPos = transform.position,
-            playerRot = transform.rotation,
-            //isCarrying = false, // check for this later
-            isSwinging = false,
-            strokes = _currentPlayerState.strokes,
-        };
+            _currentPlayerState = new PlayerData
+            {
+                playerID = OwnerClientId,
+                playerPos = transform.position,
+                playerRot = transform.rotation,
+                currentHole = _currentPlayerState.currentHole,
+                strokes = _currentPlayerState.strokes,
+                enemiesDefeated = _currentPlayerState.enemiesDefeated,
+                score = _currentPlayerState.score
+            };
 
-        //Debug.LogWarning("In BasicPlayerController.cs sending to PlayerNetworkData.cs\nOwner: " + OwnerClientId + "\npos: " + _currentPlayerState.playerPos + " rot: " + _currentPlayerState.playerRot);
-        _playerNetworkData.StorePlayerState(_currentPlayerState, OwnerClientId);
+            //Debug.Log("BasicPlayerController: sending to PlayerNetworkData.cs\nOwner: " + OwnerClientId + "\nstrokes: " + _currentPlayerState.strokes + "\nhole: " + _currentPlayerState.currentHole + "\npos: " + _currentPlayerState.playerPos);
+            UpdatePlayerState(_currentPlayerState);
+        }
     }
 
     // Animation -------------------------------------------------------------------------------------------------------------
@@ -251,10 +252,10 @@ public class BasicPlayerController : NetworkBehaviour
                 _animator.SetBool("justStriked", true);
                 DisableInput();
             }
-            
+
             if (isStriking)
             {
-                if(!strikePressed)
+                if (!strikePressed)
                 {
                     _animator.SetBool("justStriked", false);
                 }
@@ -279,16 +280,7 @@ public class BasicPlayerController : NetworkBehaviour
     }
 
 
-    // State Management -------------------------------------------------------------------------------------------------------------
-
-    // Reset player state to starting state
-    public void ResetPlayerState()
-    {
-        transform.SetPositionAndRotation(_startState.playerPos, _startState.playerRot);
-
-        _currentPlayerState = _startState;
-        _playerNetworkData.StorePlayerState(_currentPlayerState, OwnerClientId);
-    }
+    // Input Management -------------------------------------------------------------------------------------------------------------
 
     public void DisableInput()
     {
@@ -305,6 +297,13 @@ public class BasicPlayerController : NetworkBehaviour
     public void EnableInput()
     {
         canMove = true;
+    }
+
+    // State Management -------------------------------------------------------------------------------------------------------------
+    public void UpdatePlayerState(PlayerData playerState)
+    {
+        if (!IsOwner) return;
+        _playerNetworkData.StorePlayerState(playerState);
     }
 }
 

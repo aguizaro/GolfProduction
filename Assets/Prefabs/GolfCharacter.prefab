@@ -346,7 +346,7 @@ GameObject:
   - component: {fileID: -3407844358631336923}
   - component: {fileID: 7363029190862775147}
   - component: {fileID: 1651457965969626016}
-  - component: {fileID: -3992230629983439654}
+  - component: {fileID: 3693991727007100362}
   m_Layer: 0
   m_Name: GolfCharacter
   m_TagString: Player
@@ -637,7 +637,7 @@ MonoBehaviour:
   swingCamera: {fileID: 0}
   playerAnimator: {fileID: 0}
   ballPrefab: {fileID: 0}
---- !u!114 &-3992230629983439654
+--- !u!114 &3693991727007100362
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -646,10 +646,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 420073679474077443}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 58701096e9d51499db1e871dcb073930, type: 3}
+  m_Script: {fileID: 11500000, guid: 5c5757ab90b04449aa96fdd650287734, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _stateManagerPrefab: {fileID: 8083658177136378179, guid: 0c5023e9d937d41ac9b0f7d05667380e, type: 3}
 --- !u!1 &799593922335037580
 GameObject:
   m_ObjectHideFlags: 0
