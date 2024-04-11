@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
+using UnityEngine.InputSystem;
 
 
 // Needs: simple way to deactivate everything on game over / game exit, so players can play again without having to re-launch the game
@@ -29,7 +30,7 @@ public class BasicPlayerController : NetworkBehaviour
 
     // Activation
     private bool _isActive = false;
-
+    private Actions _actions;
     public override void OnNetworkSpawn()
     {
         _rb = gameObject.GetComponent<Rigidbody>();
@@ -39,10 +40,14 @@ public class BasicPlayerController : NetworkBehaviour
         _flagPoles = GameObject.FindGameObjectsWithTag("HoleFlagPole");
 
         _ragdollOnOff.Activate(); // activate ragdoll
+        _actions = new Actions();
+        if (_actions != null) { Debug.Log("PlayerActions not null"); }
+        _actions.Gameplay.Test.started += ctx => { Debug.Log($"Hello from {OwnerClientId}!"); };
 
         if (!IsOwner) return;
 
         transform.position = new Vector3(Random.Range(390, 400), 69.1f, Random.Range(318, 320));
+        _actions.Enable();
 
         // activate player controller - controller will activate the player movement, animations, shooting and ragdoll
         Activate();
@@ -109,7 +114,7 @@ public class BasicPlayerController : NetworkBehaviour
         }
         _ragdollOnOff.Deactivate();
         _playerShoot.Deactivate();
-
+        _actions.Disable();
     }
 
     public override void OnDestroy()
