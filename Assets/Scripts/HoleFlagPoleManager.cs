@@ -3,71 +3,68 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
-
-// HoleFlagPoleManager class manages the flag poles at each hole and handles player scoring
-// this class is networked and is owned by the server - because of this. Any logic that needs to be ran on clients requires a ClientRpc - onTriggerEnter is only executed on the server
-
-// Still needs: reset flag pole and deactivate on game over / game exit, so players can play again without having to re-launch the game
 public class HoleFlagPoleManager : NetworkBehaviour
 {
-    //these are set by the player controller on activation
-    public BasicPlayerController playerController;
-    public PlayerNetworkData playerNetworkData;
-    public UIManager uiManager;
-
+    private Collider holeTrigger;
+    private PlayerNetworkData _playerNetworkData;
     private bool isActive = false;
+
+    public List<Vector3> holeStartPositions;
+    private UIManager _UIManager;
 
     private List<ulong> _playerIDs = new List<ulong>();
 
+    private void Start()
+    {
+        holeTrigger = GetComponent<Collider>();
+        _UIManager = GameObject.Find("Canvas").GetComponent<UIManager>();
+    }
 
     public void Activate()
     {
+        _playerNetworkData = GameObject.FindWithTag("StateManager").GetComponent<PlayerNetworkData>();
         isActive = true;
-        Debug.Log("HoleFlagPoleManager activated for " + OwnerClientId + " isOwner: " + IsOwner + "\n" + "PlayerController: " + playerController.OwnerClientId + "\n" + "PlayerNetworkData: " + playerNetworkData.OwnerClientId + "\n" + "UIManager: " + uiManager);
-    }
-    public void Deactivate()
-    {
-        isActive = false;
-        ResetFlagPoles();
+
+        Debug.Log("HoleFlagPoleManager activated for " + OwnerClientId + " isOwner: " + IsOwner);
     }
 
-    public void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
-        if (!isActive || !IsOwner) return; //prevent updates until player is fully activated
+        if (!isActive) return; //prevent updates until player is fully activated
 
         if (other.CompareTag("Ball"))
         {
-            ulong playerID = other.gameObject.GetComponent<NetworkObject>().OwnerClientId;
-            Debug.Log("OnTriggerEnter: Ball for player " + playerID + " collided with hole " + playerController._currentPlayerState.currentHole);
-
-            if (!_playerIDs.Contains(playerID))
+            if (!_playerIDs.Contains(other.gameObject.GetComponent<NetworkObject>().OwnerClientId))
             {
+                PlayerData oldData = _playerNetworkData.GetPlayerState();
+                oldData.completedHoles++;
+
+                ulong playerID = other.gameObject.GetComponent<NetworkObject>().OwnerClientId;
+                _playerNetworkData.UpdateCompletedHoleCount(oldData.completedHoles, playerID);
+                _UIManager.UpdateHoleCountText(oldData.completedHoles + 1);
                 _playerIDs.Add(playerID);
-                HandlePlayerScoreClientRpc(playerID);
+
+                if (oldData.completedHoles == holeStartPositions.Count)
+                {
+                    Debug.Log("Game Over, you made it!");
+                    other.gameObject.SetActive(false);
+                }
+                else
+                {
+                    //stop the ball
+                    other.GetComponent<Rigidbody>().velocity = Vector3.zero;
+                    other.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
+                    //move the ball to the next start pos
+                    other.transform.position = GetNextHoleStartPosition(oldData.completedHoles);
+                    Debug.Log("Hole " + (oldData.completedHoles - 1) + " completed!\nMoving to next position " + other.transform.position);
+                }
             }
         }
     }
 
-    public void ResetFlagPoles()
+    private Vector3 GetNextHoleStartPosition(int holeIndex)
     {
-        _playerIDs.Clear();
-    }
-
-    [ClientRpc]
-    private void HandlePlayerScoreClientRpc(ulong playerID)
-    {
-        if (NetworkManager.Singleton.LocalClientId != playerID) return; //only the player that scored should handle this
-
-        Debug.Log("HandlePlayerScoreClientRpc called for " + NetworkManager.Singleton.LocalClientId);
-        Debug.Log("OnTriggerEnter: Player " + playerID + " made hole " + playerController._currentPlayerState.currentHole);
-        Debug.Log("OnTriggerEnter: Player " + playerID + " should match playerController " + playerController.OwnerClientId + " and playerNetworkData " + playerNetworkData.OwnerClientId);
-
-        playerController._currentPlayerState.currentHole++;
-
-        playerController.UpdatePlayerState(playerController._currentPlayerState);
-        uiManager.UpdateHoleCountText(playerController._currentPlayerState.currentHole);
-
-        //maybe we can check for win here since we have a reference to the player network data - currently being done in PlayerNetworkData
+        return holeStartPositions[holeIndex] + new Vector3(Random.Range(-3f, 3f), 0, Random.Range(-3f, 3f));
 
     }
 }

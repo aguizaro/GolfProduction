@@ -33,7 +33,7 @@ public class RagdollController : NetworkBehaviour
         Cursor.lockState = CursorLockMode.Locked;
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         if (!isActive) return;
 
