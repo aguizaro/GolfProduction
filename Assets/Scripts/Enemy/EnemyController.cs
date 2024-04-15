@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
-
+using Unity.Netcode;
 
 public enum EnemyState
 {
@@ -12,35 +12,33 @@ public enum EnemyState
     DEAD
 }
 
-
 [RequireComponent(typeof(NavMeshAgent))]
-public class EnemyController : MonoBehaviour
+public class NetworkEnemyController : NetworkBehaviour
 {
-    public EnemyState enemyState;
+    public NetworkVariable<EnemyState> enemyState = new NetworkVariable<EnemyState>();
     private NavMeshAgent agent;
     private Animator animator;
     private CharacterStats characterStats;
 
-    [Header("Basic Settings")]
     public float sightRadius;
-    bool isGuard;
+    public bool isGuard;
     private float speed;
+
+    private bool isReturnToOrigin = false;
     private GameObject attackTarget;
-    private float lastAttackTime;
+    private NetworkVariable<float> lastAttackTime = new NetworkVariable<float>();
     public float lookAtTime;
-    float remainLookAtTime;
+    private float remainLookAtTime;
     private Quaternion guardRotation;
     public LayerMask targetLayer;
 
-    [Header("Patrol State")]
     public float patrolRange;
-    public Vector3 wayPoint;
+    private Vector3 wayPoint;
     private Vector3 guardPos;
 
-
-    bool isWalk;
-    bool isChase;
-    bool isFollow;
+    private bool isWalk;
+    private bool isChase;
+    private bool isFollow;
 
     void Awake()
     {
@@ -49,29 +47,36 @@ public class EnemyController : MonoBehaviour
         characterStats = GetComponent<CharacterStats>();
         speed = agent.speed;
         guardPos = transform.position;
-        remainLookAtTime = lookAtTime;
         guardRotation = transform.rotation;
-        isGuard = enemyState == EnemyState.GUARD;
+
     }
 
-    void Start()
+    public override void OnNetworkSpawn()
     {
-        if (isGuard)
+        Debug.Log("Bool: " + isGuard);
+        if (IsServer)
         {
-            enemyState = EnemyState.GUARD;
-        }
-        else
-        {
-            enemyState = EnemyState.PATROL;
-            GetNewWayPoint();
+            if (isGuard)
+            {
+                enemyState.Value = EnemyState.GUARD;
+            }
+            else
+            {
+                enemyState.Value = EnemyState.PATROL;
+                GetNewWayPointServerRpc();
+            }
         }
     }
 
     void Update()
     {
-        SwitchState();
+        if (IsServer)
+        {
+            SwitchState();
+            lastAttackTime.Value -= Time.deltaTime;
+        }
         SwitchAnimation();
-        lastAttackTime -= Time.deltaTime;
+        Debug.Log($"Changing state to {enemyState.Value}, Target position set to {agent.destination}");
     }
 
     void SwitchAnimation()
@@ -79,143 +84,34 @@ public class EnemyController : MonoBehaviour
         animator.SetBool("Walk", isWalk);
         animator.SetBool("Chase", isChase);
         animator.SetBool("Follow", isFollow);
-
     }
 
     void SwitchState()
     {
         if (FoundPlayer())
         {
-            enemyState = EnemyState.CHASE;
+            enemyState.Value = EnemyState.CHASE;
         }
 
-        switch (enemyState)
+        switch (enemyState.Value)
         {
             case EnemyState.GUARD:
-                isChase = false;
-
-                if (transform.position != guardPos)
-                {
-                    isWalk = true;
-                    agent.isStopped = false;
-                    agent.destination = guardPos;
-
-                    if (Vector3.SqrMagnitude(guardPos - transform.position) <= agent.stoppingDistance)
-                    {
-                        isWalk = false;
-                        transform.rotation = Quaternion.Lerp(transform.rotation, guardRotation, 0.01f);
-                    }
-                }
+                GuardBehavior();
                 break;
             case EnemyState.PATROL:
-                isChase = false;
-                agent.speed = speed * 0.5f;
-
-                //Determine whether the waypoint has been reached
-                if (Vector3.Distance(transform.position, wayPoint) <= agent.stoppingDistance)
-                {
-                    isWalk = false;
-                    if (remainLookAtTime > 0)
-                        remainLookAtTime -= Time.deltaTime;
-                    else
-                        GetNewWayPoint();
-                }
-                else
-                {
-                    isWalk = true;
-                    agent.SetDestination(wayPoint);
-                }
-
+                PatrolBehavior();
                 break;
             case EnemyState.CHASE:
-                isWalk = false;
-                isChase = true;
-
-                agent.speed = speed;
-                Debug.Log(animator.speed);
-
-                if (!FoundPlayer())
-                {
-                    isFollow = false;
-                    if (remainLookAtTime > 0)
-                    {
-                        agent.SetDestination(transform.position);
-                        remainLookAtTime -= Time.deltaTime;
-                    }
-                    else if (isGuard)
-                    {
-                        enemyState = EnemyState.GUARD;
-                    }
-                    else
-                    {
-                        enemyState = EnemyState.PATROL;
-                    }
-                }
-                else
-                {
-                    isFollow = true;
-                    agent.isStopped = false;
-                    agent.SetDestination(attackTarget.transform.position);
-
-
-                }
-                if (TargetInAttackRange())
-                {
-                    isFollow = false;
-                    agent.isStopped = true;
-
-                    if (lastAttackTime <= 0)
-                    {
-                        lastAttackTime = characterStats.attackData.coolDown;
-                        characterStats.isCritical = Random.value < characterStats.attackData.criricalChance;
-                        Attack();
-                    }
-                }
-
-
+                ChaseBehavior();
                 break;
             case EnemyState.DEAD:
+                // Implement Death behavior
                 break;
-            default:
-                break;
         }
     }
 
-    void Attack()
-    {
-        transform.LookAt(attackTarget.transform);
-        if (TargetInAttackRange())
-        {
-            animator.SetTrigger("Attack");
-        }
-    }
-
-
-    bool TargetInAttackRange()
-    {
-        if (attackTarget != null)
-            return Vector3.Distance(attackTarget.transform.position, transform.position) <= characterStats.attackData.attackRange;
-        else
-            return false;
-    }
-
-    bool FoundPlayer()
-    {
-        var colliders = Physics.OverlapSphere(transform.position, sightRadius);
-
-        foreach (var target in colliders)
-        {
-            if (target.CompareTag("Player"))
-            {
-                attackTarget = target.gameObject;
-                return true;
-            }
-        }
-        attackTarget = null;
-        return false;
-    }
-
-    void GetNewWayPoint()
+    [ServerRpc]
+    void GetNewWayPointServerRpc()
     {
         remainLookAtTime = lookAtTime;
 
@@ -228,15 +124,143 @@ public class EnemyController : MonoBehaviour
         wayPoint = NavMesh.SamplePosition(randomPoint, out hit, patrolRange, 1) ? hit.position : transform.position;
     }
 
-    void OnDrawGizmosSelected()
+    [ServerRpc]
+    void AttackServerRpc()
     {
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(transform.position, sightRadius);
+        if (!IsServer || attackTarget == null) return;
+
+        transform.LookAt(attackTarget.transform);
+        Debug.Log("Attack Range: " + Vector3.Distance(attackTarget.transform.position, transform.position));
+
+        if (TargetInAttackRange())
+        {
+            Debug.Log("Attack!");
+            animator.SetTrigger("Attack");
+        }
     }
 
-    //Animation Event
-    void Hit()
+    bool TargetInAttackRange()
     {
+        if (attackTarget != null)
+            return Vector3.Distance(attackTarget.transform.position, transform.position) <= characterStats.attackData.attackRange;
+        else
+            return false;
+    }
+
+    bool FoundPlayer()
+    {
+        if (isReturnToOrigin)
+        {
+            return false;
+        }
+
+        var colliders = Physics.OverlapSphere(transform.position, sightRadius, targetLayer);
+
+        foreach (var target in colliders)
+        {
+            if (target.gameObject == attackTarget)
+            {
+                return true;
+            }
+        }
+
+        foreach (var target in colliders)
+        {
+            if (target.CompareTag("Player"))
+            {
+                attackTarget = target.gameObject;
+                Debug.Log("Found Player!");
+                return true;
+            }
+        }
+
+        attackTarget = null;
+        return false;
+    }
+
+    void GuardBehavior()
+    {
+        isChase = false;
+        if (transform.position != guardPos)
+        {
+            isWalk = true;
+            agent.isStopped = false;
+            agent.destination = guardPos;
+
+            if (Vector3.SqrMagnitude(guardPos - transform.position) <= agent.stoppingDistance)
+            {
+                isWalk = false;
+                transform.rotation = Quaternion.Lerp(transform.rotation, guardRotation, 0.01f);
+            }
+        }
+        else
+        {
+            isReturnToOrigin = false;
+        }
+    }
+
+    void PatrolBehavior()
+    {
+        isChase = false;
+        agent.speed = speed * 0.5f;
+
+        if (Vector3.Distance(transform.position, wayPoint) <= agent.stoppingDistance)
+        {
+            Debug.Log("Arrived at Waypoint");
+            isWalk = false;
+            isReturnToOrigin = false;
+            if (remainLookAtTime > 0)
+                remainLookAtTime -= Time.deltaTime;
+            else
+                GetNewWayPointServerRpc();
+        }
+        else
+        {
+            Debug.Log("Walking to Waypoint");
+            isWalk = true;
+            agent.SetDestination(wayPoint);
+        }
+    }
+
+    void ChaseBehavior()
+    {
+        isWalk = false;
+        isChase = true;
+
+        agent.speed = speed;
+        if (!FoundPlayer())
+        {
+            isFollow = false;
+            if (remainLookAtTime > 0)
+            {
+                agent.SetDestination(transform.position);
+                remainLookAtTime -= Time.deltaTime;
+            }
+            else
+            {
+                isReturnToOrigin = true;
+                enemyState.Value = isGuard ? EnemyState.GUARD : EnemyState.PATROL;
+            }
+        }
+        else
+        {
+            isFollow = true;
+            agent.isStopped = false;
+            agent.SetDestination(attackTarget.transform.position);
+        }
+
+        if (lastAttackTime.Value <= 0)
+        {
+            lastAttackTime.Value = characterStats.attackData.coolDown;
+            AttackServerRpc();
+        }
+    }
+
+    // Animation Event
+    public void Hit()
+    {
+        if (!IsServer) return;
+
         float attackRange = characterStats.attackData.attackRange;
         float attackAngle = 45f;
         int numberOfRays = 10;
@@ -258,16 +282,40 @@ public class EnemyController : MonoBehaviour
                 if (!hitTargets.Contains(hit.collider.gameObject))
                 {
                     hitTargets.Add(hit.collider.gameObject);
-                    Debug.Log("Hit Plyer!");
+                    Debug.Log("Hit Player!");
                     Debug.Log(hit.collider.gameObject.name);
-                    //add hit logic here
+                    NetworkObject targetNetworkObject = hit.collider.gameObject.GetComponent<NetworkObject>();
+                    if (targetNetworkObject != null)
+                    {
+                        ApplyDamageServerRpc(targetNetworkObject.NetworkObjectId);
+                    }
                 }
+
             }
             else
             {
                 Debug.DrawRay(ray.origin, ray.direction * attackRange, Color.yellow, 2f);
             }
         }
+    }
 
+    [ServerRpc]
+    void ApplyDamageServerRpc(ulong targetNetworkObjectId)
+    {
+        if (!IsServer) return;
+
+        NetworkObject networkObject = NetworkManager.Singleton.SpawnManager.SpawnedObjects[targetNetworkObjectId];
+        if (networkObject != null)
+        {
+            GameObject target = networkObject.gameObject;
+            Debug.Log($"Damage applied to {target.name}");
+            // TODO: Apply damage to target
+        }
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(transform.position, sightRadius);
     }
 }
