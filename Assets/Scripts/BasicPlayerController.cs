@@ -70,18 +70,29 @@ public class BasicPlayerController : NetworkBehaviour
     void FixedUpdate()
     {
         if (!_isActive) return;
+#if ENABLE_INPUT_SYSTEM
         if (canMove)
         {
-            Movement();
+            InputSystemMovement();
         }
+#endif
     }
     void Update()
     {
         if (!_isActive) return; //prevent updates until player is fully activated
 
         Animate();
+        #if ENABLE_INPUT_SYSTEM
+        #else
+        if (canMove)
+        {
+            Movement();
+        }
     }
-
+    void LateUpdate()
+    {
+        AfterMoveStateUpdate();
+    }
 
     // Activation -------------------------------------------------------------------------------------------------------------
 
@@ -136,7 +147,6 @@ public class BasicPlayerController : NetworkBehaviour
     {
         Deactivate();
         base.OnDestroy();
-
     }
 
 
@@ -167,8 +177,6 @@ public class BasicPlayerController : NetworkBehaviour
         moveInput = _actions.Gameplay.Move.ReadValue<Vector2>();
         lookInput = _actions.Gameplay.Look.ReadValue<Vector2>();
         InputSystemRotation();
-        InputSystemMovement();
-        AfterMoveStateUpdate();
 #else
         // old input system
         float moveHorizontal = Input.GetAxis("Horizontal");
@@ -185,11 +193,11 @@ public class BasicPlayerController : NetworkBehaviour
         float splayerSpeed = isSprinting ? moveSpeed * sprintMultiplier : moveSpeed;
 
         Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
-        movement = movement.normalized * splayerSpeed * Time.fixedDeltaTime;
+        movement = movement.normalized * splayerSpeed * Time.deltaTime;
 
         _rb.MovePosition(transform.position + transform.TransformDirection(movement));
 
-        float rotationAmount = rotationInput * rotationSpeed * Time.fixedDeltaTime;
+        float rotationAmount = rotationInput * rotationSpeed * Time.deltaTime;
         Quaternion deltaRotation = Quaternion.Euler(0f, rotationAmount, 0f);
         _rb.MoveRotation(_rb.rotation * deltaRotation);
 
