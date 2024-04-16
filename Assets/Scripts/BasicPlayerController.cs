@@ -4,7 +4,6 @@ using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.InputSystem;
 
-
 // Needs: simple way to deactivate everything on game over / game exit, so players can play again without having to re-launch the game
 public class BasicPlayerController : NetworkBehaviour
 {
@@ -31,6 +30,17 @@ public class BasicPlayerController : NetworkBehaviour
     // Activation
     private bool _isActive = false;
     private Actions _actions;
+
+    // #if ENABLE_INPUT_SYSTEM
+    public const float inputThreshold = 0.001f;
+    public Vector2 moveInput;
+    public Vector2 lookInput;
+    public bool forwardPressed;
+    public bool backPressed;
+    public bool leftPressed;
+    public bool rightPressed;
+    float targetYaw;
+    // #endif
     public override void OnNetworkSpawn()
     {
         _rb = gameObject.GetComponent<Rigidbody>();
@@ -40,30 +50,36 @@ public class BasicPlayerController : NetworkBehaviour
         _flagPoles = GameObject.FindGameObjectsWithTag("HoleFlagPole");
 
         _ragdollOnOff.Activate(); // activate ragdoll
-        _actions = new Actions();
-        if (_actions != null) { Debug.Log("PlayerActions not null"); }
-        _actions.Gameplay.Test.started += ctx => { Debug.Log($"Hello from {OwnerClientId}!"); };
-
         if (!IsOwner) return;
-
-        transform.position = new Vector3(Random.Range(390, 400), 69.1f, Random.Range(318, 320));
+#if ENABLE_INPUT_SYSTEM
+        Debug.Log("Now Enabling Input System");
+        //using new input system
+        _actions = new Actions();
         _actions.Enable();
-
+        _actions.Gameplay.Pause.started += HandlePauseStarted;
+        _actions.Gameplay.Sprint.started += HandleSprintStarted;
+        _actions.Gameplay.Sprint.canceled += HandleSprintCanceled;
+#endif
+        transform.position = new Vector3(Random.Range(390, 400), 69.1f, Random.Range(318, 320));
         // activate player controller - controller will activate the player movement, animations, shooting and ragdoll
         Activate();
     }
 
 
     // Update Loop -------------------------------------------------------------------------------------------------------------
+    void FixedUpdate()
+    {
+        if (!_isActive) return;
+        if (canMove)
+        {
+            Movement();
+        }
+    }
     void Update()
     {
         if (!_isActive) return; //prevent updates until player is fully activated
 
         Animate();
-        if (canMove)
-        {
-            Movement();
-        }
     }
 
 
@@ -99,7 +115,6 @@ public class BasicPlayerController : NetworkBehaviour
             strokes = 0,
             enemiesDefeated = 0,
             score = 0
-
         };
         UpdatePlayerState(_currentPlayerState);
     }
@@ -136,23 +151,32 @@ public class BasicPlayerController : NetworkBehaviour
             // update local player state with network data ?
         }
 
+#if ENABLE_INPUT_SYSTEM
+#else
         // Check for pause input
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (!UIManager.isPaused) { UIManager.isPaused = true; UIManager.instance.EnablePause(); Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
             else { UIManager.isPaused = false; UIManager.instance.DisablePause(); Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; }
         }
-
+#endif
         if (UIManager.isPaused) { return; }
         else { if (!UIManager.instance.titleScreenMode) { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; } }
-
+#if ENABLE_INPUT_SYSTEM
+//new input system
+        moveInput = _actions.Gameplay.Move.ReadValue<Vector2>();
+        lookInput = _actions.Gameplay.Look.ReadValue<Vector2>();
+        InputSystemRotation();
+        InputSystemMovement();
+        AfterMoveStateUpdate();
+#else
+        // old input system
         float moveHorizontal = Input.GetAxis("Horizontal");
         float moveVertical = Input.GetAxis("Vertical");
         float rotationInput = Input.GetAxis("Mouse X");
         isSprinting = Input.GetKey(KeyCode.LeftShift) && moveVertical > 0; //sprinting only allowed when moving forward
-
         PlayerMovement(moveHorizontal, moveVertical, rotationInput);
-
+#endif
     }
 
     private void PlayerMovement(float moveHorizontal, float moveVertical, float rotationInput)
@@ -161,14 +185,19 @@ public class BasicPlayerController : NetworkBehaviour
         float splayerSpeed = isSprinting ? moveSpeed * sprintMultiplier : moveSpeed;
 
         Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
-        movement = movement.normalized * splayerSpeed * Time.deltaTime;
+        movement = movement.normalized * splayerSpeed * Time.fixedDeltaTime;
 
         _rb.MovePosition(transform.position + transform.TransformDirection(movement));
 
-        float rotationAmount = rotationInput * rotationSpeed * Time.deltaTime;
+        float rotationAmount = rotationInput * rotationSpeed * Time.fixedDeltaTime;
         Quaternion deltaRotation = Quaternion.Euler(0f, rotationAmount, 0f);
         _rb.MoveRotation(_rb.rotation * deltaRotation);
 
+        AfterMoveStateUpdate();
+    }
+
+    public void AfterMoveStateUpdate()
+    {
         if (!_isActive) return; //prevent updates to state manager until player is fully activated
 
         // Update player state if position or rotation has changed
@@ -202,11 +231,13 @@ public class BasicPlayerController : NetworkBehaviour
         bool isWalking = _animator.GetBool("isWalking");
         bool isReversing = _animator.GetBool("isReversing");
         bool isStriking = _animator.GetBool("isStriking");
-        bool forwardPressed = Input.GetKey("w") || Input.GetKey("up");
-        bool runPressed = Input.GetKey("left shift") || Input.GetKey("right shift");
-        bool backPressed = Input.GetKey("s") || Input.GetKey("down");
-        bool rightPressed = Input.GetKey("d") || Input.GetKey("right");
-        bool leftPressed = Input.GetKey("a") || Input.GetKey("left");
+#if ENABLE_INPUT_SYSTEM
+#else
+        forwardPressed = Input.GetKey("w") || Input.GetKey("up");
+        backPressed = Input.GetKey("s") || Input.GetKey("down");
+        rightPressed = Input.GetKey("d") || Input.GetKey("right");
+        leftPressed = Input.GetKey("a") || Input.GetKey("left");
+#endif
         bool strikePressed = Input.GetKeyDown("e");
 
         if (UIManager.isPaused) { return; }
@@ -231,11 +262,11 @@ public class BasicPlayerController : NetworkBehaviour
                 _animator.SetBool("isReversing", false);
             }
 
-            if (!isrunning && (forwardPressed && runPressed) && !isStriking)
+            if (!isrunning && (forwardPressed && isSprinting) && !isStriking)
             {
                 _animator.SetBool("isRunning", true);
             }
-            if (isrunning && (!runPressed || !forwardPressed))
+            if (isrunning && (!isSprinting || !forwardPressed))
             {
                 _animator.SetBool("isRunning", false);
             }
@@ -296,18 +327,25 @@ public class BasicPlayerController : NetworkBehaviour
 
     public void DisableInput()
     {
+#if ENABLE_INPUT_SYSTEM
+        _actions.asset.FindActionMap("Gameplay", false).Disable();
+        _actions.asset.FindActionMap("UI", false).Enable();
+#endif
         _animator.SetBool("isWalking", false);
         _animator.SetBool("isRunning", false);
         _animator.SetBool("isLeft", false);
         _animator.SetBool("isRight", false);
         _animator.SetBool("isReversing", false);
         //_animator.SetBool("isStriking", false);
-
         canMove = false;
     }
 
     public void EnableInput()
     {
+#if ENABLE_INPUT_SYSTEM
+        _actions.asset.FindActionMap("Gameplay", false).Enable();
+        _actions.asset.FindActionMap("UI", false).Disable();
+#endif
         canMove = true;
     }
 
@@ -317,6 +355,86 @@ public class BasicPlayerController : NetworkBehaviour
         if (!IsOwner) return;
         _playerNetworkData.StorePlayerState(playerState);
     }
+    #region  Input Actions
+    public void InputSystemRotation()
+    {
+        if (lookInput.sqrMagnitude > inputThreshold)
+        {
+            float deltaTimeMultiplier = 0f;
+            var devices = InputSystem.devices;
+            foreach (var device in devices)
+            {
+                if (device is Mouse)
+                {
+                    deltaTimeMultiplier = 0.1f;
+                }
+                if (device is Gamepad)
+                {
+                    deltaTimeMultiplier = 0.5f;
+                }
+            }
+            float xInput = lookInput.x;
+            targetYaw += lookInput.x * deltaTimeMultiplier;
+            targetYaw = ClampAngle(targetYaw, float.MinValue, float.MaxValue);
+            transform.rotation = Quaternion.Euler(0, targetYaw, 0);
+        }
+    }
+    private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
+    {
+        while (lfAngle < -180f) lfAngle += 360f;
+        while (lfAngle > 180f) lfAngle -= 360f;
+        return Mathf.Clamp(lfAngle, lfMin, lfMax);
+    }
+    public void InputSystemMovement()
+    {
+        float splayerSpeed = isSprinting ? moveSpeed * sprintMultiplier : moveSpeed;
+        moveInput = moveInput.normalized;
+        if (moveInput.sqrMagnitude > inputThreshold)
+        {
+            forwardPressed = moveInput.y > 0;
+            backPressed = moveInput.y < 0;
+            leftPressed = moveInput.x < 0;
+            rightPressed = moveInput.x > 0;
+        }
+        else
+        {
+            forwardPressed = false;
+            backPressed = false;
+            leftPressed = false;
+            rightPressed = false;
+            splayerSpeed = 0;
+        }
+        _rb.velocity = transform.forward * moveInput.y * splayerSpeed + transform.right * moveInput.x * splayerSpeed + transform.up * _rb.velocity.y;
+    }
+    public void HandlePauseStarted(InputAction.CallbackContext ctx)
+    {
+        //Copied from the previous version
+        if (!UIManager.isPaused)
+        {
+            UIManager.isPaused = true;
+            UIManager.instance.EnablePause();
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+        else
+        {
+            UIManager.isPaused = false;
+            UIManager.instance.DisablePause();
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+    }
+
+    public void HandleSprintStarted(InputAction.CallbackContext ctx)
+    {
+        isSprinting = moveInput.y > inputThreshold;
+    }
+
+    public void HandleSprintCanceled(InputAction.CallbackContext ctx)
+    {
+        isSprinting = false;
+    }
+    #endregion
 }
 
 
