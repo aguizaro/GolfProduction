@@ -53,7 +53,6 @@ public class NetworkEnemyController : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        Debug.Log("Bool: " + isGuard);
         if (IsServer)
         {
             if (isGuard)
@@ -72,11 +71,11 @@ public class NetworkEnemyController : NetworkBehaviour
     {
         if (IsServer)
         {
-            SwitchState();
+
             lastAttackTime.Value -= Time.deltaTime;
         }
+        SwitchState();
         SwitchAnimation();
-        Debug.Log($"Changing state to {enemyState.Value}, Target position set to {agent.destination}");
     }
 
     void SwitchAnimation()
@@ -130,11 +129,9 @@ public class NetworkEnemyController : NetworkBehaviour
         if (!IsServer || attackTarget == null) return;
 
         transform.LookAt(attackTarget.transform);
-        Debug.Log("Attack Range: " + Vector3.Distance(attackTarget.transform.position, transform.position));
 
         if (TargetInAttackRange())
         {
-            Debug.Log("Attack!");
             animator.SetTrigger("Attack");
         }
     }
@@ -169,7 +166,6 @@ public class NetworkEnemyController : NetworkBehaviour
             if (target.CompareTag("Player"))
             {
                 attackTarget = target.gameObject;
-                Debug.Log("Found Player!");
                 return true;
             }
         }
@@ -206,7 +202,6 @@ public class NetworkEnemyController : NetworkBehaviour
 
         if (Vector3.Distance(transform.position, wayPoint) <= agent.stoppingDistance)
         {
-            Debug.Log("Arrived at Waypoint");
             isWalk = false;
             isReturnToOrigin = false;
             if (remainLookAtTime > 0)
@@ -216,7 +211,6 @@ public class NetworkEnemyController : NetworkBehaviour
         }
         else
         {
-            Debug.Log("Walking to Waypoint");
             isWalk = true;
             agent.SetDestination(wayPoint);
         }
@@ -249,11 +243,18 @@ public class NetworkEnemyController : NetworkBehaviour
             agent.SetDestination(attackTarget.transform.position);
         }
 
-        if (lastAttackTime.Value <= 0)
+
+        if (TargetInAttackRange())
         {
-            lastAttackTime.Value = characterStats.attackData.coolDown;
-            AttackServerRpc();
+            isFollow = false;
+            agent.isStopped = true;
+            if (lastAttackTime.Value <= 0)
+            {
+                lastAttackTime.Value = characterStats.attackData.coolDown;
+                AttackServerRpc();
+            }
         }
+
     }
 
     // Animation Event
@@ -282,8 +283,6 @@ public class NetworkEnemyController : NetworkBehaviour
                 if (!hitTargets.Contains(hit.collider.gameObject))
                 {
                     hitTargets.Add(hit.collider.gameObject);
-                    Debug.Log("Hit Player!");
-                    Debug.Log(hit.collider.gameObject.name);
                     NetworkObject targetNetworkObject = hit.collider.gameObject.GetComponent<NetworkObject>();
                     if (targetNetworkObject != null)
                     {
