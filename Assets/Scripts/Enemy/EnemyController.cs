@@ -1,8 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.AI;
 using Unity.Netcode;
+using UnityEngine;
 
 public enum EnemyState
 {
@@ -16,6 +16,7 @@ public enum EnemyState
 public class NetworkEnemyController : NetworkBehaviour
 {
     public NetworkVariable<EnemyState> enemyState = new NetworkVariable<EnemyState>();
+    public EnemyState _cureentState;
     private NavMeshAgent agent;
     private Animator animator;
     private CharacterStats characterStats;
@@ -65,13 +66,29 @@ public class NetworkEnemyController : NetworkBehaviour
                 GetNewWayPointServerRpc();
             }
         }
+
+        enemyState.OnValueChanged += OnSpiderStateChange;
+
+    }
+
+    private void OnSpiderStateChange(EnemyState prev, EnemyState next)
+    {
+        _cureentState = next;
+        Debug.Log($"Spider state changed from {prev} to {next}");  
+        Debug.Log($"is local client: {IsLocalPlayer}\nCurrent State:  {_cureentState}, ");
+        
+    }
+
+    private void OnDestroy()
+    {
+        enemyState.OnValueChanged -= OnSpiderStateChange;
     }
 
     void Update()
     {
         if (IsServer)
         {
-
+            
             lastAttackTime.Value -= Time.deltaTime;
         }
         SwitchState();
@@ -89,7 +106,11 @@ public class NetworkEnemyController : NetworkBehaviour
     {
         if (FoundPlayer())
         {
-            enemyState.Value = EnemyState.CHASE;
+            if(IsServer)
+            {
+                enemyState.Value = EnemyState.CHASE;
+            }
+            
         }
 
         switch (enemyState.Value)
@@ -107,6 +128,12 @@ public class NetworkEnemyController : NetworkBehaviour
                 // Implement Death behavior
                 break;
         }
+    }
+
+    [ClientRpc]
+    void ClientStateChangeClientRpc()
+    {
+
     }
 
     [ServerRpc]
