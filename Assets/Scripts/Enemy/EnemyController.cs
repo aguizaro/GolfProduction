@@ -283,7 +283,7 @@ public class NetworkEnemyController : NetworkBehaviour
 
     // Animation Event
     [ServerRpc]
-    public void HitServerRp()
+    public void HitServerRpc()
     {
         if (!IsServer) return;
 

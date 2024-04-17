@@ -493,7 +493,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1796145259731860449, guid: 767a2296540c81e4194906bff1ec91ea, type: 3}
       propertyPath: isGuard
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1796145259731860449, guid: 767a2296540c81e4194906bff1ec91ea, type: 3}
       propertyPath: enemyState
