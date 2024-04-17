@@ -26,8 +26,8 @@ public class NetworkEnemyController : NetworkBehaviour
     public bool isGuard;
     private float speed;
 
-    private bool isReturnToOrigin = false;
-    private GameObject attackTarget;
+    public bool isReturnToOrigin = false;
+    public GameObject attackTarget;
     private NetworkVariable<float> lastAttackTime = new NetworkVariable<float>();
     public float lookAtTime;
     private float remainLookAtTime;
@@ -211,11 +211,8 @@ public class NetworkEnemyController : NetworkBehaviour
             {
                 isWalk = false;
                 transform.rotation = Quaternion.Lerp(transform.rotation, guardRotation, 0.01f);
+                isReturnToOrigin = false;
             }
-        }
-        else
-        {
-            isReturnToOrigin = false;
         }
     }
 
@@ -323,7 +320,7 @@ public class NetworkEnemyController : NetworkBehaviour
         }
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     void ApplyDamageServerRpc(ulong targetNetworkObjectId)
     {
         if (!IsServer) return;
@@ -342,4 +339,5 @@ public class NetworkEnemyController : NetworkBehaviour
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(transform.position, sightRadius);
     }
+
 }
