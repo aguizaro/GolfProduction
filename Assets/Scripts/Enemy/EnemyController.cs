@@ -75,9 +75,9 @@ public class NetworkEnemyController : NetworkBehaviour
     private void OnSpiderStateChange(EnemyState prev, EnemyState next)
     {
         _cureentState = next;
-        Debug.Log($"Spider state changed from {prev} to {next}");  
+        Debug.Log($"Spider state changed from {prev} to {next}");
         Debug.Log($"is local client: {IsLocalPlayer}\nCurrent State:  {_cureentState}, ");
-        
+
     }
 
     public override void OnDestroy()
@@ -89,10 +89,10 @@ public class NetworkEnemyController : NetworkBehaviour
     {
         if (IsServer)
         {
-            
+            SwitchState();
             lastAttackTime.Value -= Time.deltaTime;
         }
-        SwitchState();
+
         SwitchAnimation();
     }
 
@@ -107,11 +107,7 @@ public class NetworkEnemyController : NetworkBehaviour
     {
         if (FoundPlayer())
         {
-            if(IsServer)
-            {
-                enemyState.Value = EnemyState.CHASE;
-            }
-            
+            enemyState.Value = EnemyState.CHASE;
         }
 
         switch (enemyState.Value)
@@ -286,7 +282,8 @@ public class NetworkEnemyController : NetworkBehaviour
     }
 
     // Animation Event
-    public void Hit()
+    [ServerRpc]
+    public void HitServerRp()
     {
         if (!IsServer) return;
 
