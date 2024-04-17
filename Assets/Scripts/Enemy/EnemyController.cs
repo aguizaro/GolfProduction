@@ -282,7 +282,7 @@ public class NetworkEnemyController : NetworkBehaviour
     }
 
     // Animation Event
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     public void HitServerRpc()
     {
         if (!IsServer) return;
