@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine.AI;
 using Unity.Netcode;
 using UnityEngine;
+using Unity.VisualScripting;
 
 public enum EnemyState
 {
@@ -79,7 +80,7 @@ public class NetworkEnemyController : NetworkBehaviour
         
     }
 
-    private void OnDestroy()
+    public override void OnDestroy()
     {
         enemyState.OnValueChanged -= OnSpiderStateChange;
     }
