@@ -34,7 +34,6 @@ public class BasicPlayerController : NetworkBehaviour
     [Header("For Input System Only")]
     public Vector2 _moveInput;
     public Vector2 _lookInput;
-    public float _playerYaw;
     public const float _inputThreshold = 0.001f;
     public Actions _actions;
 
@@ -371,7 +370,7 @@ public class BasicPlayerController : NetworkBehaviour
             _rb.MoveRotation(_rb.rotation * deltaRotation);
         }
     }
-    private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
+    public static float ClampAngle(float lfAngle, float lfMin, float lfMax)
     {
         while (lfAngle < -180f) lfAngle += 360f;
         while (lfAngle > 180f) lfAngle -= 360f;
@@ -383,10 +382,10 @@ public class BasicPlayerController : NetworkBehaviour
         float splayerSpeed = _isSprinting ? _moveSpeed * _sprintMultiplier : _moveSpeed;
         if (_moveInput.sqrMagnitude > _inputThreshold)
         {
-            _forwardPressed = _moveInput.y > 0;
-            _backPressed = _moveInput.y < 0;
-            _leftPressed = _moveInput.x < 0;
-            _rightPressed = _moveInput.x > 0;
+            _forwardPressed = _moveInput.y > 0.1f;
+            _backPressed = _moveInput.y < -0.2f;
+            _leftPressed = _moveInput.x < -0.25f;
+            _rightPressed = _moveInput.x > 0.25f;
         }
         else
         {
@@ -396,6 +395,7 @@ public class BasicPlayerController : NetworkBehaviour
             _rightPressed = false;
             splayerSpeed = 0;
         }
+        Vector3 movement = new Vector3(_moveInput.x, 0f, _moveInput.y);
         movement = movement.normalized * splayerSpeed * Time.deltaTime;
         _rb.MovePosition(transform.position + transform.TransformDirection(movement));
     }
