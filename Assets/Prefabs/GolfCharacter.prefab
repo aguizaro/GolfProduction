@@ -382,15 +382,23 @@ Animator:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 420073679474077443}
   m_Enabled: 1
-  m_Avatar: {fileID: 9000000, guid: a3e9ed997caa7634a918a06f798d152d, type: 3}
+  m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: f62df1fcd173e6f43a895967c92059d1, type: 2}
   m_CullingMode: 0
-  m_UpdateMode: 0
+  m_UpdateMode: 1
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
-  m_WarningMessage: 
+  m_WarningMessage: "\nBinding warning: Some generic clip(s) animate transforms that
+    are already bound by a Humanoid avatar. These transforms can only be changed
+    by Humanoid clips.\n\tTransform 'mixamorig:Hips'\n\tTransform 'mixamorig:LeftFoot'\n\tTransform
+    'mixamorig:LeftHandIndex1'\n\tTransform 'mixamorig:Spine1'\n\tTransform 'mixamorig:LeftToeBase'\n\tTransform
+    'mixamorig:RightArm'\n\tTransform 'mixamorig:LeftLeg'\n\tTransform 'mixamorig:LeftShoulder'\n\tTransform
+    'mixamorig:RightHandIndex3'\n\tTransform 'mixamorig:RightFoot'\n\tand more ...\n\tFrom
+    animation clip 'mixamo.com'\n\tFrom animation clip 'mixamo.com'\n\tFrom animation
+    clip 'mixamo.com'\n\tFrom animation clip 'mixamo.com'\n\tFrom animation clip
+    'mixamo.com'\n\tFrom animation clip 'mixamo.com'\n\tFrom animation clip 'mixamo.com'"
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -427,9 +435,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1fd370f29e289db4c99cfa0477a63c65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 1
-  sprintMultiplier: 4
-  rotationSpeed: 1000
+  _moveSpeed: 2
+  _sprintMultiplier: 4
+  _rotationSpeed: 100
+  _isActive: 0
+  _moveInput: {x: 0, y: 0}
+  _lookInput: {x: 0, y: 0}
+  _playerYaw: 0
+  _forwardPressed: 0
+  _backPressed: 0
+  _leftPressed: 0
+  _rightPressed: 0
+  _strikePressed: 0
 --- !u!65 &2556599362540292874
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -604,6 +621,16 @@ MonoBehaviour:
   _spawnDist: 1
   playerClubRange: 4
   verticalAngle: 0.5
+  holeStartPositions:
+  - {x: 395.84076, y: 71, z: 321.73}
+  - {x: 417.69016, y: 79, z: 234.9218}
+  - {x: 451.41544, y: 80, z: 172.0176}
+  - {x: 374.98602, y: 93.3, z: 99.01516}
+  - {x: 306.8986, y: 103.3, z: 89.000725}
+  - {x: 235.68904, y: 97.2, z: 114.393}
+  - {x: 217.79292, y: 86.5, z: 163.65755}
+  - {x: 150.85167, y: 90, z: 163.36249}
+  - {x: 76.411804, y: 93.15, z: 169.82652}
 --- !u!114 &7363029190862775147
 MonoBehaviour:
   m_ObjectHideFlags: 0

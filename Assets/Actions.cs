@@ -71,6 +71,15 @@ public partial class @Actions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Strike"",
+                    ""type"": ""Button"",
+                    ""id"": ""f8ec200a-fc0c-4f42-b699-51122e61e44c"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -335,6 +344,17 @@ public partial class @Actions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Pause"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""89a4c930-ce83-4def-80ce-2bd449a80010"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Strike"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -927,6 +947,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
         m_Gameplay_Swing = m_Gameplay.FindAction("Swing", throwIfNotFound: true);
         m_Gameplay_Sprint = m_Gameplay.FindAction("Sprint", throwIfNotFound: true);
         m_Gameplay_Pause = m_Gameplay.FindAction("Pause", throwIfNotFound: true);
+        m_Gameplay_Strike = m_Gameplay.FindAction("Strike", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -1005,6 +1026,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Gameplay_Swing;
     private readonly InputAction m_Gameplay_Sprint;
     private readonly InputAction m_Gameplay_Pause;
+    private readonly InputAction m_Gameplay_Strike;
     public struct GameplayActions
     {
         private @Actions m_Wrapper;
@@ -1014,6 +1036,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
         public InputAction @Swing => m_Wrapper.m_Gameplay_Swing;
         public InputAction @Sprint => m_Wrapper.m_Gameplay_Sprint;
         public InputAction @Pause => m_Wrapper.m_Gameplay_Pause;
+        public InputAction @Strike => m_Wrapper.m_Gameplay_Strike;
         public InputActionMap Get() { return m_Wrapper.m_Gameplay; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1038,6 +1061,9 @@ public partial class @Actions: IInputActionCollection2, IDisposable
             @Pause.started += instance.OnPause;
             @Pause.performed += instance.OnPause;
             @Pause.canceled += instance.OnPause;
+            @Strike.started += instance.OnStrike;
+            @Strike.performed += instance.OnStrike;
+            @Strike.canceled += instance.OnStrike;
         }
 
         private void UnregisterCallbacks(IGameplayActions instance)
@@ -1057,6 +1083,9 @@ public partial class @Actions: IInputActionCollection2, IDisposable
             @Pause.started -= instance.OnPause;
             @Pause.performed -= instance.OnPause;
             @Pause.canceled -= instance.OnPause;
+            @Strike.started -= instance.OnStrike;
+            @Strike.performed -= instance.OnStrike;
+            @Strike.canceled -= instance.OnStrike;
         }
 
         public void RemoveCallbacks(IGameplayActions instance)
@@ -1244,6 +1273,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
         void OnSwing(InputAction.CallbackContext context);
         void OnSprint(InputAction.CallbackContext context);
         void OnPause(InputAction.CallbackContext context);
+        void OnStrike(InputAction.CallbackContext context);
     }
     public interface IUIActions
     {
