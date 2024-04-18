@@ -7,6 +7,9 @@ using Unity.Netcode;
 // Needs: simple way to deactivate everything on game over / game exit, so players can play again without having to re-launch the game
 public class BasicPlayerController : NetworkBehaviour
 {
+    // prefabs
+    public GameObject spiderPrefab;
+
     // Movement
     public float moveSpeed = 2f;
     public float sprintMultiplier = 4f;
@@ -74,6 +77,17 @@ public class BasicPlayerController : NetworkBehaviour
         // activate player movement, animations, shooting and ragdoll
         _isActive = true;
         _playerShoot.Activate();
+
+
+        //activate spider
+        if (IsServer)
+        {
+            GameObject spider = Instantiate(spiderPrefab, new Vector3(391, 72.1f, 289), Quaternion.identity);
+            spider.GetComponent<NetworkObject>().Spawn();
+        }
+
+
+
 
         // activate flag poles
         foreach (GameObject flagPole in _flagPoles)

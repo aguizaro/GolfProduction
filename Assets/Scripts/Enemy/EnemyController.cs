@@ -16,8 +16,8 @@ public enum EnemyState
 [RequireComponent(typeof(NavMeshAgent))]
 public class NetworkEnemyController : NetworkBehaviour
 {
-    public NetworkVariable<EnemyState> enemyState = new NetworkVariable<EnemyState>();
-    public EnemyState _cureentState;
+    private NetworkVariable<EnemyState> enemyState = new NetworkVariable<EnemyState>();
+    private EnemyState _currentState;
     private NavMeshAgent agent;
     private Animator animator;
     private CharacterStats characterStats;
@@ -74,9 +74,9 @@ public class NetworkEnemyController : NetworkBehaviour
 
     private void OnSpiderStateChange(EnemyState prev, EnemyState next)
     {
-        _cureentState = next;
-        Debug.Log($"Spider state changed from {prev} to {next}");
-        Debug.Log($"is local client: {IsLocalPlayer}\nCurrent State:  {_cureentState}, ");
+        _currentState = next;
+        Debug.Log($"Spider state changed to {next}");
+        Debug.Log($"is local client: {IsLocalPlayer}\nCurrent State:  {_currentState}, ");
 
     }
 
