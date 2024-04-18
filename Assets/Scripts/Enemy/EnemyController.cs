@@ -4,6 +4,8 @@ using UnityEngine.AI;
 using Unity.Netcode;
 using UnityEngine;
 using Unity.VisualScripting;
+using System;
+
 
 public enum EnemyState
 {
@@ -36,7 +38,7 @@ public class NetworkEnemyController : NetworkBehaviour
 
     public float patrolRange;
     private Vector3 wayPoint;
-    private Vector3 guardPos;
+    public Vector3 guardPos;
 
     private bool isWalk;
     private bool isChase;
@@ -46,8 +48,6 @@ public class NetworkEnemyController : NetworkBehaviour
     void Awake()
     {
 
-
-
     }
 
     public override void OnNetworkSpawn()
@@ -56,6 +56,7 @@ public class NetworkEnemyController : NetworkBehaviour
         animator = GetComponent<Animator>();
         characterStats = GetComponent<CharacterStats>();
         speed = agent.speed;
+        isGuard = true;
         guardPos = transform.position;
         guardRotation = transform.rotation;
 
@@ -144,8 +145,8 @@ public class NetworkEnemyController : NetworkBehaviour
     {
         remainLookAtTime = lookAtTime;
 
-        float randomX = Random.Range(-patrolRange, patrolRange);
-        float randomZ = Random.Range(-patrolRange, patrolRange);
+        float randomX = UnityEngine.Random.Range(-patrolRange, patrolRange);
+        float randomZ = UnityEngine.Random.Range(-patrolRange, patrolRange);
 
         Vector3 randomPoint = new Vector3(guardPos.x + randomX, transform.position.y, guardPos.z + randomZ);
 
@@ -210,15 +211,20 @@ public class NetworkEnemyController : NetworkBehaviour
         if (transform.position != guardPos)
         {
             isWalk = true;
+
+            
             agent.isStopped = false;
             agent.destination = guardPos;
 
-            if (Vector3.SqrMagnitude(guardPos - transform.position) <= agent.stoppingDistance)
+            Debug.LogWarning($"GuardPos: {guardPos}, CurrentPos: {transform.position}, Distance.x: {guardPos.x - transform.position.x}, Distance.z: {guardPos.z - transform.position.z}");
+        
+           if (Math.Abs(guardPos.x - transform.position.x) < agent.stoppingDistance && Math.Abs(guardPos.z - transform.position.z) < agent.stoppingDistance)
             {
                 isWalk = false;
                 transform.rotation = Quaternion.Lerp(transform.rotation, guardRotation, 0.01f);
                 isReturnToOrigin = false;
             }
+            Debug.Log("Iswalk: "+ isWalk);
         }
     }
 
@@ -346,4 +352,11 @@ public class NetworkEnemyController : NetworkBehaviour
         Gizmos.DrawWireSphere(transform.position, sightRadius);
     }
 
+    void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(guardPos, 0.1f);
+    }
+    
+    
 }
