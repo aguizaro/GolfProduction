@@ -793,20 +793,20 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 179937010355921882, guid: 767a2296540c81e4194906bff1ec91ea, type: 3}
+      insertIndex: 1
+      addedObject: {fileID: 610175883}
+    - targetCorrespondingSourceObject: {fileID: 179937010355921882, guid: 767a2296540c81e4194906bff1ec91ea, type: 3}
       insertIndex: 2
-      addedObject: {fileID: 610175899}
+      addedObject: {fileID: 610175886}
     - targetCorrespondingSourceObject: {fileID: 179937010355921882, guid: 767a2296540c81e4194906bff1ec91ea, type: 3}
       insertIndex: 4
-      addedObject: {fileID: 610175883}
+      addedObject: {fileID: 610175899}
+    - targetCorrespondingSourceObject: {fileID: 179937010355921882, guid: 767a2296540c81e4194906bff1ec91ea, type: 3}
+      insertIndex: 5
+      addedObject: {fileID: 610175884}
     - targetCorrespondingSourceObject: {fileID: 179937010355921882, guid: 767a2296540c81e4194906bff1ec91ea, type: 3}
       insertIndex: -1
       addedObject: {fileID: 610175887}
-    - targetCorrespondingSourceObject: {fileID: 179937010355921882, guid: 767a2296540c81e4194906bff1ec91ea, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 610175886}
-    - targetCorrespondingSourceObject: {fileID: 179937010355921882, guid: 767a2296540c81e4194906bff1ec91ea, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 610175884}
     - targetCorrespondingSourceObject: {fileID: 179937010355921882, guid: 767a2296540c81e4194906bff1ec91ea, type: 3}
       insertIndex: -1
       addedObject: {fileID: 610175894}
@@ -831,7 +831,7 @@ MonoBehaviour:
   GlobalObjectIdHash: 2357474400
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
-  ActiveSceneSynchronization: 1
+  ActiveSceneSynchronization: 0
   SceneMigrationSynchronization: 1
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
@@ -870,7 +870,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   SyncPositionX: 1
-  SyncPositionY: 1
+  SyncPositionY: 0
   SyncPositionZ: 1
   SyncRotAngleX: 1
   SyncRotAngleY: 1
@@ -883,7 +883,7 @@ MonoBehaviour:
   ScaleThreshold: 0.01
   UseQuaternionSynchronization: 1
   UseQuaternionCompression: 0
-  UseHalfFloatPrecision: 0
+  UseHalfFloatPrecision: 1
   InLocalSpace: 0
   Interpolate: 1
   SlerpPosition: 0
