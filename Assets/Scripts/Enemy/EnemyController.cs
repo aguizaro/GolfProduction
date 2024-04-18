@@ -45,6 +45,13 @@ public class NetworkEnemyController : NetworkBehaviour
 
     void Awake()
     {
+
+
+
+    }
+
+    public override void OnNetworkSpawn()
+    {
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         characterStats = GetComponent<CharacterStats>();
@@ -52,10 +59,6 @@ public class NetworkEnemyController : NetworkBehaviour
         guardPos = transform.position;
         guardRotation = transform.rotation;
 
-    }
-
-    public override void OnNetworkSpawn()
-    {
         if (IsServer)
         {
             if (isGuard)
@@ -96,7 +99,7 @@ public class NetworkEnemyController : NetworkBehaviour
 
         SwitchAnimation();
 
-        
+
     }
 
     void SwitchAnimation()
