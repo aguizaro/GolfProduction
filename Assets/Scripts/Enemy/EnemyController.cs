@@ -43,7 +43,6 @@ public class NetworkEnemyController : NetworkBehaviour
     private bool isWalk;
     private bool isChase;
     private bool isFollow;
-    Vector3 tempPos;
 
     void Awake()
     {
@@ -75,6 +74,7 @@ public class NetworkEnemyController : NetworkBehaviour
 
         enemyState.OnValueChanged += OnSpiderStateChange;
 
+
     }
 
     private void OnSpiderStateChange(EnemyState prev, EnemyState next)
@@ -96,9 +96,10 @@ public class NetworkEnemyController : NetworkBehaviour
         {
             SwitchState();
             lastAttackTime.Value -= Time.deltaTime;
+            SwitchAnimation();
         }
 
-        SwitchAnimation();
+        
 
 
     }
