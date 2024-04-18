@@ -36,7 +36,7 @@ public class BasicPlayerController : NetworkBehaviour
     public Vector2 _lookInput;
     public const float _inputThreshold = 0.001f;
     public Actions _actions;
-
+    public float _playerYaw = 0f;
 #endif
     [Header("Hybrid Variables For Both Input Systems")]
     public bool _forwardPressed;
@@ -235,6 +235,15 @@ public class BasicPlayerController : NetworkBehaviour
 
         if (IsOwner)
         {
+#if ENABLE_INPUT_SYSTEM
+            _moveInput = _actions.Gameplay.Move.ReadValue<Vector2>().normalized;
+            _animator.SetFloat("moveX", _moveInput.x);
+            _animator.SetFloat("moveY", _moveInput.y);
+#else
+            _animator.SetFloat("moveX", 0f);
+            _animator.SetFloat("moveY", 0f);
+#endif
+            Debug.Log($"move Input: {_moveInput}");
             if (_forwardPressed && !isWalking)
             {
                 _animator.SetBool("isWalking", true);
@@ -365,9 +374,9 @@ public class BasicPlayerController : NetworkBehaviour
                     deltaTimeMultiplier = 0.5f;
                 }
             }
-            float rotationAmount = _lookInput.x * _rotationSpeed * Time.deltaTime * deltaTimeMultiplier;
-            Quaternion deltaRotation = Quaternion.Euler(0f, rotationAmount, 0f);
-            _rb.MoveRotation(_rb.rotation * deltaRotation);
+            _playerYaw += _lookInput.x * deltaTimeMultiplier;
+            _playerYaw = ClampAngle(_playerYaw, float.MinValue, float.MaxValue);
+            _rb.MoveRotation(Quaternion.Euler(0f, _playerYaw, 0f));
         }
     }
     public static float ClampAngle(float lfAngle, float lfMin, float lfMax)
@@ -378,7 +387,6 @@ public class BasicPlayerController : NetworkBehaviour
     }
     public void InputSystemMovement()
     {
-        _moveInput = _actions.Gameplay.Move.ReadValue<Vector2>().normalized;
         float splayerSpeed = _isSprinting ? _moveSpeed * _sprintMultiplier : _moveSpeed;
         if (_moveInput.sqrMagnitude > _inputThreshold)
         {
