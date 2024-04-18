@@ -18,7 +18,6 @@ GameObject:
   - component: {fileID: 148976109201488363}
   - component: {fileID: 7051230858578184742}
   - component: {fileID: 951698187366079480}
-  - component: {fileID: 4118711547123097554}
   - component: {fileID: -8949266095463023994}
   - component: {fileID: 2082206121664741897}
   - component: {fileID: 3087446511159277604}
@@ -308,27 +307,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &4118711547123097554
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 179937010355921882}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e8d0727d5ae3244e3b569694d3912374, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  TransitionStateInfoList:
-  - IsCrossFadeExit: 0
-    Layer: 1
-    OriginatingState: 2081823275
-    DestinationState: -47317214
-    TransitionDuration: 0
-    TriggerNameHash: 1080829965
-    TransitionIndex: 2
-  m_Animator: {fileID: 4235283684836695971}
 --- !u!114 &-8949266095463023994
 MonoBehaviour:
   m_ObjectHideFlags: 0
