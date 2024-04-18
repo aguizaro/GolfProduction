@@ -427,6 +427,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1fd370f29e289db4c99cfa0477a63c65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  spiderPrefab: {fileID: 179937010355921882, guid: 767a2296540c81e4194906bff1ec91ea, type: 3}
   moveSpeed: 1
   sprintMultiplier: 4
   rotationSpeed: 1000
