@@ -99,6 +99,7 @@ public class NetworkEnemyController : NetworkBehaviour
 
         if(IsClient)
         {
+            Debug.Log($"is local client: {IsLocalPlayer}\nCurrent State:  {_cureentState}, ");
             test2();
         }
     }
