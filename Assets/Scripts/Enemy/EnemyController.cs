@@ -41,6 +41,7 @@ public class NetworkEnemyController : NetworkBehaviour
     private bool isWalk;
     private bool isChase;
     private bool isFollow;
+    Vector3 tempPos;
 
     void Awake()
     {
@@ -91,9 +92,15 @@ public class NetworkEnemyController : NetworkBehaviour
         {
             SwitchState();
             lastAttackTime.Value -= Time.deltaTime;
+            test();
         }
 
         SwitchAnimation();
+
+        if(IsClient)
+        {
+            test2();
+        }
     }
 
     void SwitchAnimation()
@@ -338,6 +345,16 @@ public class NetworkEnemyController : NetworkBehaviour
     {
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(transform.position, sightRadius);
+    }
+
+    void test()
+    {
+        tempPos = transform.position;
+    }
+
+    void test2()
+    {
+        transform.position = tempPos;
     }
 
 }
