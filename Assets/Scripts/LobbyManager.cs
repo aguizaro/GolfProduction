@@ -804,9 +804,13 @@ public class LobbyManager : MonoBehaviour
         if (NetworkManager.Singleton.IsConnectedClient)
         {
             NetworkManager.Singleton.Shutdown();
-            Debug.LogWarning("Disconnected from Relay Server");
+            Debug.LogWarning("Connected Client disconnected from Relay Server");
         }
-
+        else if (NetworkManager.Singleton.IsClient)
+        {
+            NetworkManager.Singleton.Shutdown();
+            Debug.LogWarning("Client disconnected from Relay Server");
+        }
         if (ConnectedLobby != null)
         {
             if (ConnectedLobby.HostId == _playerId)

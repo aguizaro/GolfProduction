@@ -44,11 +44,6 @@ public class NetworkEnemyController : NetworkBehaviour
     private bool isChase;
     private bool isFollow;
 
-    void Awake()
-    {
-
-    }
-
     public override void OnNetworkSpawn()
     {
         agent = GetComponent<NavMeshAgent>();
@@ -99,9 +94,6 @@ public class NetworkEnemyController : NetworkBehaviour
             SwitchAnimation();
         }
 
-        
-
-
     }
 
     void SwitchAnimation()
@@ -135,12 +127,6 @@ public class NetworkEnemyController : NetworkBehaviour
         }
     }
 
-    [ClientRpc]
-    void ClientStateChangeClientRpc()
-    {
-
-    }
-
     [ServerRpc]
     void GetNewWayPointServerRpc()
     {
@@ -165,6 +151,7 @@ public class NetworkEnemyController : NetworkBehaviour
         if (TargetInAttackRange())
         {
             animator.SetTrigger("Attack");
+
         }
     }
 
@@ -197,6 +184,10 @@ public class NetworkEnemyController : NetworkBehaviour
         {
             if (target.CompareTag("Player"))
             {
+                if (target.GetComponent<NetworkObject>().IsOwner && !target.GetComponent<BasicPlayerController>().enabled)
+                { // dont set player as target if player is ragdolled
+                    return false;
+                }
                 attackTarget = target.gameObject;
                 return true;
             }
@@ -213,19 +204,16 @@ public class NetworkEnemyController : NetworkBehaviour
         {
             isWalk = true;
 
-            
+
             agent.isStopped = false;
             agent.destination = guardPos;
 
-            Debug.LogWarning($"GuardPos: {guardPos}, CurrentPos: {transform.position}, Distance.x: {guardPos.x - transform.position.x}, Distance.z: {guardPos.z - transform.position.z}");
-        
-           if (Math.Abs(guardPos.x - transform.position.x) < agent.stoppingDistance && Math.Abs(guardPos.z - transform.position.z) < agent.stoppingDistance)
+            if (Math.Abs(guardPos.x - transform.position.x) < agent.stoppingDistance && Math.Abs(guardPos.z - transform.position.z) < agent.stoppingDistance)
             {
                 isWalk = false;
                 transform.rotation = Quaternion.Lerp(transform.rotation, guardRotation, 0.01f);
                 isReturnToOrigin = false;
             }
-            Debug.Log("Iswalk: "+ isWalk);
         }
     }
 
@@ -256,9 +244,25 @@ public class NetworkEnemyController : NetworkBehaviour
         isChase = true;
 
         agent.speed = speed;
+
+        if (attackTarget != null) //stop chasing if player is ragdolled
+        {
+            if (attackTarget.GetComponent<NetworkObject>().IsOwner)
+            {
+                if (!attackTarget.GetComponent<BasicPlayerController>().enabled)
+                {
+                    Debug.Log("Player is ragdolled. Spider will return to origin");
+                    attackTarget = null;
+                    isReturnToOrigin = true;
+                    enemyState.Value = isGuard ? EnemyState.GUARD : EnemyState.PATROL;
+                    return;
+                }
+            }
+        }
+
         if (!FoundPlayer())
         {
-            isFollow = false;
+
             if (remainLookAtTime > 0)
             {
                 agent.SetDestination(transform.position);
@@ -287,8 +291,33 @@ public class NetworkEnemyController : NetworkBehaviour
                 lastAttackTime.Value = characterStats.attackData.coolDown;
                 AttackServerRpc();
             }
+
+            if (attackTarget.GetComponent<NetworkObject>().IsOwner)
+            {
+                SpiderAttackPlayerClientRpc(attackTarget.GetComponent<NetworkObject>().OwnerClientId);
+            }
         }
 
+    }
+
+    // delay for x second before player ragdolls
+    private IEnumerator DelayedPlayerRagdoll()
+    {
+        yield return new WaitForSeconds(0.5f);
+        if (attackTarget != null)
+        {
+            attackTarget.GetComponent<BasicPlayerController>()._ragdollOnOff.PerformRagdoll();
+        }
+    }
+
+    [ClientRpc]
+    void SpiderAttackPlayerClientRpc(ulong targetClientId)
+    {
+        if (NetworkManager.Singleton.LocalClientId == targetClientId)
+        {
+            Debug.Log("Spider attacked player: " + attackTarget.GetComponent<NetworkObject>().OwnerClientId);
+            StartCoroutine(DelayedPlayerRagdoll());
+        }
     }
 
     // Animation Event
@@ -358,6 +387,6 @@ public class NetworkEnemyController : NetworkBehaviour
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(guardPos, 0.1f);
     }
-    
-    
+
+
 }

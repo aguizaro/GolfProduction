@@ -23,7 +23,7 @@ public class BasicPlayerController : NetworkBehaviour
     // State Management
     public PlayerData _currentPlayerState;
     private PlayerNetworkData _playerNetworkData;
-    private RagdollOnOff _ragdollOnOff;
+    public RagdollOnOff _ragdollOnOff;
     private bool canMove = true;
 
     // Animation
@@ -31,7 +31,7 @@ public class BasicPlayerController : NetworkBehaviour
     private GameObject[] _flagPoles;
 
     // Activation
-    private bool _isActive = false;
+    public bool _isActive = false;
 
     public override void OnNetworkSpawn()
     {
@@ -71,6 +71,7 @@ public class BasicPlayerController : NetworkBehaviour
     {
         Debug.Log("Activating player controller for " + OwnerClientId + " isOwner: " + IsOwner);
         _playerNetworkData = GetComponent<PlayerNetworkData>();
+        _ragdollOnOff._playerNetworkData = _playerNetworkData;
 
         if (!IsOwner) return;
 
@@ -180,23 +181,19 @@ public class BasicPlayerController : NetworkBehaviour
 
         if (!_isActive) return; //prevent updates to state manager until player is fully activated
 
-        // Update player state if position or rotation has changed
-        if (transform.position != _currentPlayerState.playerPos || transform.rotation != _currentPlayerState.playerRot)
+        _currentPlayerState = new PlayerData
         {
-            _currentPlayerState = new PlayerData
-            {
-                playerID = OwnerClientId,
-                playerPos = transform.position,
-                playerRot = transform.rotation,
-                currentHole = _currentPlayerState.currentHole,
-                strokes = _currentPlayerState.strokes,
-                enemiesDefeated = _currentPlayerState.enemiesDefeated,
-                score = _currentPlayerState.score
-            };
+            playerID = OwnerClientId,
+            playerPos = transform.position,
+            playerRot = transform.rotation,
+            currentHole = _currentPlayerState.currentHole,
+            strokes = _currentPlayerState.strokes,
+            enemiesDefeated = _currentPlayerState.enemiesDefeated,
+            score = _currentPlayerState.score
+        };
 
-            //Debug.Log("BasicPlayerController: sending to PlayerNetworkData.cs\nOwner: " + OwnerClientId + "\nstrokes: " + _currentPlayerState.strokes + "\nhole: " + _currentPlayerState.currentHole + "\npos: " + _currentPlayerState.playerPos);
-            UpdatePlayerState(_currentPlayerState);
-        }
+        //Debug.Log("BasicPlayerController: sending to PlayerNetworkData.cs\nOwner: " + OwnerClientId + "\nstrokes: " + _currentPlayerState.strokes + "\nhole: " + _currentPlayerState.currentHole + "\npos: " + _currentPlayerState.playerPos);
+        UpdatePlayerState(_currentPlayerState);
     }
 
     // Animation -------------------------------------------------------------------------------------------------------------
@@ -324,6 +321,7 @@ public class BasicPlayerController : NetworkBehaviour
     public void UpdatePlayerState(PlayerData playerState)
     {
         if (!IsOwner) return;
+
         _playerNetworkData.StorePlayerState(playerState);
     }
 }
