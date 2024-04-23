@@ -427,10 +427,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1fd370f29e289db4c99cfa0477a63c65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  gameManagerPrefab: {fileID: 5831013797825701885, guid: 31cf9695843eb9a4096a93bfb4c70e9d, type: 3}
   spiderPrefab: {fileID: 179937010355921882, guid: 767a2296540c81e4194906bff1ec91ea, type: 3}
   moveSpeed: 1
   sprintMultiplier: 4
   rotationSpeed: 1000
+  _ragdollOnOff: {fileID: 0}
+  _isActive: 0
 --- !u!65 &2556599362540292874
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -630,6 +633,7 @@ MonoBehaviour:
   mainCollider: {fileID: -7954830342355126766}
   playerRB: {fileID: 4649621009289334031}
   playerRig: {fileID: 420073679474077443}
+  _playerNetworkData: {fileID: 0}
   ragdollDelay: 0.5
   getUpDelay: 8
 --- !u!114 &1651457965969626016

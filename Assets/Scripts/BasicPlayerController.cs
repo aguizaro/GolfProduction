@@ -8,6 +8,7 @@ using Unity.Netcode;
 public class BasicPlayerController : NetworkBehaviour
 {
     // prefabs
+    public GameObject gameManagerPrefab;
     public GameObject spiderPrefab;
 
     // Movement
@@ -76,16 +77,20 @@ public class BasicPlayerController : NetworkBehaviour
         if (!IsOwner) return;
 
         // activate player movement, animations, shooting and ragdoll
-        _isActive = true;
         _playerShoot.Activate();
 
-
-        //activate spider
         if (IsServer)
         {
+            //activate game manager
+            GameObject gameManager = Instantiate(gameManagerPrefab, new Vector3(0, 0, 0), Quaternion.identity);
+            gameManager.GetComponent<NetworkObject>().Spawn();
+
+            //activate spider
             GameObject spider = Instantiate(spiderPrefab, new Vector3(391, 72.1f, 289), Quaternion.identity);
             spider.GetComponent<NetworkObject>().Spawn();
         }
+
+        _isActive = true;
 
 
 
