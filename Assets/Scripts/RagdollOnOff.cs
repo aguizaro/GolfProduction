@@ -35,11 +35,9 @@ public class RagdollOnOff : NetworkBehaviour
         else RagdollModeOff(); // non owners deactivate ragdoll locally
     }
 
-    public void Deactivate() => isActive = false;
-
 
     // Update Loop -------------------------------------------------------------------------------------------------------------
-    void Update()
+    void FixedUpdate()
     {
 
         if (!isActive) return; //prevent updates until player is fully activated

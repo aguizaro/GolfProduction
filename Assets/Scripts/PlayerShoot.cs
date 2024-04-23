@@ -21,25 +21,14 @@ public class PlayerShoot : NetworkBehaviour
     private bool isActive = false;
     private bool _projectileMoving = false;
 
-    public Vector3[] holeStartPositions = new Vector3[]
-    {
-        new Vector3(395.840759f, 71f, 321.73f),
-        new Vector3(417.690155f, 79f, 234.9218f),
-        new Vector3(451.415436f, 80f, 172.0176f),
-        new Vector3(374.986023f, 93.3f, 99.01516f),
-        new Vector3(306.8986f, 103.3f, 89.0007248f),
-        new Vector3(235.689041f, 97.2f, 114.393f),
-        new Vector3(217.792923f, 86.5f, 163.657547f),
-        new Vector3(150.851669f, 90f, 163.362488f),
-        new Vector3(76.4118042f, 93.15f, 169.826523f)
-    };
-
 
     // Activation -------------------------------------------------------------------------------------------------------------
     public void Activate()
     {
+        Debug.Log("PlayerShoot activated for " + OwnerClientId + " isOwner: " + IsOwner);
+
         _playerController = GetComponent<BasicPlayerController>();
-        _playerNetworkData = GetComponent<PlayerNetworkData>();
+        _playerNetworkData = GameObject.FindWithTag("StateManager").GetComponent<PlayerNetworkData>();
         _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
         _ragdollOnOff = GetComponent<RagdollOnOff>();
         isActive = true;
@@ -53,7 +42,7 @@ public class PlayerShoot : NetworkBehaviour
     public void Deactivate() => isActive = false;
 
     // Update Loop -------------------------------------------------------------------------------------------------------------
-    private void Update()
+    private void FixedUpdate()
     {
         if (!isActive) return; //prevent updates until player is fully activated
         if (UIManager.isPaused) return; //no shoot on pause
@@ -75,6 +64,7 @@ public class PlayerShoot : NetworkBehaviour
         if (_projectileMoving && _projectileRb.velocity.magnitude < 0.1f && _projectileRb.angularVelocity.magnitude > 0)
         {
             _projectileMoving = false;
+            //Debug.Log("Ball stopped moving at " + _projectileInstance.transform.position + " when velocity droppped to " + _projectileRb.velocity.magnitude);
             stopRotation();
         }
     }
@@ -118,14 +108,15 @@ public class PlayerShoot : NetworkBehaviour
             // Display a raycast for debugging
             Debug.DrawRay(_projectileInstance.transform.position, dir * _projectileForce, Color.red, 100f);
 
-            // Increment the number of strokes and store data
+            // Increment the number of strokes
+            //_playerNetworkData.IncrementStrokeCount(ownerId);
             _playerController._currentPlayerState.strokes++;
-            _playerNetworkData.StorePlayerState(_playerController._currentPlayerState);
+            _playerNetworkData.StorePlayerState(_playerController._currentPlayerState, ownerId);
 
             _uiManager.UpdateStrokesUI(_playerController._currentPlayerState.strokes);
         }
-
-        // play audio here
+        //}
+        // AudioSource.PlayClipAtPoint(_spawnClip, transform.position);
     }
 
 
@@ -174,6 +165,7 @@ public class PlayerShoot : NetworkBehaviour
         if (!IsOwner) return; //redundnat check since this is a public function
 
         Vector3 ballSpawnPos = new Vector3(395.5f + Random.Range(-5, 5), 75f, 322.0f + Random.Range(-3, 3));
+        Debug.Log("Spawning at: " + ballSpawnPos + "for " + ownerId);
         RequestBallSpawnServerRpc(OwnerClientId, ballSpawnPos);
     }
 
@@ -184,24 +176,9 @@ public class PlayerShoot : NetworkBehaviour
         RemoveForces(); //  prevent ball from rolling
         stopRotation();
 
+        Debug.Log("The given destination position: " + destination);
+
         //  move ball to point
         _projectileInstance.transform.position = destination;
-    }
-
-    // checks playerdata for final hole, if not, moves ball to next hole startig postiiton
-    public void CheckForWin(PlayerData data)
-    {
-        if (data.currentHole > holeStartPositions.Length)
-        {
-            Debug.Log("Player " + data.playerID + " has won the game!");
-            _projectileInstance.SetActive(false);
-        }
-        else
-        {
-            _projectileRb.velocity = Vector3.zero;
-            _projectileRb.angularVelocity = Vector3.zero; // maybe get rid of this ? sometimes get a warning
-            MoveProjectileToPosition(holeStartPositions[data.currentHole - 1]);
-            Debug.Log("Hole " + (data.currentHole - 1) + " completed!\nMoving to next position " + _projectileInstance.transform.position);
-        }
     }
 }

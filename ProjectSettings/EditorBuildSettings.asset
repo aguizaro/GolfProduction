@@ -11,6 +11,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/TitleScreen.unity
     guid: bc05916d3563512439ebb04ff38b56b7
+  - enabled: 1
+    path: Assets/Scenes/TEST_SCENE.unity
+    guid: 16bb64e8afb5d6745bb33f1a699cf8a5
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: 980d985ff5bd35449b55537ed2066c67, type: 2}
     com.unity.localization.settings: {fileID: 11400000, guid: 878dae222a2efc34d96508898f134c51, type: 2}
