@@ -14,6 +14,7 @@ public class SwingManager : NetworkBehaviour
     [SerializeField]
     private float startSwingMaxDistance = 2f;   // The distance the player can be from their ball to start swing mode
     private bool inSwingMode = false;
+    private bool waitingForSwing = false;
     private GameObject thisBall;    // Reference to this player's ball
     private Rigidbody thisBallRb;
     [SerializeField] private float swingForce = 20f;
@@ -29,15 +30,34 @@ public class SwingManager : NetworkBehaviour
             return;
         }
 
-        if (!inSwingMode && Input.GetKeyDown(KeyCode.Space) && IsCloseToBall())     // Swing input is currently spacebar
+        
+        // Check if player is already in swing mode and waiting to swing
+        if (inSwingMode && waitingForSwing)
         {
+            if (Input.GetKeyDown(KeyCode.Escape)) // Exit swing mode without performing swing
+            {
+                ExitSwingMode();
+            }
+            else if (Input.GetKeyDown(KeyCode.Space)) // Perform swing
+            {
+                PerformSwingOnServerRpc();
+            }
+            return; // Don't execute further logic if waiting for swing
+        }
+
+        // Check for input to enter swing mode
+        if (!inSwingMode && Input.GetKeyDown(KeyCode.Space) && IsCloseToBall())
+        {
+            Debug.Log("Called StartSwingMode()");
             StartSwingMode();
-            PerformSwingOnServerRpc();
         }
-        else if (inSwingMode && Input.GetKeyUp(KeyCode.Space))
+        // Check for input to exit swing mode
+        else if (inSwingMode && Input.GetKeyDown(KeyCode.Escape))
         {
-            PerformSwingOnServerRpc();
+            ExitSwingMode();
         }
+
+
 
         /*
         // Spawn a ball when pressing a certain key (e.g., 'B')
@@ -58,6 +78,8 @@ public class SwingManager : NetworkBehaviour
         if (distance <= startSwingMaxDistance)
         {
             return true;
+            // Check for line of sight: will be good for active ragdoll
+            /*
             RaycastHit hit;
             // Send raycast from the camera's position and direction
             bool hasLineOfSight = Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, out hit, startSwingMaxDistance);
@@ -66,6 +88,7 @@ public class SwingManager : NetworkBehaviour
             {
                 return true;    // Player is close to ball and looking at it
             }
+            */
         }
 
         return false; // Ball exists but player is not close enough/looking at it
@@ -75,6 +98,7 @@ public class SwingManager : NetworkBehaviour
     {
         Debug.Log("Swing State entered");
         inSwingMode = true;
+        waitingForSwing = true;
         // Lock player controls
         playerControllerScript.DisableInput();
         // Set camera to swing state
@@ -90,20 +114,22 @@ public class SwingManager : NetworkBehaviour
         // Apply the force to the ball
         // Trigger swing animation
         playerAnimator.SetTrigger("Swing");
-
+        // set waitingForSwing to false to exit swing mode after animations finished
+        waitingForSwing = false;
         // Add forces
         var dir = transform.forward + new Vector3(0, verticalAngle, 0);
         thisBallRb.AddForce(dir * swingForce, ForceMode.Impulse);
         thisBallMoving = true;
 
 /*
-        // Increment the number of strokes?
+        // Increment the number of strokes? idk if this should be located here but prob
 
         playerControllerScript._currentPlayerState.strokes++;
         _playerNetworkData.StorePlayerState(playerControllerScript._currentPlayerState, ownerId);
 
         _uiManager.UpdateStrokesUI(playerControllerScript._currentPlayerState.strokes);
 */
+
         // Set camera to default state
         cameraFollowScript.SetSwingState(false);
 
@@ -118,6 +144,8 @@ public class SwingManager : NetworkBehaviour
 
         playerControllerScript.EnableInput();
         cameraFollowScript.SetSwingState(false);
+        // Make sure its no longer waiting for swing
+        waitingForSwing = false;
     }
 
     [ServerRpc]
