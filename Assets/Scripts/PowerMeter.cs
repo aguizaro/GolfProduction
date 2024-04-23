@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class PowerMeter : MonoBehaviour
 {
-    // Start is called before the first frame update
+
     private Slider power;
     public float changeSpeed = 1.0f;
     private bool increasing = true;
@@ -16,15 +16,19 @@ public class PowerMeter : MonoBehaviour
         power = GetComponentInChildren<Slider>();
     }
 
-    // Update is called once per frame
+
     void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButton(0))
         {
             mouseDown = true;
         }
+        else
+        {
+            mouseDown = false;
+        }
 
-        if (power != null && !mouseDown)
+        if (power != null && mouseDown)
         {
             if (increasing)
             {
