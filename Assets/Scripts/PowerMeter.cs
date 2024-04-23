@@ -11,6 +11,7 @@ public class PowerMeter : MonoBehaviour
     public float changeSpeed = 1.0f;
     private bool increasing = true;
     private bool mouseDown = false;
+    private bool playerShot = false;
     void Start()
     {
         power = GetComponentInChildren<Slider>();
@@ -23,8 +24,7 @@ public class PowerMeter : MonoBehaviour
         {
             mouseDown = true;
         }
-        else
-        {
+        else {
             mouseDown = false;
         }
 
