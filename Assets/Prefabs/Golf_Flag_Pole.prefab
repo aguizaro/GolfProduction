@@ -107,15 +107,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: cce459c69c55eda43939406eedd2a5b2, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 358.51184
+      value: 407.89325
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: cce459c69c55eda43939406eedd2a5b2, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 108.89686
+      value: 112.96085
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: cce459c69c55eda43939406eedd2a5b2, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -209.95258
+      value: -270.7683
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: cce459c69c55eda43939406eedd2a5b2, type: 3}
       propertyPath: m_LocalRotation.w
@@ -221,7 +221,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2393216127
+  GlobalObjectIdHash: 2626590684
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
@@ -241,16 +241,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2de11ce5cb065674d966f269671046f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerController: {fileID: 0}
+  playerNetworkData: {fileID: 0}
+  uiManager: {fileID: 0}
   holeStartPositions:
   - {x: 395.84076, y: 71, z: 321.73}
   - {x: 417.69016, y: 79, z: 234.9218}
   - {x: 451.41544, y: 80, z: 172.0176}
-  - {x: 374.98602, y: 93, z: 99.01516}
-  - {x: 306.8986, y: 103, z: 89.000725}
-  - {x: 235.68904, y: 97, z: 114.393}
+  - {x: 374.98602, y: 93.3, z: 99.01516}
+  - {x: 306.8986, y: 103.3, z: 89.000725}
+  - {x: 235.68904, y: 97.2, z: 114.393}
   - {x: 217.79292, y: 86.5, z: 163.65755}
   - {x: 150.85167, y: 90, z: 163.36249}
-  - {x: 76.411804, y: 93, z: 169.82652}
+  - {x: 76.411804, y: 93.15, z: 169.82652}
 --- !u!136 &676549419622347072
 CapsuleCollider:
   m_ObjectHideFlags: 0

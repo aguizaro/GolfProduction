@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 9f846603ae3f7de4a9246e2ff986c1f0
+guid: af4d8bc7500598144a16b6a6df780181
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
@@ -31,11 +31,11 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: Strike1
+      name: Sword And Shield Attack
       takeName: mixamo.com
       internalID: -203655887218126122
       firstFrame: 0
-      lastFrame: 47
+      lastFrame: 52
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
