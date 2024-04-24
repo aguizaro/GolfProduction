@@ -3,15 +3,15 @@ using UnityEngine.UI;
 
 public class SliderColor : MonoBehaviour
 {
-    private Slider slider;
+    private Slider power;
     private Image handleImage;
 
     void Start()
     {
-        slider = GetComponent<Slider>();
-        handleImage = slider.fillRect.GetComponentInChildren<Image>();
-        slider.onValueChanged.AddListener(HandleSliderValueChanged);
-        HandleSliderValueChanged(slider.value);
+        power = GetComponent<Slider>();
+        handleImage = power.fillRect.GetComponentInChildren<Image>();
+        power.onValueChanged.AddListener(HandleSliderValueChanged);
+        HandleSliderValueChanged(power.value);
     }
 
     void HandleSliderValueChanged(float value)
@@ -35,6 +35,6 @@ public class SliderColor : MonoBehaviour
 
     private void OnDestroy()
     {
-        slider.onValueChanged.RemoveListener(HandleSliderValueChanged);
+        power.onValueChanged.RemoveListener(HandleSliderValueChanged);
     }
 }
