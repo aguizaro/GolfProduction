@@ -96,6 +96,7 @@ public class UIManager : MonoBehaviour
         // Settings Button Events
         _settingsApplyButton.onClick.AddListener(ApplySettings);
         _settingsBackButton.onClick.AddListener(DisableSettings);
+        _settingsLanguageDropdown.onValueChanged.AddListener(ApplyLanguage);
 
         //Camera Start Position
         _cameraStartTransform = _mainCamera.transform;
@@ -199,6 +200,14 @@ public class UIManager : MonoBehaviour
 
         Debug.Log("Is Locale active: " + localeActive);
 
+        if (!localeActive) { StartCoroutine(SetLocale(language)); }
+    }
+
+    public void ApplyLanguage(int lang)
+    {
+        SettingsData sData = DataManager.instance.GetSettingsData();
+        sData.language = lang;
+        DataManager.instance.SetSettingsData(sData);
         if (!localeActive) { StartCoroutine(SetLocale(language)); }
     }
 
