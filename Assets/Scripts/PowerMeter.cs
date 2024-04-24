@@ -16,7 +16,7 @@ public class PowerMeter : MonoBehaviour
     void Start()
     {
         power = GetComponentInChildren<Slider>();
-            handleImage = power.fillRect.GetComponentInChildren<Image>();
+        handleImage = power.fillRect.GetComponentInChildren<Image>();
         power.onValueChanged.AddListener(HandleSliderValueChanged);
         HandleSliderValueChanged(power.value);
     }
@@ -39,18 +39,24 @@ public class PowerMeter : MonoBehaviour
         handleImage.color = handleColor;
     }
 
-
     void Update()
     {
+
         if (Input.GetMouseButton(0))
         {
             mouseDown = true;
         }
-        else {
+        else
+        {
             mouseDown = false;
+
+        }
+        if (Input.GetMouseButtonUp(0))
+        {
+        playerShot = true;
         }
 
-        if (power != null && mouseDown)
+        if (power != null && mouseDown && !playerShot)
         {
             if (increasing)
             {
@@ -70,7 +76,7 @@ public class PowerMeter : MonoBehaviour
             }
         }
     }
-  
+
     private void OnDestroy()
     {
         power.onValueChanged.RemoveListener(HandleSliderValueChanged);
