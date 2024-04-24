@@ -51,7 +51,7 @@ public class PlayerNetworkData : NetworkBehaviour
 
     private void OnPlayerDataChanged(PlayerData prevData, PlayerData newData)
     {
-        // Debug.Log("OnPlayerDataChanged: called by owner: " + OwnerClientId + " isOwner: " + IsOwner + " isServer: " + IsServer + "\nfor player: " + newData.playerID + " - strokes: " + _currentPlayerData.strokes + " hole: " + _currentPlayerData.currentHole + " pos:" + _currentPlayerData.playerPos);
+        Debug.Log("OnPlayerDataChanged: called by owner: " + OwnerClientId + " isOwner: " + IsOwner + "\n\nfor player: " + newData.playerID + " - strokes: " + _currentPlayerData.strokes + " hole: " + _currentPlayerData.currentHole + _currentPlayerData.enemiesDefeated + " score: " + _currentPlayerData.score);
         _currentPlayerData = newData;
 
         if (IsOwner)

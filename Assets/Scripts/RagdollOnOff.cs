@@ -10,14 +10,15 @@ public class RagdollOnOff : NetworkBehaviour
     public GameObject playerRig;
     private Animator _playerAnimator;
     private BasicPlayerController _basicPlayerController;
+    public PlayerNetworkData _playerNetworkData;
     private BoxCollider _golfClubCollider;
 
     public float ragdollDelay = 0.5f; //Slight delay defore ragdoll mode is activated
     public float getUpDelay = 10f;
     private float delay;
     private bool isRagdoll = false; //is player in ragdoll mode
-
     private bool isActive = false; //is player instance active
+
 
 
     // Activation -------------------------------------------------------------------------------------------------------------
@@ -111,6 +112,7 @@ public class RagdollOnOff : NetworkBehaviour
         mainCollider.enabled = false;
         playerRB.isKinematic = true;
         isRagdoll = true;
+
 
     }
     // Dev Note: Don't call this function directly. Use the RPCs instead. - this will only exectute locally
