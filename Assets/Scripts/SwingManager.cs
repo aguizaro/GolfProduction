@@ -27,8 +27,8 @@ public class SwingManager : NetworkBehaviour
     private GameObject thisBall;    // Reference to this player's ball
     private Rigidbody thisBallRb;
     private BasicPlayerController _playerController;
-    private RagdollOnOff _ragdollOnOff;
     private float swingForce = 50f;
+    private bool first = true;
 
     [SerializeField] private float verticalAngle = 0.50f;
 
@@ -55,6 +55,7 @@ public class SwingManager : NetworkBehaviour
         {
             SpawnBallOnServerRpc(OwnerClientId);
         }
+
     }
 
     public void Deactivate()
@@ -67,16 +68,14 @@ public class SwingManager : NetworkBehaviour
         powerMeter = GetComponentInChildren<Slider>();
         powerMeterRef = meterCanvas.GetComponent<PowerMeter>();
         _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
-        
-        _ragdollOnOff = GetComponent<RagdollOnOff>();
+
         _playerNetworkData = GetComponent<PlayerNetworkData>();
         _playerController = GetComponent<BasicPlayerController>();
-
-
     }
     // Update is called once per frame
     void Update()
     {
+        Debug.Log("ballpos: " + thisBall.transform.position);
         if (!_isActive) return;
 
         if (!IsOwner || !isActiveAndEnabled)
@@ -100,7 +99,7 @@ public class SwingManager : NetworkBehaviour
         }
 
         // Check for input to enter swing mode
-        if (!inSwingMode && Input.GetKeyDown(KeyCode.Space) && IsCloseToBall() && !_ragdollOnOff.IsRagdoll())
+        if (!inSwingMode && Input.GetKeyDown(KeyCode.Space) && IsCloseToBall())
         {
             Debug.Log("Called StartSwingMode()");
             StartSwingMode();
@@ -121,6 +120,11 @@ public class SwingManager : NetworkBehaviour
         if (Input.GetKeyDown(KeyCode.F) && (thisBall != null))
         {
             ReturnBallToPlayer();
+            if (first)
+            {
+                first = false;
+                return;
+            }
             _playerController._currentPlayerState.strokes++;
             _playerNetworkData.StorePlayerState(_playerController._currentPlayerState);
             _uiManager.UpdateStrokesUI(_playerController._currentPlayerState.strokes);
@@ -160,7 +164,6 @@ public class SwingManager : NetworkBehaviour
     void StartSwingMode()
     {
         Debug.Log("Swing State entered");
-
 
         RemoveForces(); //  prevent ball from rolling
         stopRotation();
@@ -214,7 +217,7 @@ public class SwingManager : NetworkBehaviour
     }
 
     // Exit swing state without performing swing, will need rpcs
-    public void ExitSwingMode()
+    void ExitSwingMode()
     {
         inSwingMode = false;
 
@@ -277,14 +280,9 @@ public class SwingManager : NetworkBehaviour
         }
     }
 
-    public bool isInSwingMode()
-    {
-        return inSwingMode;
-    }
-
     // helper functions -------------------------------------------------------------------------------------------------------------
 
-    
+
     private void ReturnBallToPlayer()
     {
         if (thisBall == null) return;
