@@ -177,13 +177,10 @@ public class NetworkEnemyController : NetworkBehaviour
             if (target.gameObject == attackTarget)
             {
                 // if player is ragdolled, break and try to find another target
-                if (target.GetComponent<NetworkObject>().IsOwner)
+                if (!target.GetComponent<BasicPlayerController>().enabled)
                 {
-                    if (!target.GetComponent<BasicPlayerController>().enabled)
-                    {
-                        attackTarget = null;
-                        break;
-                    }
+                    attackTarget = null;
+                    break;
                 }
                 return true;
             }
@@ -193,7 +190,7 @@ public class NetworkEnemyController : NetworkBehaviour
         {
             if (target.CompareTag("Player"))
             {
-                if (target.GetComponent<NetworkObject>().IsOwner && !target.GetComponent<BasicPlayerController>().enabled)
+                if (!target.GetComponent<BasicPlayerController>().enabled)
                 { // dont set player as target if player is ragdolled
                     return false;
                 }
@@ -216,15 +213,15 @@ public class NetworkEnemyController : NetworkBehaviour
 
             agent.isStopped = false;
             agent.destination = guardPos;
-            
+
 
             if (Math.Abs(guardPos.x - transform.position.x) < agent.stoppingDistance && Math.Abs(guardPos.z - transform.position.z) < agent.stoppingDistance)
             {
                 isWalk = false;
-                transform.rotation = Quaternion.Lerp(transform.rotation, guardRotation, 0.01f);
+                //transform.rotation = Quaternion.Lerp(transform.rotation, guardRotation, 0.01f);
                 isReturnToOrigin = false;
             }
-            Debug.Log("Absolute distance: " + Math.Abs(guardPos.x - transform.position.x) + " " + Math.Abs(guardPos.z - transform.position.z));
+            //Debug.Log("Absolute distance: " + Math.Abs(guardPos.x - transform.position.x) + " " + Math.Abs(guardPos.z - transform.position.z));
         }
     }
 
@@ -302,6 +299,7 @@ public class NetworkEnemyController : NetworkBehaviour
             {
                 lastAttackTime.Value = characterStats.attackData.coolDown;
                 AttackServerRpc();
+                Debug.Log("Spider attacked player");
             }
 
             // if (attackTarget.GetComponent<NetworkObject>().IsOwner)
