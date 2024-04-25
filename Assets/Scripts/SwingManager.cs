@@ -30,7 +30,6 @@ public class SwingManager : NetworkBehaviour
     private RagdollOnOff _ragdollOnOff;
     private float swingForce = 50f;
 
-    private int returnBallTimes = 3;
     [SerializeField] private float verticalAngle = 0.50f;
 
     public Vector3[] holeStartPositions = new Vector3[]
@@ -121,11 +120,10 @@ public class SwingManager : NetworkBehaviour
 
         if (Input.GetKeyDown(KeyCode.F) && (thisBall != null))
         {
-            if (returnBallTimes > 0)
-            {
-                ReturnBallToPlayer();
-                returnBallTimes--;
-            }
+            ReturnBallToPlayer();
+            _playerController._currentPlayerState.strokes++;
+            _playerNetworkData.StorePlayerState(_playerController._currentPlayerState);
+            _uiManager.UpdateStrokesUI(_playerController._currentPlayerState.strokes);
         }
 
     }
@@ -237,7 +235,7 @@ public class SwingManager : NetworkBehaviour
     [ServerRpc]
     void SpawnBallOnServerRpc(ulong ownerId)
     {
-        Vector3 spawnPosition = playerTransform.position + playerTransform.forward * 1f + Vector3.up * 0.5f;
+        Vector3 spawnPosition = playerTransform.position + playerTransform.forward * 0.5f + Vector3.up * 0.5f;
         thisBall = Instantiate(ballPrefab, spawnPosition, Quaternion.identity);
         thisBallRb = thisBall.GetComponent<Rigidbody>();
         //thisBallRb.velocity = playerTransform.forward * 10f; // Example velocity
@@ -273,7 +271,8 @@ public class SwingManager : NetworkBehaviour
         {
             thisBallRb.velocity = Vector3.zero;
             thisBallRb.angularVelocity = Vector3.zero; // maybe get rid of this ? sometimes get a warning
-            MoveProjectileToPosition(holeStartPositions[data.currentHole - 1]);
+            Vector2 randStartPos = holeStartPositions[data.currentHole - 1] + new Vector3(Random.Range(-0.5f, 0.5f), 0, Random.Range(-0.5f, 0.5f));
+            MoveProjectileToPosition(randStartPos);
             Debug.Log("Hole " + (data.currentHole - 1) + " completed!\nMoving to next position " + thisBall.transform.position);
         }
     }
