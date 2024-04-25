@@ -19,8 +19,8 @@ public class SwingManager : NetworkBehaviour
     private Slider powerMeter;
     private PowerMeter powerMeterRef;
 
+    private float startSwingMaxDistance = 0.6f;   // The distance the player can be from their ball to start swing mode
     [SerializeField]
-    private float startSwingMaxDistance = 2f;   // The distance the player can be from their ball to start swing mode
     private bool inSwingMode = false;
     private bool waitingForSwing = false;
     private bool _isActive;
@@ -121,23 +121,26 @@ public class SwingManager : NetworkBehaviour
         // Checks if the player is close enough to the ball and looking at it
         if (thisBall == null) return false;
 
-        float distance = Vector3.Distance(playerTransform.position, thisBall.transform.position);
+        float distance = Vector3.Distance(playerTransform.position + Vector3.down, thisBall.transform.position);
+        Debug.Log("DISTANCE IS: " + distance + " " + startSwingMaxDistance);
 
         if (distance <= startSwingMaxDistance)
         {
-            return true;
-            // Check for line of sight: will be good for active ragdoll
             /*
-            RaycastHit hit;
-            // Send raycast from the camera's position and direction
-            bool hasLineOfSight = Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, out hit, startSwingMaxDistance);
+            Ray ray = new Ray(transform.position, transform.forward);
 
-            if (hasLineOfSight && hit.collider.gameObject == thisBall)
+            RaycastHit hit;
+            if(Physics.Raycast(ray, out hit, 2f))
             {
-                return true;    // Player is close to ball and looking at it
+                if (hit.collider.gameObject == thisBall)
+                {
+                    return true;
+                }
             }
             */
+            return true;
         }
+        //Debug.DrawRay(transform.position, transform.forward * 3, Color.red, 0.5f);
 
         return false; // Ball exists but player is not close enough/looking at it
     }

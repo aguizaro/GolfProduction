@@ -152,14 +152,6 @@ public class BasicPlayerController : NetworkBehaviour
 
             // update local player state with network data ?
         }
-        // Check for pause input
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            if (!UIManager.isPaused) { UIManager.isPaused = true; UIManager.instance.EnablePause(); Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
-            else { UIManager.isPaused = false; UIManager.instance.DisablePause(); Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; }
-        }
-        if (UIManager.isPaused) { return; }
-        else { if (!UIManager.instance.titleScreenMode) { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; } }
 #if ENABLE_INPUT_SYSTEM
         InputSystemRotation();
         InputSystemMovement();
