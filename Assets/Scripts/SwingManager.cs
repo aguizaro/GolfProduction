@@ -28,6 +28,7 @@ public class SwingManager : NetworkBehaviour
     private Rigidbody thisBallRb;
     private BasicPlayerController _playerController;
     private float swingForce = 50f;
+    private bool first = true;
 
     [SerializeField] private float verticalAngle = 0.50f;
 
@@ -54,6 +55,7 @@ public class SwingManager : NetworkBehaviour
         {
             SpawnBallOnServerRpc(OwnerClientId);
         }
+
     }
 
     public void Deactivate()
@@ -69,7 +71,6 @@ public class SwingManager : NetworkBehaviour
 
         _playerNetworkData = GetComponent<PlayerNetworkData>();
         _playerController = GetComponent<BasicPlayerController>();
-
     }
     // Update is called once per frame
     void Update()
@@ -119,6 +120,11 @@ public class SwingManager : NetworkBehaviour
         if (Input.GetKeyDown(KeyCode.F) && (thisBall != null))
         {
             ReturnBallToPlayer();
+            if (first)
+            {
+                first = false;
+                return;
+            }
             _playerController._currentPlayerState.strokes++;
             _playerNetworkData.StorePlayerState(_playerController._currentPlayerState);
             _uiManager.UpdateStrokesUI(_playerController._currentPlayerState.strokes);
