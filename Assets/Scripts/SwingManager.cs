@@ -15,6 +15,7 @@ public class SwingManager : NetworkBehaviour
 
     private PlayerNetworkData _playerNetworkData;
     private UIManager _uiManager;
+    private RagdollOnOff _ragdollOnOff;
 
     private Slider powerMeter;
     private PowerMeter powerMeterRef;
@@ -162,6 +163,10 @@ public class SwingManager : NetworkBehaviour
 
     void StartSwingMode()
     {
+        if(_ragdollOnOff.isRagdoll())
+        {
+            return;
+        }
         Debug.Log("Swing State entered");
 
         RemoveForces(); //  prevent ball from rolling
@@ -216,7 +221,7 @@ public class SwingManager : NetworkBehaviour
     }
 
     // Exit swing state without performing swing, will need rpcs
-    void ExitSwingMode()
+    public void ExitSwingMode()
     {
         inSwingMode = false;
 
@@ -277,6 +282,11 @@ public class SwingManager : NetworkBehaviour
             MoveProjectileToPosition(randStartPos);
             Debug.Log("Hole " + (data.currentHole - 1) + " completed!\nMoving to next position " + thisBall.transform.position);
         }
+    }
+
+    public bool isInSwingState()
+    {
+        return inSwingMode;
     }
 
     // helper functions -------------------------------------------------------------------------------------------------------------
