@@ -51,7 +51,10 @@ public class SwingManager : NetworkBehaviour
     {
         _isActive = true;
         // spawn ball on activation
-        SpawnBallOnServerRpc();
+        if (IsOwner)
+        {
+            SpawnBallOnServerRpc(OwnerClientId);
+        }
     }
 
     public void Deactivate()
@@ -228,7 +231,7 @@ public class SwingManager : NetworkBehaviour
     // Spawn and shooting rpcs
 
     [ServerRpc]
-    void SpawnBallOnServerRpc()
+    void SpawnBallOnServerRpc(ulong ownerId)
     {
         Vector3 spawnPosition = playerTransform.position + playerTransform.forward * 1f + Vector3.up * 0.5f;
         thisBall = Instantiate(ballPrefab, spawnPosition, Quaternion.identity);
@@ -237,7 +240,7 @@ public class SwingManager : NetworkBehaviour
         NetworkObject ballNetworkObject = thisBall.GetComponent<NetworkObject>();
         if (ballNetworkObject != null)
         {
-            ballNetworkObject.Spawn();
+            ballNetworkObject.SpawnWithOwnership(ownerId);
         }
 
         //RemoveForces(); //  prevent ball from rolling
@@ -250,18 +253,8 @@ public class SwingManager : NetworkBehaviour
     [ClientRpc]
     void SpawnBallOnClientRpc(ulong ballId)
     {
-        if (IsOwner)
-            return;
-
-        NetworkObject ballNetworkObject = NetworkManager.Singleton.SpawnManager.SpawnedObjects[ballId];
-        if (ballNetworkObject != null)
-        {
-            GameObject ballGameObject = ballNetworkObject.gameObject;
-            if (ballGameObject != null)
-            {
-                ballGameObject.GetComponent<NetworkObject>().Spawn();
-            }
-        }
+        thisBall = NetworkManager.Singleton.SpawnManager.SpawnedObjects[ballId].gameObject;
+        thisBallRb = thisBall.GetComponent<Rigidbody>();
     }
 
     // checks playerdata for final hole, if not, moves ball to next hole startig postiiton
