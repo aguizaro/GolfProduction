@@ -39,7 +39,7 @@ public class DataManager : MonoBehaviour
     // Loads json data into data class variable (not yet implemented)
     public void LoadData()
     {
-        if (settingsData == null) 
+        if (settingsData == null)
         {
             Debug.Log("No save data found, creating new data.");
             NewSettingsData();

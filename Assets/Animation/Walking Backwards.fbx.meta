@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 2c9c6f0c2ce351b43bd445b5165a8d61
+guid: ef598c85ba5028940aded5716676a9cd
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
@@ -31,11 +31,11 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: mixamo.com
+      name: Walking Backwards
       takeName: mixamo.com
       internalID: -203655887218126122
       firstFrame: 0
-      lastFrame: 28
+      lastFrame: 36
       wrapMode: 0
       orientationOffsetY: 0
       level: 0

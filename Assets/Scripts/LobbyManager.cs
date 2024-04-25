@@ -53,7 +53,6 @@ public class LobbyManager : MonoBehaviour
 
     [SerializeField] EncryptionType encryption = EncryptionType.WSS;
     [SerializeField] int maxLobbySize = 5;
-    public GameObject _stateManagerPrefab;
 
     private const string RelayJoinCodeKey = "RelayJoinCode";
     private const string LobbyTypeKey = "LobbyType";
@@ -241,6 +240,7 @@ public class LobbyManager : MonoBehaviour
 
             _UIManager.DeactivateUI();
 
+
             Debug.Log("Connected lobby code: " + ConnectedLobby.LobbyCode);
 
         }
@@ -284,7 +284,7 @@ public class LobbyManager : MonoBehaviour
         }
         catch (Exception e)
         {
-            Debug.Log($"Failed to join lobby: {e.Message}");
+            Debug.LogWarning($"Failed to join lobby: {e.Message}");
         }
 
     }
@@ -342,8 +342,6 @@ public class LobbyManager : MonoBehaviour
             Debug.Log("Connected Lobby: " + ConnectedLobby.Name);
 
             JoinAllocation allocation = await RelayService.Instance.JoinAllocationAsync(ConnectedLobby.Data[RelayJoinCodeKey].Value);
-
-            Debug.Log("grabbed allocation from lobby: " + allocation.AllocationId);
 
             // configure unity tranport to use websockets for webGL support
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(allocation, _encrptionType));
@@ -477,6 +475,8 @@ public class LobbyManager : MonoBehaviour
     {
         var callbacks = new LobbyEventCallbacks();
         callbacks.LobbyChanged += OnLobbyChanged;
+        callbacks.PlayerJoined += OnPlayerJoined;
+        callbacks.PlayerLeft += OnPlayerLeft;
         callbacks.KickedFromLobby += OnKickedFromLobby;
         callbacks.LobbyEventConnectionStateChanged += OnLobbyEventConnectionStateChanged;
         try
@@ -502,8 +502,15 @@ public class LobbyManager : MonoBehaviour
     {
         if (ConnectedLobbyyEvents != null)
         {
+            ConnectedLobbyyEvents.Callbacks.LobbyChanged -= OnLobbyChanged;
+            ConnectedLobbyyEvents.Callbacks.PlayerJoined -= OnPlayerJoined;
+            ConnectedLobbyyEvents.Callbacks.PlayerLeft -= OnPlayerLeft;
+            ConnectedLobbyyEvents.Callbacks.KickedFromLobby -= OnKickedFromLobby;
+            ConnectedLobbyyEvents.Callbacks.LobbyEventConnectionStateChanged -= OnLobbyEventConnectionStateChanged;
             await ConnectedLobbyyEvents.UnsubscribeAsync();
+
             ConnectedLobbyyEvents = null;
+            Debug.Log("Unsubscribed from lobby events");
         }
     }
 
@@ -513,8 +520,24 @@ public class LobbyManager : MonoBehaviour
 
         if (changes.LobbyDeleted)
         {
+            ConnectedLobby = null;
             await PlayerExit();
             return;
+        }
+
+        if (changes.AvailableSlots.Changed)
+        {
+            Debug.LogWarning("Available Slots Changed");
+            if (changes.AvailableSlots.Value == 0)
+            {
+                Debug.LogWarning("Lobby Full");
+                // Do something specific due to this change
+            }
+            if (changes.AvailableSlots.Added)
+            {
+                Debug.LogWarning("Player Joined Lobby");
+                // Do something specific due to this change
+            }
         }
 
         changes.ApplyToLobby(ConnectedLobby);
@@ -522,6 +545,24 @@ public class LobbyManager : MonoBehaviour
         if (changes.Name.Changed)
         {
             // Do something specific due to this change
+        }
+        // Refresh the UI in some way
+    }
+
+    private void OnPlayerJoined(List<LobbyPlayerJoined> players)
+    {
+        foreach (var playerEntry in players)
+        {
+            Debug.LogWarning($"player: {playerEntry.Player.Data[playerNameKey].Value} joined lobby");
+        }
+        // Refresh the UI in some way
+    }
+
+    private void OnPlayerLeft(List<int> playerNumbers)
+    {
+        foreach (var playerNumber in playerNumbers)
+        {
+            Debug.LogWarning($"player: {playerNumber} left lobby");
         }
         // Refresh the UI in some way
     }
@@ -611,7 +652,7 @@ public class LobbyManager : MonoBehaviour
         {
             Debug.Log("still waiting for connection... " + tick);
             tick++;
-            if (tick > 2000)
+            if (tick > 160)
             {
                 Debug.LogWarning("Failed to connect to network");
                 await PlayerExit();
@@ -647,6 +688,7 @@ public class LobbyManager : MonoBehaviour
         gameIsActive = true;
 
         _UIManager.DeactivateUI();
+        _UIManager.ActivateHUD();
         _UIManager.DisplaySignedIn();
         _UIManager.DisplayCode(ConnectedLobby.LobbyCode);
         _UIManager.DisplayLobbyName(ConnectedLobby.Name);
@@ -662,13 +704,8 @@ public class LobbyManager : MonoBehaviour
         gameIsActive = false;
         ConnectionNotificationManager.Singleton.OnClientConnectionNotification -= HandleClientConnectionNotification;
 
-
-        Debug.Log("cursor state: " + Cursor.lockState.ToString());
-        Debug.Log("cursor visible: " + Cursor.visible.ToString());
-
         _UIManager.DisableUIText();
         _UIManager.ReturnToTitle();
-
 
     }
 
@@ -686,11 +723,7 @@ public class LobbyManager : MonoBehaviour
             await Lobbies.Instance.RemovePlayerAsync(ConnectedLobby.Id, _playerId);
             ConnectedLobby = null;
 
-            Debug.Log("Left Lobby");
-
-            //NetworkManager.Singleton.Shutdown();
-            //while (NetworkManager.Singleton.ShutdownInProgress) ;
-            //Debug.Log("Disconnected from Relay Server");
+            Debug.LogWarning("Left Lobby");
 
         }
         catch (LobbyServiceException e)
@@ -723,7 +756,7 @@ public class LobbyManager : MonoBehaviour
                 IsPrivate = true
             });
 
-            Debug.Log("Locked Lobby");
+            Debug.LogWarning("Locked Lobby");
         }
         catch (LobbyServiceException e)
         {
@@ -736,7 +769,7 @@ public class LobbyManager : MonoBehaviour
 
     private async void OnApplicationQuit()
     {
-        Debug.Log("Application Quit: trying to exit");
+        Debug.LogWarning("Application Quit: trying to exit");
         await PlayerExit();
     }
 
@@ -745,7 +778,7 @@ public class LobbyManager : MonoBehaviour
         try
         {
             Debug.Log("Player Exit Called");
-            await OnApplicationQuitCallback();
+            await TryQuitLobby();
 
             EndGame();
         }
@@ -762,18 +795,17 @@ public class LobbyManager : MonoBehaviour
     }
 
 
-    public async Task OnApplicationQuitCallback()
+    public async Task TryQuitLobby()
     {
-        Debug.Log("OnApplicationQuitCallback called");
+        Debug.Log("TryQuitLobby called");
+
+        await UnsubscribeFromLobbyEvents();
 
         if (NetworkManager.Singleton.IsConnectedClient)
         {
-
             NetworkManager.Singleton.Shutdown();
-            Debug.Log("Disconnected from Relay Server");
+            Debug.LogWarning("Disconnected from Relay Server");
         }
-
-        await UnsubscribeFromLobbyEvents();
 
         if (ConnectedLobby != null)
         {
@@ -805,7 +837,7 @@ public class LobbyManager : MonoBehaviour
             if (ConnectedLobby.HostId == _playerId) await LobbyService.Instance.DeleteLobbyAsync(ConnectedLobby.Id);
             ConnectedLobby = null;
 
-            Debug.Log("Deleted Lobby");
+            Debug.LogWarning("Deleted Lobby");
 
         }
         catch (LobbyServiceException e)
