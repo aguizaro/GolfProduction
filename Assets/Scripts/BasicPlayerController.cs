@@ -15,7 +15,7 @@ public class BasicPlayerController : NetworkBehaviour
 
     // Physics
     private Rigidbody _rb;
-    private PlayerShoot _playerShoot;
+    //private PlayerShoot _playerShoot;
 
     // State Management
     public PlayerData _currentPlayerState;
@@ -49,7 +49,7 @@ public class BasicPlayerController : NetworkBehaviour
     {
         _rb = gameObject.GetComponent<Rigidbody>();
         _animator = GetComponent<Animator>();
-        _playerShoot = GetComponent<PlayerShoot>();
+        //_playerShoot = GetComponent<PlayerShoot>();
         _ragdollOnOff = GetComponent<RagdollOnOff>();
         _flagPoles = GameObject.FindGameObjectsWithTag("HoleFlagPole");
 
@@ -95,7 +95,7 @@ public class BasicPlayerController : NetworkBehaviour
 
         // activate player movement, animations, shooting and ragdoll
         _isActive = true;
-        _playerShoot.Activate();
+        //_playerShoot.Activate();
 
         // activate flag poles
         foreach (GameObject flagPole in _flagPoles)
@@ -129,7 +129,7 @@ public class BasicPlayerController : NetworkBehaviour
             flagPole.GetComponent<HoleFlagPoleManager>().Deactivate();
         }
         _ragdollOnOff.Deactivate();
-        _playerShoot.Deactivate();
+        //_playerShoot.Deactivate();
         _actions.Disable();
     }
 

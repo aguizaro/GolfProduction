@@ -6,11 +6,22 @@ using Unity.Netcode;
 public class SwingManager : NetworkBehaviour
 {
     public Transform playerTransform;
-    public Camera swingCamera;
     public Animator playerAnimator;
     public GameObject ballPrefab;
+    public StartCameraFollow cameraFollowScript;
+    public BasicPlayerController playerControllerScript;
 
+    [SerializeField]
+    private float startSwingMaxDistance = 2f;   // The distance the player can be from their ball to start swing mode
     private bool inSwingMode = false;
+    private bool waitingForSwing = false;
+    private GameObject thisBall;    // Reference to this player's ball
+    private Rigidbody thisBallRb;
+    [SerializeField] private float swingForce = 20f;
+    [SerializeField] private float verticalAngle = 0.50f;
+
+    private bool thisBallMoving = false;
+
 
     // Update is called once per frame
     void Update()
@@ -20,73 +31,135 @@ public class SwingManager : NetworkBehaviour
             return;
         }
 
-        if (!inSwingMode && Input.GetKeyDown(KeyCode.Space) && IsCloseToBall())
+        // Spawn a ball when pressing a certain key (e.g., 'B')
+        if (Input.GetKeyDown(KeyCode.B) && (thisBall == null))
         {
-            StartSwingMode();
-            PerformSwingOnServerRpc();
-        }
-        else if (inSwingMode && Input.GetKeyUp(KeyCode.Space))
-        {
-            PerformSwingOnServerRpc();
+            Debug.Log("Spawn ball");
+            SpawnBallOnServerRpc();
         }
 
-        // Spawn a ball when pressing a certain key (e.g., 'B')
-        if (Input.GetKeyDown(KeyCode.B))
+        // dev cheat key
+        if (Input.GetKeyDown(KeyCode.F)) ReturnBallToPlayer();
+        
+        // Check if player is already in swing mode and waiting to swing
+        if (inSwingMode && waitingForSwing)
         {
-            SpawnBallOnServerRpc();
+            if (Input.GetKeyDown(KeyCode.Escape)) // Exit swing mode without performing swing
+            {
+                ExitSwingMode();
+            }
+            else if (Input.GetKeyDown(KeyCode.Space)) // Perform swing
+            {
+                PerformSwing();
+            }
+            return; // Don't execute further logic if waiting for swing
+        }
+
+        // Check for input to enter swing mode
+        if (!inSwingMode && Input.GetKeyDown(KeyCode.Space) && IsCloseToBall())
+        {
+            Debug.Log("Called StartSwingMode()");
+            StartSwingMode();
+        }
+        // Check for input to exit swing mode
+        else if (inSwingMode && Input.GetKeyDown(KeyCode.Escape))
+        {
+            ExitSwingMode();
         }
     }
 
+
     bool IsCloseToBall()
     {
-        // Implement logic to check if the player is close to the ball
-        // You might use Vector3.Distance or some collider overlap checks
-        return true; // Placeholder return value
+        // Checks if the player is close enough to the ball and looking at it
+        if (thisBall == null) return false;
+
+        float distance = Vector3.Distance(playerTransform.position, thisBall.transform.position);
+
+        if (distance <= startSwingMaxDistance)
+        {
+            return true;
+            // Check for line of sight: will be good for active ragdoll
+            /*
+            RaycastHit hit;
+            // Send raycast from the camera's position and direction
+            bool hasLineOfSight = Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, out hit, startSwingMaxDistance);
+
+            if (hasLineOfSight && hit.collider.gameObject == thisBall)
+            {
+                return true;    // Player is close to ball and looking at it
+            }
+            */
+        }
+
+        return false; // Ball exists but player is not close enough/looking at it
     }
 
     void StartSwingMode()
     {
+        Debug.Log("Swing State entered");
         inSwingMode = true;
+        waitingForSwing = true;
         // Lock player controls
-        // Activate swing camera
-        swingCamera.enabled = true;
+        playerControllerScript.DisableInput();
+        // Set camera to swing state
+        cameraFollowScript.SetSwingState(true);
         // Trigger stance animation
         playerAnimator.SetTrigger("Stance");
     }
 
+    // perform swing and exit swing state, will need rpcs
     void PerformSwing()
     {
         // Calculate swing force and direction
         // Apply the force to the ball
         // Trigger swing animation
         playerAnimator.SetTrigger("Swing");
-        // Reset camera
-        swingCamera.enabled = false;
-        // Unlock player controls
+        // set waitingForSwing to false to exit swing mode after animations finished
+        waitingForSwing = false;
+        // Add forces
+        var dir = transform.forward + new Vector3(0, verticalAngle, 0);
+        thisBallRb.AddForce(dir * swingForce, ForceMode.Impulse);
+        thisBallMoving = true;
+
+/*
+        // Increment the number of strokes? idk if this should be located here but prob
+
+        playerControllerScript._currentPlayerState.strokes++;
+        _playerNetworkData.StorePlayerState(playerControllerScript._currentPlayerState, ownerId);
+
+        _uiManager.UpdateStrokesUI(playerControllerScript._currentPlayerState.strokes);
+*/
+
+        // Set camera to default state
+        cameraFollowScript.SetSwingState(false);
+
+        // Re enable player controls
+        playerControllerScript.EnableInput();
+
         inSwingMode = false;
     }
 
-    [ServerRpc]
-    void PerformSwingOnServerRpc()
+    // Exit swing state without performing swing
+    void ExitSwingMode()
     {
-        PerformSwing();
-        PerformSwingOnClientRpc();
+        inSwingMode = false;
+
+        playerControllerScript.EnableInput();
+        cameraFollowScript.SetSwingState(false);
+        // Make sure its no longer waiting for swing
+        waitingForSwing = false;
     }
 
-    [ClientRpc]
-    void PerformSwingOnClientRpc()
-    {
-        if (IsOwner)
-            PerformSwing();
-    }
 
     [ServerRpc]
     void SpawnBallOnServerRpc()
     {
-        Vector3 spawnPosition = playerTransform.position + playerTransform.forward * 1f;        // Ball spawn distance should be tweaked
-        GameObject newBall = Instantiate(ballPrefab, spawnPosition, Quaternion.identity);
-        newBall.GetComponent<Rigidbody>().velocity = playerTransform.forward * 10f; // Example velocity
-        NetworkObject ballNetworkObject = newBall.GetComponent<NetworkObject>();
+        Vector3 spawnPosition = playerTransform.position + playerTransform.forward * 1f + Vector3.up * 0.5f;
+        thisBall = Instantiate(ballPrefab, spawnPosition, Quaternion.identity);
+        thisBallRb = thisBall.GetComponent<Rigidbody>();
+        //thisBallRb.velocity = playerTransform.forward * 10f; // Example velocity
+        NetworkObject ballNetworkObject = thisBall.GetComponent<NetworkObject>();
         if (ballNetworkObject != null)
         {
             ballNetworkObject.Spawn();
@@ -96,7 +169,7 @@ public class SwingManager : NetworkBehaviour
         //stopRotation();
         
         // Inform the client about the spawned projectile
-        SpawnBallOnClientRpc(newBall.GetComponent<NetworkObject>().NetworkObjectId);
+        SpawnBallOnClientRpc(thisBall.GetComponent<NetworkObject>().NetworkObjectId);
     }
 
     [ClientRpc]
@@ -118,42 +191,68 @@ public class SwingManager : NetworkBehaviour
 
     // helper functions -------------------------------------------------------------------------------------------------------------
 
-    /*
-    private void ReturnProjectileToPlayer()
+
+    private void ReturnBallToPlayer()
     {
-        if (_projectileInstance == null) return;
+        if (thisBall == null) return;
 
         RemoveForces(); //  prevent ball from rolling
         stopRotation();
 
         //  move ball to player
-        _projectileInstance.transform.position = transform.position + transform.up / 2 + transform.forward * _spawnDist;
+        thisBall.transform.position = transform.position + transform.up / 2 + transform.forward * 1f;
     }
 
     private void RemoveForces()
     {
-        if (_projectileInstance != null && _projectileRb != null)
+        if (thisBall != null && thisBallRb != null)
         {
-            _projectileRb.velocity = Vector3.zero;
-            _projectileRb.angularVelocity = Vector3.zero;
+            if (IsOwner)
+            {
+                thisBallRb.velocity = Vector3.zero;
+                thisBallRb.angularVelocity = Vector3.zero;
+            }
         }
     }
 
     private void stopRotation()
     {
-        if (_projectileInstance != null && _projectileRb != null)
+        if (thisBall != null && thisBallRb != null)
         {
-            _projectileRb.freezeRotation = true;
+            if (IsOwner) thisBallRb.freezeRotation = true;
         }
     }
 
     private void enableRotation()
     {
-        if (_projectileInstance != null && _projectileRb != null)
+        if (thisBall != null && thisBallRb != null)
         {
-            _projectileRb.freezeRotation = false;
+            if (IsOwner) thisBallRb.freezeRotation = false;
         }
     }
-    */
+
+    public void SpawnProjectile(ulong ownerId)
+    {
+        if (!IsOwner) return; //redundnat check since this is a public function
+
+        Vector3 ballSpawnPos = new Vector3(395.5f + Random.Range(-5, 5), 75f, 322.0f + Random.Range(-3, 3));
+        Debug.Log("Spawning at: " + ballSpawnPos + "for " + ownerId);
+        //RequestBallSpawnServerRpc(OwnerClientId, ballSpawnPos);
+    }
+
+    public void MoveProjectileToPosition(Vector3 destination)
+    {
+        if (thisBall == null) return;
+
+        RemoveForces(); //  prevent ball from rolling
+        stopRotation();
+
+        Debug.Log("The given destination position: " + destination);
+
+        //  move ball to point
+        thisBall.transform.position = destination;
+    }
+
     
+
 }
