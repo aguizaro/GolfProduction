@@ -200,6 +200,8 @@ public class UIManager : MonoBehaviour
         Debug.Log("Is Locale active: " + localeActive);
 
         if (!localeActive) { StartCoroutine(SetLocale(language)); }
+
+        DisableSettings();
     }
 
     public void EnableUI(UIState state)

@@ -95,8 +95,8 @@ public class BasicPlayerController : NetworkBehaviour
         if (!IsOwner) return;
 
         // activate player movement, animations, shooting and ragdoll
-        _isActive = true; 
-        _swingManager.Activate(); 
+        _isActive = true;
+        _swingManager.Activate();
 
         // activate flag poles
         foreach (GameObject flagPole in _flagPoles)
@@ -152,6 +152,10 @@ public class BasicPlayerController : NetworkBehaviour
 
             // update local player state with network data ?
         }
+
+        if (UIManager.isPaused) { return; }
+        else { if (!UIManager.instance.titleScreenMode) { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; } }
+
 #if ENABLE_INPUT_SYSTEM
         InputSystemRotation();
         InputSystemMovement();
@@ -370,7 +374,8 @@ public class BasicPlayerController : NetworkBehaviour
             }
             _playerYaw += _lookInput.x * deltaTimeMultiplier;
             _playerYaw = ClampAngle(_playerYaw, float.MinValue, float.MaxValue);
-            _rb.MoveRotation(Quaternion.Euler(0f, _playerYaw, 0f));
+            SettingsData sData = DataManager.instance.GetSettingsData();
+            _rb.MoveRotation(Quaternion.Euler(0f, _playerYaw * sData.cameraSensitivity, 0f));
         }
     }
     public static float ClampAngle(float lfAngle, float lfMin, float lfMax)
