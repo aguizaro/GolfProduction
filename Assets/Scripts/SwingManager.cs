@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using Unity.Netcode;
 
 public class SwingManager : NetworkBehaviour
@@ -10,6 +11,11 @@ public class SwingManager : NetworkBehaviour
     public GameObject ballPrefab;
     public StartCameraFollow cameraFollowScript;
     public BasicPlayerController playerControllerScript;
+    public Canvas meterCanvas;
+    public GameObject meterCanvasObject;
+
+    private Slider powerMeter;
+    private PowerMeter powerMeterRef;
 
     [SerializeField]
     private float startSwingMaxDistance = 2f;   // The distance the player can be from their ball to start swing mode
@@ -22,7 +28,13 @@ public class SwingManager : NetworkBehaviour
 
     private bool thisBallMoving = false;
 
+    void Start()
+    {
+        powerMeter =  GetComponentInChildren<Slider>();
+        powerMeterRef = meterCanvas.GetComponent<PowerMeter>();
 
+        Debug.Log(powerMeter);
+    }
     // Update is called once per frame
     void Update()
     {
@@ -31,15 +43,6 @@ public class SwingManager : NetworkBehaviour
             return;
         }
 
-        // Spawn a ball when pressing a certain key (e.g., 'B')
-        if (Input.GetKeyDown(KeyCode.B) && (thisBall == null))
-        {
-            Debug.Log("Spawn ball");
-            SpawnBallOnServerRpc();
-        }
-
-        // dev cheat key
-        if (Input.GetKeyDown(KeyCode.F)) ReturnBallToPlayer();
         
         // Check if player is already in swing mode and waiting to swing
         if (inSwingMode && waitingForSwing)
@@ -48,7 +51,7 @@ public class SwingManager : NetworkBehaviour
             {
                 ExitSwingMode();
             }
-            else if (Input.GetKeyDown(KeyCode.Space)) // Perform swing
+            else if (powerMeterRef.GetShotStatus() == true) // Perform swing
             {
                 PerformSwing();
             }
@@ -66,8 +69,15 @@ public class SwingManager : NetworkBehaviour
         {
             ExitSwingMode();
         }
-    }
 
+
+        // Spawn a ball when pressing a certain key (e.g., 'B')
+        if (Input.GetKeyDown(KeyCode.B) && (thisBall == null))
+        {
+            SpawnBallOnServerRpc();
+        }
+
+    }
 
     bool IsCloseToBall()
     {
@@ -98,8 +108,13 @@ public class SwingManager : NetworkBehaviour
     void StartSwingMode()
     {
         Debug.Log("Swing State entered");
+        // Enable power meter
+        // meterCanvas.GetComponent<Canvas>().enabled = true;
+        meterCanvasObject.SetActive(true);
+
         inSwingMode = true;
         waitingForSwing = true;
+
         // Lock player controls
         playerControllerScript.DisableInput();
         // Set camera to swing state
@@ -117,9 +132,10 @@ public class SwingManager : NetworkBehaviour
         playerAnimator.SetTrigger("Swing");
         // set waitingForSwing to false to exit swing mode after animations finished
         waitingForSwing = false;
+
         // Add forces
         var dir = transform.forward + new Vector3(0, verticalAngle, 0);
-        thisBallRb.AddForce(dir * swingForce, ForceMode.Impulse);
+        thisBallRb.AddForce(dir * swingForce * meterCanvas.GetComponent<PowerMeter>().GetPowerValue(), ForceMode.Impulse);
         thisBallMoving = true;
 
 /*
@@ -134,16 +150,19 @@ public class SwingManager : NetworkBehaviour
         // Set camera to default state
         cameraFollowScript.SetSwingState(false);
 
-        // Re enable player controls
-        playerControllerScript.EnableInput();
-
+        // Unlock player controls
         inSwingMode = false;
+
+        ExitSwingMode();
     }
 
-    // Exit swing state without performing swing
+    // Exit swing state without performing swing, will need rpcs
     void ExitSwingMode()
     {
         inSwingMode = false;
+
+        meterCanvasObject.SetActive(false);
+
 
         playerControllerScript.EnableInput();
         cameraFollowScript.SetSwingState(false);
@@ -152,6 +171,8 @@ public class SwingManager : NetworkBehaviour
     }
 
 
+    // Spawn and shooting rpcs
+    
     [ServerRpc]
     void SpawnBallOnServerRpc()
     {

@@ -13,7 +13,8 @@ public class PowerMeter : MonoBehaviour
     private bool mouseDown = false;
     private bool playerShot = false;
     private Image handleImage;
-    void Awake()
+
+    void OnEnable()
     {
         increasing = true;
         mouseDown = false;
@@ -84,8 +85,14 @@ public class PowerMeter : MonoBehaviour
         }
     }
 
-    private void OnDestroy()
+
+    public float GetPowerValue()
     {
-        power.onValueChanged.RemoveListener(HandleSliderValueChanged);
+        return power.value;
+    }
+    
+    public bool GetShotStatus()
+    {
+        return playerShot;
     }
 }
