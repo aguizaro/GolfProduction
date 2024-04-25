@@ -13,9 +13,16 @@ public class PowerMeter : MonoBehaviour
     private bool mouseDown = false;
     private bool playerShot = false;
     private Image handleImage;
+    void Awake()
+    {
+        increasing = true;
+        mouseDown = false;
+        playerShot = false;
+        power = GetComponentInChildren<Slider>();
+        power.value = 0;
+    }
     void Start()
     {
-        power = GetComponentInChildren<Slider>();
         handleImage = power.fillRect.GetComponentInChildren<Image>();
         power.onValueChanged.AddListener(HandleSliderValueChanged);
         HandleSliderValueChanged(power.value);
@@ -53,7 +60,7 @@ public class PowerMeter : MonoBehaviour
         }
         if (Input.GetMouseButtonUp(0))
         {
-        playerShot = true;
+            playerShot = true;
         }
 
         if (power != null && mouseDown && !playerShot)
