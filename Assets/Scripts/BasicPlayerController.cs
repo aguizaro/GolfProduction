@@ -35,8 +35,12 @@ public class BasicPlayerController : NetworkBehaviour
     public Vector2 _moveInput;
     public Vector2 _lookInput;
     public const float _inputThreshold = 0.001f;
-    public Actions _actions;
+    public InputActionAsset _inputActionAsset;
+    public InputActionMap _gameplayActionMap;
     public float _playerYaw = 0f;
+    public InputActionRebindingExtensions.RebindingOperation _rebindingOperation;
+    public string targetActionName;
+    public string _newInputPath;
 #endif
     [Header("Hybrid Variables For Both Input Systems")]
     public bool _forwardPressed;
@@ -57,13 +61,17 @@ public class BasicPlayerController : NetworkBehaviour
         if (!IsOwner) return;
 #if ENABLE_INPUT_SYSTEM
         #region Input Actions Initialization
-        _actions = new Actions();
-        _actions.Enable();
-        _actions.Gameplay.Pause.started += HandlePauseStarted;
-        _actions.Gameplay.Sprint.started += HandleSprintStarted;
-        _actions.Gameplay.Sprint.canceled += HandleSprintCanceled;
-        _actions.Gameplay.Strike.started += HandleStrikeStarted;
-        _actions.Gameplay.Strike.canceled += HandleStrikeCanceled;
+
+        _inputActionAsset.Enable();
+        _gameplayActionMap = _inputActionAsset.FindActionMap("Gameplay",throwIfNotFound: true);
+        _gameplayActionMap.Enable();
+        _inputActionAsset.FindActionMap("UI").Disable();
+
+        _gameplayActionMap["Pause"].started += HandlePauseStarted;
+        _gameplayActionMap["Sprint"].started += HandleSprintStarted;
+        _gameplayActionMap["Sprint"].canceled += HandleSprintCanceled;
+        _gameplayActionMap["Strike"].started += HandleStrikeStarted;
+        _gameplayActionMap["Strike"].canceled += HandleStrikeCanceled;
         #endregion
 #endif
         transform.position = new Vector3(Random.Range(390, 400), 69.1f, Random.Range(318, 320));
@@ -130,7 +138,7 @@ public class BasicPlayerController : NetworkBehaviour
         }
         _ragdollOnOff.Deactivate();
         _playerShoot.Deactivate();
-        _actions.Disable();
+        _inputActionAsset.FindActionMap("Gameplay").Disable();
     }
 
     public override void OnDestroy()
@@ -236,14 +244,13 @@ public class BasicPlayerController : NetworkBehaviour
         if (IsOwner)
         {
 #if ENABLE_INPUT_SYSTEM
-            _moveInput = _actions.Gameplay.Move.ReadValue<Vector2>().normalized;
+            _moveInput = _gameplayActionMap["Move"].ReadValue<Vector2>().normalized;
             _animator.SetFloat("moveX", _moveInput.x);
             _animator.SetFloat("moveY", _moveInput.y);
 #else
             _animator.SetFloat("moveX", 0f);
             _animator.SetFloat("moveY", 0f);
 #endif
-            Debug.Log($"move Input: {_moveInput}");
             if (_forwardPressed && !isWalking)
             {
                 _animator.SetBool("isWalking", true);
@@ -328,8 +335,8 @@ public class BasicPlayerController : NetworkBehaviour
     public void DisableInput()
     {
 #if ENABLE_INPUT_SYSTEM
-        _actions.asset.FindActionMap("Gameplay", false).Disable();
-        _actions.asset.FindActionMap("UI", false).Enable();
+        _inputActionAsset.FindActionMap("Gameplay", false).Disable();
+        _inputActionAsset.FindActionMap("UI", false).Enable();
 #endif
         _animator.SetBool("isWalking", false);
         _animator.SetBool("isRunning", false);
@@ -343,8 +350,8 @@ public class BasicPlayerController : NetworkBehaviour
     public void EnableInput()
     {
 #if ENABLE_INPUT_SYSTEM
-        _actions.asset.FindActionMap("Gameplay", false).Enable();
-        _actions.asset.FindActionMap("UI", false).Disable();
+        _inputActionAsset.FindActionMap("Gameplay", false).Enable();
+        _inputActionAsset.FindActionMap("UI", false).Disable();
 #endif
         _canMove = true;
     }
@@ -358,7 +365,7 @@ public class BasicPlayerController : NetworkBehaviour
     #region  Input Actions Functions
     public void InputSystemRotation()
     {
-        _lookInput = _actions.Gameplay.Look.ReadValue<Vector2>();
+        _lookInput = _gameplayActionMap["Look"].ReadValue<Vector2>();
         if (_lookInput.sqrMagnitude > _inputThreshold)
         {
             float deltaTimeMultiplier = 0f;
@@ -444,6 +451,56 @@ public class BasicPlayerController : NetworkBehaviour
         _strikePressed = false;
     }
     #endregion
+    #region Actions Rebinding
+    [ContextMenu("Rebind Actions")]
+    public void TestRebinding()
+    {
+        RebindActions(targetActionName);
+    }
+    public void CheckTest(InputAction.CallbackContext ctx)
+    {
+        Debug.Log($"{ctx.action.name} ");
+    }
+    public void RebindActions(string name)
+    {
+        _inputActionAsset.FindActionMap("Gameplay", false).Disable();
+        _inputActionAsset.FindActionMap("UI", false).Enable();
+        InputAction action = _gameplayActionMap[name];
+        Debug.Log($"Rebinding Start for {name},binding count {action.bindings.Count}");
+        for (int i = 0; i < action.bindings.Count; i++)
+        {
+            Debug.Log($"{action.bindings[i].effectivePath}");
+        }
+
+        _newInputPath = InputControlPath.ToHumanReadableString(action.bindings[0].effectivePath, InputControlPath.HumanReadableStringOptions.OmitDevice);
+
+        action.Disable();
+
+        _rebindingOperation = action.PerformInteractiveRebinding()
+            .WithControlsExcluding("<Gamepad or Keyboard>")
+            .WithControlsExcluding("<Mouse>/position")
+            .WithControlsExcluding("<Mouse>/scroll")
+            .WithControlsExcluding("<Mouse>/delta")
+            .WithControlsExcluding("<Keyboard>/escape")
+            .OnMatchWaitForAnother(0.1f)
+            .OnComplete(operation =>
+            {
+                int bindingIndex = operation.action.GetBindingIndexForControl(operation.action.controls[0]);
+                var newBinding = operation.action.bindings[bindingIndex];
+                _newInputPath = InputControlPath.ToHumanReadableString(newBinding.effectivePath, InputControlPath.HumanReadableStringOptions.OmitDevice);
+                operation.action.started += CheckTest;
+                _inputActionAsset.FindActionMap("Gameplay", false).Enable();
+                _inputActionAsset.FindActionMap("UI", false).Disable();
+                operation.Dispose();
+                Debug.Log($"Rebinding Completed for {name},binding count {action.bindings.Count}");
+                for (int i = 0; i < action.bindings.Count; i++)
+                {
+                    Debug.Log($"{action.bindings[i].effectivePath}");
+                }
+            })
+            .Start();
+    }
+    #endregion 
 }
 
 

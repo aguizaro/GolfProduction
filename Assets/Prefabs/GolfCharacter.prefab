@@ -441,7 +441,16 @@ MonoBehaviour:
   _isActive: 0
   _moveInput: {x: 0, y: 0}
   _lookInput: {x: 0, y: 0}
+  _inputActionAsset: {fileID: -944628639613478452, guid: 348f818bb0642074cad3730e725f48c3, type: 3}
+  _gameplayActionMap:
+    m_Name: Gameplay
+    m_Id: 0f954ed8-15bb-4b39-84db-2361f8059426
+    m_Asset: {fileID: 0}
+    m_Actions: []
+    m_Bindings: []
   _playerYaw: 0
+  _newInputPath: 
+  _isWorks: 0
   _forwardPressed: 0
   _backPressed: 0
   _leftPressed: 0
