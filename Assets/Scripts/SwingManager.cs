@@ -75,7 +75,6 @@ public class SwingManager : NetworkBehaviour
     // Update is called once per frame
     void Update()
     {
-        Debug.Log("ballpos: " + thisBall.transform.position);
         if (!_isActive) return;
 
         if (!IsOwner || !isActiveAndEnabled)
