@@ -1307,7 +1307,7 @@ MonoBehaviour:
   m_OverrideTileSize: 0
   m_TileSize: 256
   m_OverrideVoxelSize: 0
-  m_VoxelSize: 0.16666667
+  m_VoxelSize: 0.6666667
   m_MinRegionArea: 2
   m_NavMeshData: {fileID: 23800000, guid: fafc6c7128c62484bb1f66aeb7d168dd, type: 2}
   m_BuildHeightMesh: 0
@@ -1916,11 +1916,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3617788962536984438, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_Options.m_Options.Array.size
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 3617788962536984438, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_Options.m_Options.Array.data[2].m_Text
       value: "\u0641\u0627\u0631\u0633\u06CC"
+      objectReference: {fileID: 0}
+    - target: {fileID: 3617788962536984438, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: m_Options.m_Options.Array.data[3].m_Text
+      value: "\u4E2D\u6587"
       objectReference: {fileID: 0}
     - target: {fileID: 3617788962536984438, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_Options.m_Options.Array.data[2].m_Color.a
@@ -1936,6 +1940,22 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3617788962536984438, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_Options.m_Options.Array.data[2].m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3617788962536984438, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: m_Options.m_Options.Array.data[3].m_Color.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3617788962536984438, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: m_Options.m_Options.Array.data[3].m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3617788962536984438, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: m_Options.m_Options.Array.data[3].m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3617788962536984438, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: m_Options.m_Options.Array.data[3].m_Color.r
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3777167182168427627, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
