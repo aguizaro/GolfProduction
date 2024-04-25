@@ -70,6 +70,8 @@ public class SwingManager : NetworkBehaviour
         powerMeterRef = meterCanvas.GetComponent<PowerMeter>();
         _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
 
+        _ragdollOnOff = GetComponent<RagdollOnOff>();
+
         _playerNetworkData = GetComponent<PlayerNetworkData>();
         _playerController = GetComponent<BasicPlayerController>();
     }
