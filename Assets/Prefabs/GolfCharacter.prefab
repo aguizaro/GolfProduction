@@ -347,7 +347,6 @@ GameObject:
   - component: {fileID: 7363029190862775147}
   - component: {fileID: 1651457965969626016}
   - component: {fileID: 3693991727007100362}
-  - component: {fileID: 7833148284346593803}
   m_Layer: 0
   m_Name: GolfCharacter
   m_TagString: Player
@@ -677,19 +676,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c5757ab90b04449aa96fdd650287734, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &7833148284346593803
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 420073679474077443}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2b2fc3309b89fb240b295be463455ca8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  changeSpeed: 1
 --- !u!1 &799593922335037580
 GameObject:
   m_ObjectHideFlags: 0
@@ -1167,7 +1153,7 @@ GameObject:
   - component: {fileID: 8614192876408869114}
   - component: {fileID: 4886864119540698915}
   m_Layer: 0
-  m_Name: Canvas
+  m_Name: SwingHUD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

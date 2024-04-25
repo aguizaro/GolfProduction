@@ -59,7 +59,7 @@ public class PlayerNetworkData : NetworkBehaviour
             if (prevData.currentHole != newData.currentHole) // check for current hole change
             {
                 // check player data for win - or moves ball to next hole
-                GetComponent<PlayerShoot>().CheckForWin(newData);
+                GetComponent<SwingManager>().CheckForWin(newData);
             }
         }
 

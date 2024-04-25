@@ -10,9 +10,11 @@ public class SwingManager : NetworkBehaviour
     public Animator playerAnimator;
     public GameObject ballPrefab;
     public StartCameraFollow cameraFollowScript;
-    public BasicPlayerController playerControllerScript;
     public Canvas meterCanvas;
     public GameObject meterCanvasObject;
+
+    private PlayerNetworkData _playerNetworkData;
+    private UIManager _uiManager;
 
     private Slider powerMeter;
     private PowerMeter powerMeterRef;
@@ -21,23 +23,53 @@ public class SwingManager : NetworkBehaviour
     private float startSwingMaxDistance = 2f;   // The distance the player can be from their ball to start swing mode
     private bool inSwingMode = false;
     private bool waitingForSwing = false;
+    private bool _isActive;
     private GameObject thisBall;    // Reference to this player's ball
     private Rigidbody thisBallRb;
+    private BasicPlayerController _playerController;
     [SerializeField] private float swingForce = 20f;
     [SerializeField] private float verticalAngle = 0.50f;
 
+    public Vector3[] holeStartPositions = new Vector3[]
+    {
+        new Vector3(395.840759f, 71f, 321.73f),
+        new Vector3(417.690155f, 79f, 234.9218f),
+        new Vector3(451.415436f, 80f, 172.0176f),
+        new Vector3(374.986023f, 93.3f, 99.01516f),
+        new Vector3(306.8986f, 103.3f, 89.0007248f),
+        new Vector3(235.689041f, 97.2f, 114.393f),
+        new Vector3(217.792923f, 86.5f, 163.657547f),
+        new Vector3(150.851669f, 90f, 163.362488f),
+        new Vector3(76.4118042f, 93.15f, 169.826523f)
+    };
+
     private bool thisBallMoving = false;
+
+    public void Activate() 
+    {
+        _isActive = true;
+    }
+
+    public void Deactivate()
+    {
+        _isActive = false;
+    }
 
     void Start()
     {
         powerMeter =  GetComponentInChildren<Slider>();
         powerMeterRef = meterCanvas.GetComponent<PowerMeter>();
+        _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
 
-        Debug.Log(powerMeter);
+        _playerNetworkData = GetComponent<PlayerNetworkData>();
+        _playerController = GetComponent<BasicPlayerController>();
+
     }
     // Update is called once per frame
     void Update()
     {
+        if (!_isActive) return;
+
         if (!IsOwner || !isActiveAndEnabled)
         {
             return;
@@ -77,6 +109,11 @@ public class SwingManager : NetworkBehaviour
             SpawnBallOnServerRpc();
         }
 
+        if (Input.GetKeyDown(KeyCode.F) && (thisBall != null))
+        {
+            ReturnBallToPlayer();
+        }
+
     }
 
     bool IsCloseToBall()
@@ -108,6 +145,10 @@ public class SwingManager : NetworkBehaviour
     void StartSwingMode()
     {
         Debug.Log("Swing State entered");
+
+        RemoveForces(); //  prevent ball from rolling
+        stopRotation();
+
         // Enable power meter
         // meterCanvas.GetComponent<Canvas>().enabled = true;
         meterCanvasObject.SetActive(true);
@@ -116,7 +157,9 @@ public class SwingManager : NetworkBehaviour
         waitingForSwing = true;
 
         // Lock player controls
-        playerControllerScript.DisableInput();
+        Debug.Log(_playerController);
+        _playerController.DisableInput();
+
         // Set camera to swing state
         cameraFollowScript.SetSwingState(true);
         // Trigger stance animation
@@ -138,14 +181,12 @@ public class SwingManager : NetworkBehaviour
         thisBallRb.AddForce(dir * swingForce * meterCanvas.GetComponent<PowerMeter>().GetPowerValue(), ForceMode.Impulse);
         thisBallMoving = true;
 
-/*
+
         // Increment the number of strokes? idk if this should be located here but prob
 
-        playerControllerScript._currentPlayerState.strokes++;
-        _playerNetworkData.StorePlayerState(playerControllerScript._currentPlayerState, ownerId);
-
-        _uiManager.UpdateStrokesUI(playerControllerScript._currentPlayerState.strokes);
-*/
+        _playerController._currentPlayerState.strokes++;
+        _playerNetworkData.StorePlayerState(_playerController._currentPlayerState);
+        _uiManager.UpdateStrokesUI(_playerController._currentPlayerState.strokes);
 
         // Set camera to default state
         cameraFollowScript.SetSwingState(false);
@@ -163,8 +204,10 @@ public class SwingManager : NetworkBehaviour
 
         meterCanvasObject.SetActive(false);
 
+        // Allow ball to roll again
+        enableRotation();
 
-        playerControllerScript.EnableInput();
+        _playerController.EnableInput();
         cameraFollowScript.SetSwingState(false);
         // Make sure its no longer waiting for swing
         waitingForSwing = false;
@@ -207,6 +250,23 @@ public class SwingManager : NetworkBehaviour
             {
                 ballGameObject.GetComponent<NetworkObject>().Spawn();
             }
+        }
+    }
+
+    // checks playerdata for final hole, if not, moves ball to next hole startig postiiton
+    public void CheckForWin(PlayerData data)
+    {
+        if (data.currentHole > holeStartPositions.Length)
+        {
+            Debug.Log("Player " + data.playerID + " has won the game!");
+            thisBall.SetActive(false);
+        }
+        else
+        {
+            thisBallRb.velocity = Vector3.zero;
+            thisBallRb.angularVelocity = Vector3.zero; // maybe get rid of this ? sometimes get a warning
+            MoveProjectileToPosition(holeStartPositions[data.currentHole - 1]);
+            Debug.Log("Hole " + (data.currentHole - 1) + " completed!\nMoving to next position " + thisBall.transform.position);
         }
     }
 
