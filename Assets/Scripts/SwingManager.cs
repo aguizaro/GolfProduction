@@ -163,7 +163,7 @@ public class SwingManager : NetworkBehaviour
 
     void StartSwingMode()
     {
-        if(_ragdollOnOff.isRagdoll())
+        if(_ragdollOnOff.IsRagdoll())
         {
             return;
         }
