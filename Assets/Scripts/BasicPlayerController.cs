@@ -21,7 +21,7 @@ public class BasicPlayerController : NetworkBehaviour
     // State Management
     public PlayerData _currentPlayerState;
     private PlayerNetworkData _playerNetworkData;
-    private RagdollOnOff _ragdollOnOff;
+    public RagdollOnOff _ragdollOnOff;
     private bool _canMove = true;
 
     // Animation
