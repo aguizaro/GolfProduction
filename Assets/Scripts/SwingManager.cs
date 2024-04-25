@@ -237,7 +237,7 @@ public class SwingManager : NetworkBehaviour
     [ServerRpc]
     void SpawnBallOnServerRpc(ulong ownerId)
     {
-        Vector3 spawnPosition = new Vector3(394.55f + Random.Range(-1f, 1f), 70.7f, 322.09f);
+        Vector3 spawnPosition = new Vector3(394.55f + Random.Range(-1f, 1f), 70.7f, 0); // 322.09f is intended z
         thisBall = Instantiate(ballPrefab, spawnPosition, Quaternion.identity);
         thisBallRb = thisBall.GetComponent<Rigidbody>();
         //thisBallRb.velocity = playerTransform.forward * 10f; // Example velocity
