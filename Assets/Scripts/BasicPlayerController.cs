@@ -9,7 +9,7 @@ public class BasicPlayerController : NetworkBehaviour
 {
     // Movement
     public float _moveSpeed = 2f;
-    public float _sprintMultiplier = 3f;
+    private float _sprintMultiplier = 2.5f;
     public float _rotationSpeed = 100f;
     private bool _isSprinting = false;
 
