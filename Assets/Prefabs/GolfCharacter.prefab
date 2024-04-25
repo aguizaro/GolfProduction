@@ -408,7 +408,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 171685441
+  GlobalObjectIdHash: 3746147730
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 1
@@ -429,7 +429,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _moveSpeed: 2
-  _sprintMultiplier: 4
+  _sprintMultiplier: 3
   _rotationSpeed: 100
   _isActive: 0
   _moveInput: {x: 0, y: 0}
@@ -660,8 +660,7 @@ MonoBehaviour:
   cameraFollowScript: {fileID: 4118846366210689039}
   meterCanvas: {fileID: 7656790667480007816}
   meterCanvasObject: {fileID: 3066179444019347802}
-  startSwingMaxDistance: 2
-  swingForce: 20
+  inSwingMode: 0
   verticalAngle: 0.5
   holeStartPositions:
   - {x: 395.84076, y: 71, z: 321.73}

@@ -23,17 +23,14 @@ public class StartCameraFollow : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         if (!IsOwner) isActive = false;
-    }
 
-
-    private void Start()
-    {
         // Initialize camera to regular position and rotation
         regularPosition = transform.position - (Quaternion.Euler(xCamRotation, transform.eulerAngles.y, 0f) * camOffset);
         regularRotation = Quaternion.Euler(xCamRotation, transform.eulerAngles.y, 0f);
         Camera.main.transform.position = regularPosition;
         Camera.main.transform.rotation = regularRotation;
     }
+
 
     private void LateUpdate()
     {

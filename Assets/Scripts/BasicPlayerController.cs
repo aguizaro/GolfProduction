@@ -9,7 +9,7 @@ public class BasicPlayerController : NetworkBehaviour
 {
     // Movement
     public float _moveSpeed = 2f;
-    public float _sprintMultiplier = 2.5f;
+    public float _sprintMultiplier = 3f;
     public float _rotationSpeed = 100f;
     private bool _isSprinting = false;
 
@@ -241,7 +241,6 @@ public class BasicPlayerController : NetworkBehaviour
             _animator.SetFloat("moveX", 0f);
             _animator.SetFloat("moveY", 0f);
 #endif
-            Debug.Log($"move Input: {_moveInput}");
             if (_forwardPressed && !isWalking)
             {
                 _animator.SetBool("isWalking", true);

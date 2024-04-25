@@ -19,7 +19,7 @@ public class SwingManager : NetworkBehaviour
     private Slider powerMeter;
     private PowerMeter powerMeterRef;
 
-    private float startSwingMaxDistance = 0.6f;   // The distance the player can be from their ball to start swing mode
+    private float startSwingMaxDistance = 1.6f;   // The distance the player can be from their ball to start swing mode
     [SerializeField]
     private bool inSwingMode = false;
     private bool waitingForSwing = false;
@@ -27,7 +27,9 @@ public class SwingManager : NetworkBehaviour
     private GameObject thisBall;    // Reference to this player's ball
     private Rigidbody thisBallRb;
     private BasicPlayerController _playerController;
-    [SerializeField] private float swingForce = 20f;
+    private float swingForce = 50f;
+
+    private int returnBallTimes = 3;
     [SerializeField] private float verticalAngle = 0.50f;
 
     public Vector3[] holeStartPositions = new Vector3[]
@@ -45,9 +47,11 @@ public class SwingManager : NetworkBehaviour
 
     private bool thisBallMoving = false;
 
-    public void Activate() 
+    public void Activate()
     {
         _isActive = true;
+        // spawn ball on activation
+        SpawnBallOnServerRpc();
     }
 
     public void Deactivate()
@@ -57,7 +61,7 @@ public class SwingManager : NetworkBehaviour
 
     void Start()
     {
-        powerMeter =  GetComponentInChildren<Slider>();
+        powerMeter = GetComponentInChildren<Slider>();
         powerMeterRef = meterCanvas.GetComponent<PowerMeter>();
         _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
 
@@ -75,11 +79,11 @@ public class SwingManager : NetworkBehaviour
             return;
         }
 
-        
+
         // Check if player is already in swing mode and waiting to swing
         if (inSwingMode && waitingForSwing)
         {
-            if (Input.GetKeyDown(KeyCode.Escape)) // Exit swing mode without performing swing
+            if (Input.GetKeyDown(KeyCode.Space)) // Exit swing mode without performing swing
             {
                 ExitSwingMode();
             }
@@ -97,21 +101,25 @@ public class SwingManager : NetworkBehaviour
             StartSwingMode();
         }
         // Check for input to exit swing mode
-        else if (inSwingMode && Input.GetKeyDown(KeyCode.Escape))
-        {
-            ExitSwingMode();
-        }
+        //else if (inSwingMode && Input.GetKeyDown(KeyCode.Space))
+        //{
+        //  ExitSwingMode();
+        //}
 
 
         // Spawn a ball when pressing a certain key (e.g., 'B')
-        if (Input.GetKeyDown(KeyCode.B) && (thisBall == null))
-        {
-            SpawnBallOnServerRpc();
-        }
+        //if (Input.GetKeyDown(KeyCode.B) && (thisBall == null))
+        //{
+        //  SpawnBallOnServerRpc();
+        //}
 
         if (Input.GetKeyDown(KeyCode.F) && (thisBall != null))
         {
-            ReturnBallToPlayer();
+            if (returnBallTimes > 0)
+            {
+                ReturnBallToPlayer();
+                returnBallTimes--;
+            }
         }
 
     }
@@ -208,7 +216,7 @@ public class SwingManager : NetworkBehaviour
         meterCanvasObject.SetActive(false);
 
         // Allow ball to roll again
-        enableRotation();
+        //enableRotation();
 
         _playerController.EnableInput();
         cameraFollowScript.SetSwingState(false);
@@ -218,7 +226,7 @@ public class SwingManager : NetworkBehaviour
 
 
     // Spawn and shooting rpcs
-    
+
     [ServerRpc]
     void SpawnBallOnServerRpc()
     {
@@ -234,7 +242,7 @@ public class SwingManager : NetworkBehaviour
 
         //RemoveForces(); //  prevent ball from rolling
         //stopRotation();
-        
+
         // Inform the client about the spawned projectile
         SpawnBallOnClientRpc(thisBall.GetComponent<NetworkObject>().NetworkObjectId);
     }
@@ -337,6 +345,6 @@ public class SwingManager : NetworkBehaviour
         thisBall.transform.position = destination;
     }
 
-    
+
 
 }
