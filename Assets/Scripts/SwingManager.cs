@@ -27,6 +27,7 @@ public class SwingManager : NetworkBehaviour
     private GameObject thisBall;    // Reference to this player's ball
     private Rigidbody thisBallRb;
     private BasicPlayerController _playerController;
+    private RagdollOnOff _ragdollOnOff;
     private float swingForce = 50f;
 
     private int returnBallTimes = 3;
@@ -67,9 +68,11 @@ public class SwingManager : NetworkBehaviour
         powerMeter = GetComponentInChildren<Slider>();
         powerMeterRef = meterCanvas.GetComponent<PowerMeter>();
         _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
-
+        
+        _ragdollOnOff = GetComponent<RagdollOnOff>();
         _playerNetworkData = GetComponent<PlayerNetworkData>();
         _playerController = GetComponent<BasicPlayerController>();
+
 
     }
     // Update is called once per frame
@@ -98,7 +101,7 @@ public class SwingManager : NetworkBehaviour
         }
 
         // Check for input to enter swing mode
-        if (!inSwingMode && Input.GetKeyDown(KeyCode.Space) && IsCloseToBall())
+        if (!inSwingMode && Input.GetKeyDown(KeyCode.Space) && IsCloseToBall() && !_ragdollOnOff.IsRagdoll())
         {
             Debug.Log("Called StartSwingMode()");
             StartSwingMode();
@@ -160,6 +163,7 @@ public class SwingManager : NetworkBehaviour
     {
         Debug.Log("Swing State entered");
 
+
         RemoveForces(); //  prevent ball from rolling
         stopRotation();
 
@@ -212,7 +216,7 @@ public class SwingManager : NetworkBehaviour
     }
 
     // Exit swing state without performing swing, will need rpcs
-    void ExitSwingMode()
+    public void ExitSwingMode()
     {
         inSwingMode = false;
 
@@ -274,9 +278,14 @@ public class SwingManager : NetworkBehaviour
         }
     }
 
+    public bool isInSwingMode()
+    {
+        return inSwingMode;
+    }
+
     // helper functions -------------------------------------------------------------------------------------------------------------
 
-
+    
     private void ReturnBallToPlayer()
     {
         if (thisBall == null) return;
