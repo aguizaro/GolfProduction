@@ -223,6 +223,7 @@ MonoBehaviour:
     m_Bits: 128
   patrolRange: 8
   guardPos: {x: 0, y: 0, z: 0}
+  deathDuration: 20
 --- !u!114 &6495749480028689394
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -248,10 +249,10 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 128
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 128
+    m_Bits: 0
   m_LayerOverridePriority: 0
   m_IsTrigger: 1
   m_ProvidesContacts: 0

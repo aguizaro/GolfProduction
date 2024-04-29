@@ -39,9 +39,13 @@ public class NetworkEnemyController : NetworkBehaviour
     private Vector3 wayPoint;
     public Vector3 guardPos;
 
+    public float deathDuration = 20f;
+    private float deathTimer = 0f;
+
     private bool isWalk;
     private bool isChase;
     private bool isFollow;
+    private bool isDead;
 
     public override void OnNetworkSpawn()
     {
@@ -101,11 +105,16 @@ public class NetworkEnemyController : NetworkBehaviour
         animator.SetBool("Walk", isWalk);
         animator.SetBool("Chase", isChase);
         animator.SetBool("Follow", isFollow);
+        animator.SetBool("Death", isDead);
     }
 
     void SwitchState()
     {
-        if (FoundPlayer())
+        if (isDead)
+        {
+            enemyState.Value = EnemyState.DEAD;
+        }
+        else if (FoundPlayer())
         {
             enemyState.Value = EnemyState.CHASE;
         }
@@ -123,6 +132,7 @@ public class NetworkEnemyController : NetworkBehaviour
                 break;
             case EnemyState.DEAD:
                 // Implement Death behavior
+                DeadBehavior();
                 break;
         }
     }
@@ -291,23 +301,78 @@ public class NetworkEnemyController : NetworkBehaviour
         }
 
 
-        if (TargetInAttackRange())
+        // if (TargetInAttackRange())
+        // {
+        //     isFollow = false;
+        //     agent.isStopped = true;
+        //     if (lastAttackTime.Value <= 0)
+        //     {
+        //         lastAttackTime.Value = characterStats.attackData.coolDown;
+        //         AttackServerRpc();
+        //         Debug.Log("Spider attacked player");
+        //     }
+
+        //     // if (attackTarget.GetComponent<NetworkObject>().IsOwner)
+        //     // {
+        //     //     SpiderAttackPlayerClientRpc(attackTarget.GetComponent<NetworkObject>().OwnerClientId);
+        //     // }
+        // }
+
+    }
+
+    private void DeadBehavior()
+    {
+        Debug.Log("Spider is dead");
+        isWalk = false;
+        isChase = false;
+        isFollow = false;
+        agent.isStopped = true;
+        if (deathTimer > 0)
         {
-            isFollow = false;
-            agent.isStopped = true;
-            if (lastAttackTime.Value <= 0)
-            {
-                lastAttackTime.Value = characterStats.attackData.coolDown;
-                AttackServerRpc();
-                Debug.Log("Spider attacked player");
-            }
-
-            // if (attackTarget.GetComponent<NetworkObject>().IsOwner)
-            // {
-            //     SpiderAttackPlayerClientRpc(attackTarget.GetComponent<NetworkObject>().OwnerClientId);
-            // }
+            deathTimer -= Time.deltaTime;
         }
+        else
+        {
+            isDead = false;
+            agent.isStopped = false;
+            enemyState.Value = isGuard ? EnemyState.GUARD : EnemyState.PATROL;
+        }
+    }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        PerformDead(other);
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        PerformDead(other);
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        PerformDead(other);
+    }
+
+    private void PerformDead(Collider other)
+    {
+        if (isDead) return;
+
+        if (other.gameObject.CompareTag("Player"))
+        {
+            if (!other.GetComponent<BasicPlayerController>().enabled && other.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
+            {
+                Debug.Log("Player attacked spider");
+                DeadStateServerRpc();
+            }
+        }
+    }
+
+    [ServerRpc]
+    private void DeadStateServerRpc()
+    {
+        isDead = true;
+        deathTimer = deathDuration;
     }
 
     // delay for x second before player ragdolls
