@@ -9,18 +9,19 @@ public class BasicPlayerController : NetworkBehaviour
 {
     // Movement
     public float _moveSpeed = 2f;
-    public float _sprintMultiplier = 4f;
+    private float _sprintMultiplier = 2.5f;
     public float _rotationSpeed = 100f;
     private bool _isSprinting = false;
 
     // Physics
     private Rigidbody _rb;
-    private PlayerShoot _playerShoot;
+    //private PlayerShoot _playerShoot;
+    private SwingManager _swingManager;
 
     // State Management
     public PlayerData _currentPlayerState;
     private PlayerNetworkData _playerNetworkData;
-    private RagdollOnOff _ragdollOnOff;
+    public RagdollOnOff _ragdollOnOff;
     private bool _canMove = true;
 
     // Animation
@@ -49,7 +50,7 @@ public class BasicPlayerController : NetworkBehaviour
     {
         _rb = gameObject.GetComponent<Rigidbody>();
         _animator = GetComponent<Animator>();
-        _playerShoot = GetComponent<PlayerShoot>();
+        _swingManager = GetComponent<SwingManager>();
         _ragdollOnOff = GetComponent<RagdollOnOff>();
         _flagPoles = GameObject.FindGameObjectsWithTag("HoleFlagPole");
 
@@ -95,7 +96,7 @@ public class BasicPlayerController : NetworkBehaviour
 
         // activate player movement, animations, shooting and ragdoll
         _isActive = true;
-        _playerShoot.Activate();
+        _swingManager.Activate();
 
         // activate flag poles
         foreach (GameObject flagPole in _flagPoles)
@@ -129,7 +130,8 @@ public class BasicPlayerController : NetworkBehaviour
             flagPole.GetComponent<HoleFlagPoleManager>().Deactivate();
         }
         _ragdollOnOff.Deactivate();
-        _playerShoot.Deactivate();
+        _swingManager.Deactivate();
+        //_playerShoot.Deactivate();
         _actions.Disable();
     }
 
@@ -150,14 +152,10 @@ public class BasicPlayerController : NetworkBehaviour
 
             // update local player state with network data ?
         }
-        // Check for pause input
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            if (!UIManager.isPaused) { UIManager.isPaused = true; UIManager.instance.EnablePause(); Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
-            else { UIManager.isPaused = false; UIManager.instance.DisablePause(); Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; }
-        }
+
         if (UIManager.isPaused) { return; }
         else { if (!UIManager.instance.titleScreenMode) { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; } }
+
 #if ENABLE_INPUT_SYSTEM
         InputSystemRotation();
         InputSystemMovement();
@@ -243,7 +241,6 @@ public class BasicPlayerController : NetworkBehaviour
             _animator.SetFloat("moveX", 0f);
             _animator.SetFloat("moveY", 0f);
 #endif
-            Debug.Log($"move Input: {_moveInput}");
             if (_forwardPressed && !isWalking)
             {
                 _animator.SetBool("isWalking", true);
@@ -376,7 +373,8 @@ public class BasicPlayerController : NetworkBehaviour
             }
             _playerYaw += _lookInput.x * deltaTimeMultiplier;
             _playerYaw = ClampAngle(_playerYaw, float.MinValue, float.MaxValue);
-            _rb.MoveRotation(Quaternion.Euler(0f, _playerYaw, 0f));
+            SettingsData sData = DataManager.instance.GetSettingsData();
+            _rb.MoveRotation(Quaternion.Euler(0f, _playerYaw * sData.cameraSensitivity, 0f));
         }
     }
     public static float ClampAngle(float lfAngle, float lfMin, float lfMax)

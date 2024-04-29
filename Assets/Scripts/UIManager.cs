@@ -104,6 +104,7 @@ public class UIManager : MonoBehaviour
         instance = this;
 
         RefreshDisplayList();
+        InitializetLanguageDropdown();
     }
 
     private void Start() { DisablePause(); DisableSettings(); EnableUI(UIState.Title); }
@@ -175,6 +176,21 @@ public class UIManager : MonoBehaviour
     public void SetOneHandModeToggle(bool value) => oneHandMode = value;
     public void SetLanguageDropdown(int value) => language = value;
 
+    private void InitializetLanguageDropdown()
+    {
+        var currentLocale = LocalizationSettings.SelectedLocale;
+        var locales = LocalizationSettings.AvailableLocales.Locales;
+        for (int i = 0; i < locales.Count; i++)
+        {
+            if (locales[i] == currentLocale)
+            {
+                _settingsLanguageDropdown.value = i;
+            }
+        }
+
+
+    }
+
     public void LoadSettings()
     {
         // Load settings data
@@ -186,7 +202,7 @@ public class UIManager : MonoBehaviour
         language = sData.language;
 
         _settingsSensitivitySlider.value = settingsSensitivity;
-        _settingsLanguageDropdown.value = language;
+        //_settingsLanguageDropdown.value = language;
     }
 
     public void ApplySettings()
@@ -201,6 +217,8 @@ public class UIManager : MonoBehaviour
         Debug.Log("Is Locale active: " + localeActive);
 
         if (!localeActive) { StartCoroutine(SetLocale(language)); }
+
+        DisableSettings();
     }
 
     public void ApplyLanguage(int lang)
