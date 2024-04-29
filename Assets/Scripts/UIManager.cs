@@ -10,7 +10,15 @@ using UnityEngine.Localization.Settings;
 public enum UIState
 {
     Title,
-    Lobby
+    Lobby,
+    Game,
+}
+public enum MenuState
+{
+    None,
+    Pause,
+    Settings,
+    Control,
 }
 
 public class UIManager : MonoBehaviour
@@ -65,6 +73,14 @@ public class UIManager : MonoBehaviour
 
     // Controls UI Elements
     [Header("Controls UI Elements")]
+    [SerializeField] private GameObject _controlsScreenUI;
+
+    [SerializeField] private Button _controlsApplyButton;
+    [SerializeField] private Button _controlsBackButton;
+    [SerializeField] private Button _controlsUpButton;
+    [SerializeField] private Button _controlsLeftButton;
+    [SerializeField] private Button _controlsDownButton;
+    [SerializeField] private Button _controlsRightButton;
 
     [Header("Other")]
     [SerializeField] private TMP_Text _holeCountText;
@@ -81,6 +97,7 @@ public class UIManager : MonoBehaviour
     public static bool isPaused { get; set; } = false;
     private bool localeActive = false;
     private Transform _cameraStartTransform;
+    private MenuState menuState = MenuState.None; 
 
     private void Awake()
     {
@@ -168,7 +185,7 @@ public class UIManager : MonoBehaviour
         ReturnToTitle();
     }
 
-    // returns to rile screen
+    // returns to title screen
     public void ReturnToTitle()
     {
         DeactivateHUD();
@@ -255,6 +272,24 @@ public class UIManager : MonoBehaviour
                 break;
             case UIState.Lobby:
                 _lobbyUI.SetActive(true);
+                break;
+        }
+    }
+
+    public void EnableMenu(MenuState state)
+    {
+        _settingsScreenUI.SetActive(false);
+        _controlsScreenUI.SetActive(false);
+
+        switch (state) 
+        {
+            case MenuState.Settings:
+                _settingsScreenUI.SetActive(true);
+                break;
+            case MenuState.Control:
+                _controlsScreenUI.SetActive(true);
+                break;
+            default:
                 break;
         }
     }
