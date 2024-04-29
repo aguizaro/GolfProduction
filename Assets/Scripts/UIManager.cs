@@ -10,7 +10,7 @@ using UnityEngine.Localization.Settings;
 public enum UIState
 {
     Title,
-    Lobby,
+    Lobby
 }
 
 public class UIManager : MonoBehaviour
@@ -59,8 +59,14 @@ public class UIManager : MonoBehaviour
 
     [SerializeField] private Button _settingsApplyButton;
     [SerializeField] private Button _settingsBackButton;
+    [SerializeField] private Button _settingsControlButton;
     [SerializeField] private Slider _settingsSensitivitySlider;
     [SerializeField] private TMP_Dropdown _settingsLanguageDropdown;
+
+    // Controls UI Elements
+    [Header("Controls UI Elements")]
+
+    [Header("Other")]
     [SerializeField] private TMP_Text _holeCountText;
 
     // UIManager instance
@@ -97,6 +103,7 @@ public class UIManager : MonoBehaviour
         _settingsApplyButton.onClick.AddListener(ApplySettings);
         _settingsBackButton.onClick.AddListener(DisableSettings);
         _settingsLanguageDropdown.onValueChanged.AddListener(ApplyLanguage);
+        _settingsControlButton.onClick.AddListener(GotoControls);
 
         //Camera Start Position
         _cameraStartTransform = _mainCamera.transform;
@@ -149,6 +156,10 @@ public class UIManager : MonoBehaviour
     public void EnableSettings() { LoadSettings(); _settingsScreenUI.SetActive(true); }
     public void DisableSettings() { _settingsScreenUI.SetActive(false); if (!titleScreenMode) { EnablePause(); } }
     public void PauseStartSettings() { _pauseScreenUI.SetActive(false); EnableSettings(); }
+    public void EnableControls() 
+    {
+        // todo
+    }
 
     // Quit lobby and return to title screen
     private async void QuitLobbyReturnToTitle()
@@ -209,14 +220,11 @@ public class UIManager : MonoBehaviour
     {
         Debug.Log("Applying settings");
         SettingsData sData = DataManager.instance.GetSettingsData();
+        // apply all settings
         sData.cameraSensitivity = settingsSensitivity;
-        sData.language = language;
+        // language is applied on when it is changed, so do not need to apply it now
 
         DataManager.instance.SetSettingsData(sData);
-
-        Debug.Log("Is Locale active: " + localeActive);
-
-        if (!localeActive) { StartCoroutine(SetLocale(language)); }
 
         DisableSettings();
     }
@@ -226,7 +234,13 @@ public class UIManager : MonoBehaviour
         SettingsData sData = DataManager.instance.GetSettingsData();
         sData.language = lang;
         DataManager.instance.SetSettingsData(sData);
+        
         if (!localeActive) { StartCoroutine(SetLocale(language)); }
+    }
+
+    public void GotoControls()
+    {
+        Debug.Log("Controls!");
     }
 
     public void EnableUI(UIState state)
