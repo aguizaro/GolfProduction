@@ -362,7 +362,7 @@ public class NetworkEnemyController : NetworkBehaviour
         if (other.gameObject.CompareTag("Player"))
         {
             Debug.Log("Spider is dead2: " + isDead);
-            if (other.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
+            if (other.GetComponent<BasicPlayerController>().enabled && other.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
             {
                 Debug.Log("Player attacked spider");
                 DeadStateServerRpc();
