@@ -365,12 +365,13 @@ public class NetworkEnemyController : NetworkBehaviour
             if (other.GetComponent<BasicPlayerController>().enabled && other.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
             {
                 Debug.Log("Player attacked spider");
+                if(!IsOwner) return;
                 DeadStateServerRpc();
             }
         }
     }
 
-    [ServerRpc (RequireOwnership = false)] 
+    [ServerRpc] 
     private void DeadStateServerRpc()
     {
         isDead = true;
