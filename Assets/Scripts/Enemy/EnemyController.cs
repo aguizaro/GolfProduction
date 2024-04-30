@@ -301,22 +301,17 @@ public class NetworkEnemyController : NetworkBehaviour
         }
 
 
-        // if (TargetInAttackRange())
-        // {
-        //     isFollow = false;
-        //     agent.isStopped = true;
-        //     if (lastAttackTime.Value <= 0)
-        //     {
-        //         lastAttackTime.Value = characterStats.attackData.coolDown;
-        //         AttackServerRpc();
-        //         Debug.Log("Spider attacked player");
-        //     }
-
-        //     // if (attackTarget.GetComponent<NetworkObject>().IsOwner)
-        //     // {
-        //     //     SpiderAttackPlayerClientRpc(attackTarget.GetComponent<NetworkObject>().OwnerClientId);
-        //     // }
-        // }
+        if (TargetInAttackRange())
+        {
+            isFollow = false;
+            agent.isStopped = true;
+            if (lastAttackTime.Value <= 0)
+            {
+                lastAttackTime.Value = characterStats.attackData.coolDown;
+                AttackServerRpc();
+                Debug.Log("Spider attacked player");
+            }
+        }
 
     }
 
