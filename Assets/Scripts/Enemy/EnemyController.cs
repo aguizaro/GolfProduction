@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine.AI;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEditor.Localization.Plugins.XLIFF.V12;
 
 
 public enum EnemyState
@@ -360,13 +361,13 @@ public class NetworkEnemyController : NetworkBehaviour
             if (other.GetComponent<BasicPlayerController>().enabled && other.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
             {
                 Debug.Log("Player attacked spider");
-                if(!IsOwner) return;
+                if (!IsOwner) return;
                 DeadStateServerRpc();
             }
         }
     }
 
-    [ServerRpc] 
+    [ServerRpc]
     private void DeadStateServerRpc()
     {
         isDead = true;
@@ -420,7 +421,11 @@ public class NetworkEnemyController : NetworkBehaviour
                     NetworkObject targetNetworkObject = hit.collider.gameObject.GetComponent<NetworkObject>();
                     if (targetNetworkObject != null && targetNetworkObject.IsOwner)
                     {
-                        SpiderAttackPlayerClientRpc(targetNetworkObject.NetworkObjectId);
+                        if (!hit.collider.gameObject.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
+                        {
+                            SpiderAttackPlayerClientRpc(targetNetworkObject.NetworkObjectId);
+                        }
+
                     }
                 }
 
