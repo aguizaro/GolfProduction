@@ -356,11 +356,13 @@ public class NetworkEnemyController : NetworkBehaviour
 
     private void PerformDead(Collider other)
     {
+        Debug.Log("Spider is dead: " + isDead);
         if (isDead) return;
 
         if (other.gameObject.CompareTag("Player"))
         {
-            if (!other.GetComponent<BasicPlayerController>().enabled && other.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
+            Debug.Log("Spider is dead2: " + isDead);
+            if (other.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
             {
                 Debug.Log("Player attacked spider");
                 DeadStateServerRpc();
