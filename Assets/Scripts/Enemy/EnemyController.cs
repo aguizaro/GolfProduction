@@ -40,7 +40,7 @@ public class NetworkEnemyController : NetworkBehaviour
     private Vector3 wayPoint;
     public Vector3 guardPos;
 
-    public float deathDuration = 20f;
+    public float deathDuration = 5f;
     private float deathTimer = 0f;
 
     private bool isWalk;
