@@ -370,7 +370,7 @@ public class NetworkEnemyController : NetworkBehaviour
         }
     }
 
-    [ServerRpc]
+    [ServerRpc (RequireOwnership = false)] 
     private void DeadStateServerRpc()
     {
         isDead = true;
