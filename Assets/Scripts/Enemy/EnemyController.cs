@@ -392,7 +392,11 @@ public class NetworkEnemyController : NetworkBehaviour
         if (targetNetworkObject != null && targetNetworkObject.IsOwner)
         {
             Debug.Log("Spider attacked player: " + targetNetworkObject.name);
-            StartCoroutine(DelayedPlayerRagdoll(targetNetworkObject));
+            if(!targetNetworkObject.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
+            {
+                StartCoroutine(DelayedPlayerRagdoll(targetNetworkObject)); 
+            }
+                
         }
     }
 
