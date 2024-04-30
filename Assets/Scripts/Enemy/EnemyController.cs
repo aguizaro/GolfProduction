@@ -309,7 +309,10 @@ public class NetworkEnemyController : NetworkBehaviour
             if (lastAttackTime.Value <= 0)
             {
                 lastAttackTime.Value = characterStats.attackData.coolDown;
-                AttackServerRpc();
+                if (!attackTarget.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
+                {
+                    AttackServerRpc();
+                }
                 Debug.Log("Spider attacked player");
             }
         }
@@ -421,11 +424,7 @@ public class NetworkEnemyController : NetworkBehaviour
                     NetworkObject targetNetworkObject = hit.collider.gameObject.GetComponent<NetworkObject>();
                     if (targetNetworkObject != null && targetNetworkObject.IsOwner)
                     {
-                        if (!hit.collider.gameObject.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
-                        {
-                            SpiderAttackPlayerClientRpc(targetNetworkObject.NetworkObjectId);
-                        }
-
+                        SpiderAttackPlayerClientRpc(targetNetworkObject.NetworkObjectId);
                     }
                 }
 
