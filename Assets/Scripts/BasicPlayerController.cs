@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.InputSystem;
+using FMODUnity;
+using FMOD.Studio;
 
 // Needs: simple way to deactivate everything on game over / game exit, so players can play again without having to re-launch the game
 public class BasicPlayerController : NetworkBehaviour
@@ -27,6 +29,9 @@ public class BasicPlayerController : NetworkBehaviour
     // Animation
     private Animator _animator;
     private GameObject[] _flagPoles;
+
+    // Sound
+    private EventInstance playerFootsteps;
 
     // Activation
     [SerializeField] private bool _isActive = false;
@@ -68,6 +73,10 @@ public class BasicPlayerController : NetworkBehaviour
         #endregion
 #endif
         transform.position = new Vector3(Random.Range(390, 400), 69.1f, Random.Range(318, 320));
+
+        GameObject.Find("Main Camera").GetComponent<StudioListener>().SetAttenuationObject(gameObject);
+        playerFootsteps = AudioManager.instance.CreateInstance(FMODEvents.instance.playerFootsteps, gameObject);
+
         // activate player controller - controller will activate the player movement, animations, shooting and ragdoll
         Activate();
     }
@@ -166,12 +175,12 @@ public class BasicPlayerController : NetworkBehaviour
         _isSprinting = Input.GetKey(KeyCode.LeftShift) && moveVertical > 0; //sprinting only allowed when moving forward
         PlayerMovement(moveHorizontal, moveVertical, rotationInput);
 #endif
+        UpdateSound();
         AfterMoveStateUpdate();
     }
 
     private void PlayerMovement(float moveHorizontal, float moveVertical, float rotationInput)
     {
-
         float splayerSpeed = _isSprinting ? _moveSpeed * _sprintMultiplier : _moveSpeed;
 
         Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
@@ -319,6 +328,29 @@ public class BasicPlayerController : NetworkBehaviour
         }
     }
 
+    // Sound -------------------------------------------------------------------------------------------------------------
+    private void UpdateSound()
+    {
+        Debug.Log("can update sound?");
+        // PLay sounds only when player is moving
+        if (_rb.velocity.x != 0 || _rb.velocity.z != 0)
+        {
+            Debug.Log("UPDATE SOUND!");
+            // get the playback state
+            PLAYBACK_STATE playbackState;
+            playerFootsteps.getPlaybackState(out playbackState);
+
+            if (playbackState.Equals(PLAYBACK_STATE.STOPPED))
+            {
+                playerFootsteps.start();
+            }
+        }
+        // Otherwise, stop playing sounds
+        else
+        {
+            playerFootsteps.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
+        }
+    }
 
     // Input Management -------------------------------------------------------------------------------------------------------------
 
