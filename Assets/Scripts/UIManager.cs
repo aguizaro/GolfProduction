@@ -260,6 +260,22 @@ public class UIManager : MonoBehaviour
         Debug.Log("Controls!");
     }
 
+    public void OnForwardButtonChange() {
+        Debug.Log("forward");
+    }
+
+    public void OnLeftButtonChange() {
+        Debug.Log("left");
+    }
+    
+    public void OnBackButtonChange() {
+        Debug.Log("back");
+    }
+
+    public void OnRightButtonChange() {
+        Debug.Log("Right");
+    }
+
     public void EnableUI(UIState state)
     {
         _titleScreenUI.SetActive(false);
