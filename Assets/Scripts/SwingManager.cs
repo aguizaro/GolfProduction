@@ -12,8 +12,6 @@ public class SwingManager : NetworkBehaviour
     public StartCameraFollow cameraFollowScript;
     public Canvas meterCanvas;
     public GameObject meterCanvasObject;
-
-    private PlayerNetworkData _playerNetworkData;
     private UIManager _uiManager;
     private RagdollOnOff _ragdollOnOff;
 
@@ -28,14 +26,15 @@ public class SwingManager : NetworkBehaviour
     private GameObject thisBall;    // Reference to this player's ball
     private Rigidbody thisBallRb;
     private BasicPlayerController _playerController;
+    private PlayerNetworkData _playerNetworkData;
     private float swingForce = 50f;
     private bool first = true;
 
     [SerializeField] private float verticalAngle = 0.50f;
 
-    public Vector3[] holeStartPositions = new Vector3[]
+    private Vector3[] holeStartPositions = new Vector3[]
     {
-        new Vector3(395.840759f, 71f, 321.73f),
+        new Vector3(390f, 69.5f, 321f),
         new Vector3(417.690155f, 79f, 234.9218f),
         new Vector3(451.415436f, 80f, 172.0176f),
         new Vector3(374.986023f, 93.3f, 99.01516f),
@@ -51,7 +50,6 @@ public class SwingManager : NetworkBehaviour
     public void Activate()
     {
         _isActive = true;
-        // spawn ball on activation
         if (IsOwner)
         {
             SpawnBallOnServerRpc(OwnerClientId);
@@ -112,13 +110,6 @@ public class SwingManager : NetworkBehaviour
         //  ExitSwingMode();
         //}
 
-
-        // Spawn a ball when pressing a certain key (e.g., 'B')
-        //if (Input.GetKeyDown(KeyCode.B) && (thisBall == null))
-        //{
-        //  SpawnBallOnServerRpc();
-        //}
-
         if (Input.GetKeyDown(KeyCode.F) && (thisBall != null))
         {
             ReturnBallToPlayer();
@@ -127,9 +118,13 @@ public class SwingManager : NetworkBehaviour
                 first = false;
                 return;
             }
-            _playerController._currentPlayerState.strokes++;
-            _playerNetworkData.StorePlayerState(_playerController._currentPlayerState);
-            _uiManager.UpdateStrokesUI(_playerController._currentPlayerState.strokes);
+
+            if (!_playerController.IsActive) return; // do not count strokes if the player is in pre-game lobby
+
+            PlayerData _currentPlayerData = _playerNetworkData.GetPlayerData();
+            _currentPlayerData.strokes++;
+            _playerNetworkData.StorePlayerState(_currentPlayerData);
+            _uiManager.UpdateStrokesUI(_currentPlayerData.strokes);
         }
 
     }
@@ -140,7 +135,7 @@ public class SwingManager : NetworkBehaviour
         if (thisBall == null) return false;
 
         float distance = Vector3.Distance(playerTransform.position + Vector3.down, thisBall.transform.position);
-        Debug.Log("DISTANCE IS: " + distance + " " + startSwingMaxDistance);
+        //Debug.Log("DISTANCE IS: " + distance + " " + startSwingMaxDistance);
 
         if (distance <= startSwingMaxDistance)
         {
@@ -165,7 +160,7 @@ public class SwingManager : NetworkBehaviour
 
     void StartSwingMode()
     {
-        if(_ragdollOnOff.IsRagdoll())
+        if (_ragdollOnOff.IsRagdoll())
         {
             return;
         }
@@ -182,7 +177,6 @@ public class SwingManager : NetworkBehaviour
         waitingForSwing = true;
 
         // Lock player controls
-        Debug.Log(_playerController);
         _playerController.DisableInput();
 
         // Set camera to swing state
@@ -206,12 +200,14 @@ public class SwingManager : NetworkBehaviour
         thisBallRb.AddForce(dir * swingForce * meterCanvas.GetComponent<PowerMeter>().GetPowerValue(), ForceMode.Impulse);
         thisBallMoving = true;
 
-
-        // Increment the number of strokes? idk if this should be located here but prob
-
-        _playerController._currentPlayerState.strokes++;
-        _playerNetworkData.StorePlayerState(_playerController._currentPlayerState);
-        _uiManager.UpdateStrokesUI(_playerController._currentPlayerState.strokes);
+        // only count strokes if the game is active / not in pre-game lobby
+        if (_playerController.IsActive)
+        {
+            PlayerData _currentPlayerData = _playerNetworkData.GetPlayerData();
+            _currentPlayerData.strokes++;
+            _playerNetworkData.StorePlayerState(_currentPlayerData);
+            _uiManager.UpdateStrokesUI(_currentPlayerData.strokes);
+        }
 
         // Set camera to default state
         cameraFollowScript.SetSwingState(false);
@@ -244,7 +240,7 @@ public class SwingManager : NetworkBehaviour
     [ServerRpc]
     void SpawnBallOnServerRpc(ulong ownerId)
     {
-        Vector3 spawnPosition = new Vector3(394.55f + Random.Range(-1f, 1f), 70.7f, 0); // 322.09f is intended z
+        Vector3 spawnPosition = new Vector3(94.2144241f + OwnerClientId * 2, 102.18f, -136.345001f + 1f); // spawn ball in front of player
         thisBall = Instantiate(ballPrefab, spawnPosition, Quaternion.identity);
         thisBallRb = thisBall.GetComponent<Rigidbody>();
         //thisBallRb.velocity = playerTransform.forward * 10f; // Example velocity
@@ -252,6 +248,8 @@ public class SwingManager : NetworkBehaviour
         if (ballNetworkObject != null)
         {
             ballNetworkObject.SpawnWithOwnership(ownerId);
+            Debug.Log("Ball spawned for player " + ownerId);
+
         }
 
         //RemoveForces(); //  prevent ball from rolling
@@ -280,9 +278,13 @@ public class SwingManager : NetworkBehaviour
         {
             thisBallRb.velocity = Vector3.zero;
             thisBallRb.angularVelocity = Vector3.zero; // maybe get rid of this ? sometimes get a warning
-            Vector2 randStartPos = holeStartPositions[data.currentHole - 1] + new Vector3(Random.Range(-0.5f, 0.5f), 0, Random.Range(-0.5f, 0.5f));
+            Vector3 randStartPos;
+            // if on first hole, space balls out by 2 units to match player start positions, otherwise spawn them only 1 unit apart
+            if (data.currentHole == 1) randStartPos = holeStartPositions[0] + new Vector3(OwnerClientId * 2, 0, -1);
+            else randStartPos = holeStartPositions[data.currentHole - 1] + new Vector3(OwnerClientId, 0, 0);
+
             MoveProjectileToPosition(randStartPos);
-            Debug.Log("Hole " + (data.currentHole - 1) + " completed!\nMoving to next position " + thisBall.transform.position);
+            Debug.Log("Ball for player " + data.playerID + " moved to " + randStartPos + " currentHole: " + data.currentHole);
         }
     }
 
@@ -325,21 +327,14 @@ public class SwingManager : NetworkBehaviour
         }
     }
 
+    //not using rotation to avoid ball moving too much down hills
+
     private void enableRotation()
     {
         if (thisBall != null && thisBallRb != null)
         {
             if (IsOwner) thisBallRb.freezeRotation = false;
         }
-    }
-
-    public void SpawnProjectile(ulong ownerId)
-    {
-        if (!IsOwner) return; //redundnat check since this is a public function
-
-        Vector3 ballSpawnPos = new Vector3(395.5f + Random.Range(-5, 5), 75f, 322.0f + Random.Range(-3, 3));
-        Debug.Log("Spawning at: " + ballSpawnPos + "for " + ownerId);
-        //RequestBallSpawnServerRpc(OwnerClientId, ballSpawnPos);
     }
 
     public void MoveProjectileToPosition(Vector3 destination)
@@ -349,7 +344,7 @@ public class SwingManager : NetworkBehaviour
         RemoveForces(); //  prevent ball from rolling
         stopRotation();
 
-        Debug.Log("The given destination position: " + destination);
+        Debug.Log("ball moved to: " + destination + "for player " + OwnerClientId);
 
         //  move ball to point
         thisBall.transform.position = destination;
