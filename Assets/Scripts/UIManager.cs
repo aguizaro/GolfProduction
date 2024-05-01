@@ -170,12 +170,12 @@ public class UIManager : MonoBehaviour
     // Pause UI Methods
     public void EnablePause() { isPaused = true; _pauseScreenUI.SetActive(true); }
     public void DisablePause() { isPaused = false; _pauseScreenUI.SetActive(false); _settingsScreenUI.SetActive(false); }
-    public void EnableSettings() { LoadSettings(); _settingsScreenUI.SetActive(true); }
+    public void EnableSettings() { EnableMenu(MenuState.Settings); }
     public void DisableSettings() { _settingsScreenUI.SetActive(false); if (!titleScreenMode) { EnablePause(); } }
     public void PauseStartSettings() { _pauseScreenUI.SetActive(false); EnableSettings(); }
     public void EnableControls() 
     {
-        // todo
+        EnableMenu(MenuState.Control);
     }
 
     // Quit lobby and return to title screen
@@ -264,11 +264,12 @@ public class UIManager : MonoBehaviour
     {
         _titleScreenUI.SetActive(false);
         _lobbyUI.SetActive(false);
-
+        
         switch (state)
         {
             case UIState.Title:
                 _titleScreenUI.SetActive(true);
+                
                 break;
             case UIState.Lobby:
                 _lobbyUI.SetActive(true);
@@ -280,10 +281,12 @@ public class UIManager : MonoBehaviour
     {
         _settingsScreenUI.SetActive(false);
         _controlsScreenUI.SetActive(false);
+        menuState = state;
 
         switch (state) 
         {
             case MenuState.Settings:
+                LoadSettings();
                 _settingsScreenUI.SetActive(true);
                 break;
             case MenuState.Control:
