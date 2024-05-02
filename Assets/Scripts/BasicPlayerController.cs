@@ -11,7 +11,7 @@ public class BasicPlayerController : NetworkBehaviour
     public float _moveSpeed = 2f;
     public float _sprintMultiplier = 4f;
     public float _rotationSpeed = 100f;
-    private bool _isSprinting = false;
+    [SerializeField] private bool _isSprinting = false;
 
     // Physics
     private Rigidbody _rb;
@@ -36,11 +36,12 @@ public class BasicPlayerController : NetworkBehaviour
     public Vector2 _lookInput;
     public const float _inputThreshold = 0.001f;
     public InputActionAsset _inputActionAsset;
-    public InputActionMap _gameplayActionMap;
+    public InputActionMap _gameplayActionMap = new InputActionMap();
     public float _playerYaw = 0f;
     public InputActionRebindingExtensions.RebindingOperation _rebindingOperation;
-    public string targetActionName;
+    public string targetActionName = "Sprint";
     public string _newInputPath;
+    public int _testValue = 0;
 #endif
     [Header("Hybrid Variables For Both Input Systems")]
     public bool _forwardPressed;
@@ -61,7 +62,7 @@ public class BasicPlayerController : NetworkBehaviour
         if (!IsOwner) return;
 #if ENABLE_INPUT_SYSTEM
         #region Input Actions Initialization
-
+        _inputActionAsset = _inputActionAsset??Resources.Load<InputActionAsset>("InputActionAsset/Actions");
         _inputActionAsset.Enable();
         _gameplayActionMap = _inputActionAsset.FindActionMap("Gameplay",throwIfNotFound: true);
         _gameplayActionMap.Enable();
@@ -456,14 +457,15 @@ public class BasicPlayerController : NetworkBehaviour
     public void TestRebinding()
     {
         RebindActions(targetActionName);
+        _testValue++;
     }
     public void CheckTest(InputAction.CallbackContext ctx)
     {
-        Debug.Log($"{ctx.action.name} ");
+        Debug.Log($"{ctx.action.name}: {_strikePressed}");
     }
     public void RebindActions(string name)
     {
-        _inputActionAsset.FindActionMap("Gameplay", false).Disable();
+        _gameplayActionMap.Disable();
         _inputActionAsset.FindActionMap("UI", false).Enable();
         InputAction action = _gameplayActionMap[name];
         Debug.Log($"Rebinding Start for {name},binding count {action.bindings.Count}");
@@ -488,10 +490,11 @@ public class BasicPlayerController : NetworkBehaviour
                 int bindingIndex = operation.action.GetBindingIndexForControl(operation.action.controls[0]);
                 var newBinding = operation.action.bindings[bindingIndex];
                 _newInputPath = InputControlPath.ToHumanReadableString(newBinding.effectivePath, InputControlPath.HumanReadableStringOptions.OmitDevice);
+                action.ApplyBindingOverride(bindingIndex, newBinding.effectivePath);
                 operation.action.started += CheckTest;
                 _inputActionAsset.FindActionMap("Gameplay", false).Enable();
                 _inputActionAsset.FindActionMap("UI", false).Disable();
-                operation.Dispose();
+                _rebindingOperation.Dispose();
                 Debug.Log($"Rebinding Completed for {name},binding count {action.bindings.Count}");
                 for (int i = 0; i < action.bindings.Count; i++)
                 {
