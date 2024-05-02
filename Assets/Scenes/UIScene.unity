@@ -486,7 +486,7 @@ GameObject:
   - component: {fileID: 120384970}
   - component: {fileID: 120384969}
   m_Layer: 5
-  m_Name: BackButton
+  m_Name: ControlBackButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -991,7 +991,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Up
+  m_text: Forward
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 0f411e728b172734d8d8a0c2e2f9fdea, type: 2}
   m_sharedMaterial: {fileID: -1858061573867540441, guid: 0f411e728b172734d8d8a0c2e2f9fdea, type: 2}
@@ -1952,7 +1952,7 @@ GameObject:
   - component: {fileID: 750341079}
   - component: {fileID: 750341078}
   m_Layer: 5
-  m_Name: UpButton
+  m_Name: FowardButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2400,7 +2400,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1032021423
 Transform:
   m_ObjectHideFlags: 0
@@ -2618,7 +2618,7 @@ GameObject:
   - component: {fileID: 1146019408}
   - component: {fileID: 1146019407}
   m_Layer: 5
-  m_Name: ApplyButton
+  m_Name: ControlApplyButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3643,7 +3643,7 @@ GameObject:
   - component: {fileID: 1524487458}
   - component: {fileID: 1524487457}
   m_Layer: 5
-  m_Name: DownButton
+  m_Name: BackwardsButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3905,7 +3905,7 @@ GameObject:
   - component: {fileID: 1621425760}
   - component: {fileID: 1621425759}
   m_Layer: 5
-  m_Name: DownText
+  m_Name: BackwardsText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3990,7 +3990,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Down
+  m_text: Back
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 0f411e728b172734d8d8a0c2e2f9fdea, type: 2}
   m_sharedMaterial: {fileID: -1858061573867540441, guid: 0f411e728b172734d8d8a0c2e2f9fdea, type: 2}
@@ -5302,7 +5302,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6336588044693464572, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6704431797588788809, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_fontAsset
