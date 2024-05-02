@@ -234,7 +234,12 @@ public class RagdollOnOff : NetworkBehaviour
     {
         Debug.Log("RagDollOnOff: AddForceToSelfClientRpc running on " + OwnerClientId + " from client " + NetworkManager.Singleton.LocalClientId);
         playerRB.isKinematic = false; //this needs to be set back to true later but idk how to find out when the force is done being applied
-        playerRB.AddForce(force, ForceMode.Impulse);
+        foreach (Rigidbody rb in playerRB.gameObject.GetComponentsInChildren<Rigidbody>())
+        {
+            rb.AddForce(force);
+            Debug.Log("Added force to " + rb.gameObject.name + " with force " + force);
+        }
+        //playerRB.AddForce(new Vector3(0, 100, 0), ForceMode.Impulse);
     }
 
 }

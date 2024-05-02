@@ -269,7 +269,8 @@ public class SwingManager : NetworkBehaviour
         // add forces
         Vector3 swingForceVector = dir * swingForce * meterCanvas.GetComponent<PowerMeter>().GetPowerValue();
 
-        Debug.Log("force dir: " + swingForceVector);
+        Debug.Log("force dir: " + dir);
+        Debug.Log("force vector: " + swingForceVector);
         //ask the ragdolled player to add force on themselves
         if (ragdolled_player_id != -1)
         {
