@@ -204,6 +204,13 @@ public class SwingManager : NetworkBehaviour
     {
         if (_ragdollOnOff.IsRagdoll()) return;
 
+        playerAnimator.ResetTrigger("isWalking");
+        playerAnimator.ResetTrigger("isRunning");
+        playerAnimator.ResetTrigger("isStriking");
+        playerAnimator.ResetTrigger("isRight");
+        playerAnimator.ResetTrigger("isLeft");
+        playerAnimator.ResetTrigger("isReversing");
+        playerAnimator.SetTrigger("Stance");
         //Debug.Log("Swing State entered");
 
         RemoveForces(); //  prevent ball from rolling
@@ -221,8 +228,6 @@ public class SwingManager : NetworkBehaviour
 
         // Set camera to swing state
         cameraFollowScript.SetSwingState(true);
-        // Trigger stance animation
-        playerAnimator.SetTrigger("Stance");
     }
 
 
@@ -230,6 +235,7 @@ public class SwingManager : NetworkBehaviour
     void PerformSwingOnBall()
     {
         playerAnimator.SetTrigger("Swing");
+        playerAnimator.ResetTrigger("Stance");
         // set waitingForSwing to false to exit swing mode after animations finished
         waitingForSwing = false;
 

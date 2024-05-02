@@ -474,6 +474,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _renderer: {fileID: 711926077802830346}
+  CurrentColor: {r: 0, g: 0, b: 0, a: 0}
 --- !u!114 &4118846366210689039
 MonoBehaviour:
   m_ObjectHideFlags: 0
