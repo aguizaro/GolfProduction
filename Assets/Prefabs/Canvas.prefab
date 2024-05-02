@@ -362,9 +362,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_StringReference:
     m_TableReference:
-      m_TableCollectionName: GUID:fa09f4bfc9488034481bbcb2967f950c
+      m_TableCollectionName: 
     m_TableEntryReference:
-      m_KeyId: 1834737852416
+      m_KeyId: 0
       m_Key: 
     m_FallbackState: 0
     m_WaitForCompletion: 0
@@ -1551,9 +1551,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_StringReference:
     m_TableReference:
-      m_TableCollectionName: GUID:fa09f4bfc9488034481bbcb2967f950c
+      m_TableCollectionName: 
     m_TableEntryReference:
-      m_KeyId: 1834737852416
+      m_KeyId: 0
       m_Key: 
     m_FallbackState: 0
     m_WaitForCompletion: 0
@@ -2438,7 +2438,7 @@ GameObject:
   - component: {fileID: 1643645499744680604}
   - component: {fileID: 1440789217845418347}
   m_Layer: 5
-  m_Name: FowardButton
+  m_Name: ForwardButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2461,7 +2461,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -232.6, y: 199.15}
+  m_AnchoredPosition: {x: -161.21, y: 199.15}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8550121587390318314
@@ -3884,9 +3884,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_StringReference:
     m_TableReference:
-      m_TableCollectionName: GUID:fa09f4bfc9488034481bbcb2967f950c
+      m_TableCollectionName: 
     m_TableEntryReference:
-      m_KeyId: 1834737852416
+      m_KeyId: 0
       m_Key: 
     m_FallbackState: 0
     m_WaitForCompletion: 0
@@ -4149,7 +4149,7 @@ GameObject:
   - component: {fileID: 4232433530707053957}
   - component: {fileID: 9159793334478969350}
   m_Layer: 5
-  m_Name: UpText
+  m_Name: ForwardText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4287,9 +4287,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_StringReference:
     m_TableReference:
-      m_TableCollectionName: GUID:fa09f4bfc9488034481bbcb2967f950c
+      m_TableCollectionName: 
     m_TableEntryReference:
-      m_KeyId: 1636166918144
+      m_KeyId: 0
       m_Key: 
     m_FallbackState: 0
     m_WaitForCompletion: 0
@@ -6677,7 +6677,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -232.6, y: -155.2}
+  m_AnchoredPosition: {x: -150.5, y: -155.2}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5515666073452207539
@@ -8085,7 +8085,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1489739013510010719
 Transform:
   m_ObjectHideFlags: 0
@@ -9532,9 +9532,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_StringReference:
     m_TableReference:
-      m_TableCollectionName: GUID:fa09f4bfc9488034481bbcb2967f950c
+      m_TableCollectionName: 
     m_TableEntryReference:
-      m_KeyId: 1636166918144
+      m_KeyId: 0
       m_Key: 
     m_FallbackState: 0
     m_WaitForCompletion: 0
@@ -9594,7 +9594,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -232.6, y: 74.2}
+  m_AnchoredPosition: {x: -156.1, y: 74.2}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2476330252137093264
@@ -9842,9 +9842,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_StringReference:
     m_TableReference:
-      m_TableCollectionName: GUID:fa09f4bfc9488034481bbcb2967f950c
+      m_TableCollectionName: 
     m_TableEntryReference:
-      m_KeyId: 1636166918144
+      m_KeyId: 0
       m_Key: 
     m_FallbackState: 0
     m_WaitForCompletion: 0
@@ -10152,9 +10152,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_StringReference:
     m_TableReference:
-      m_TableCollectionName: GUID:fa09f4bfc9488034481bbcb2967f950c
+      m_TableCollectionName: 
     m_TableEntryReference:
-      m_KeyId: 1636166918144
+      m_KeyId: 0
       m_Key: 
     m_FallbackState: 0
     m_WaitForCompletion: 0
@@ -10537,9 +10537,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_StringReference:
     m_TableReference:
-      m_TableCollectionName: GUID:fa09f4bfc9488034481bbcb2967f950c
+      m_TableCollectionName: 
     m_TableEntryReference:
-      m_KeyId: 1834737852416
+      m_KeyId: 0
       m_Key: 
     m_FallbackState: 0
     m_WaitForCompletion: 0
@@ -10939,7 +10939,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -232.6, y: -42.2}
+  m_AnchoredPosition: {x: -152.4, y: -42.2}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4620026897308063874
@@ -14200,9 +14200,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_StringReference:
     m_TableReference:
-      m_TableCollectionName: GUID:fa09f4bfc9488034481bbcb2967f950c
+      m_TableCollectionName: 
     m_TableEntryReference:
-      m_KeyId: 1834737852416
+      m_KeyId: 0
       m_Key: 
     m_FallbackState: 0
     m_WaitForCompletion: 0
