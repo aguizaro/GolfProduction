@@ -5,13 +5,20 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Localization.Settings;
-using UnityEngine.Localization.SmartFormat.Utilities;
 
 
 public enum UIState
 {
     Title,
     Lobby,
+    Game,
+}
+public enum MenuState
+{
+    None,
+    Pause,
+    Settings,
+    Control,
 }
 
 public class UIManager : MonoBehaviour
@@ -60,8 +67,22 @@ public class UIManager : MonoBehaviour
 
     [SerializeField] private Button _settingsApplyButton;
     [SerializeField] private Button _settingsBackButton;
+    [SerializeField] private Button _settingsControlButton;
     [SerializeField] private Slider _settingsSensitivitySlider;
     [SerializeField] private TMP_Dropdown _settingsLanguageDropdown;
+
+    // Controls UI Elements
+    [Header("Controls UI Elements")]
+    [SerializeField] private GameObject _controlsScreenUI;
+
+    [SerializeField] private Button _controlsApplyButton;
+    [SerializeField] private Button _controlsBackButton;
+    [SerializeField] private Button _controlsForwardChangeButton;
+    [SerializeField] private Button _controlsLeftChangeButton;
+    [SerializeField] private Button _controlsBackChangeButton;
+    [SerializeField] private Button _controlsRightChangeButton;
+
+    [Header("Other")]
     [SerializeField] private TMP_Text _holeCountText;
 
     // UIManager instance
@@ -76,6 +97,7 @@ public class UIManager : MonoBehaviour
     public static bool isPaused { get; set; } = false;
     private bool localeActive = false;
     private Transform _cameraStartTransform;
+    private MenuState menuState = MenuState.None; 
 
     private void Awake()
     {
@@ -97,6 +119,16 @@ public class UIManager : MonoBehaviour
         // Settings Button Events
         _settingsApplyButton.onClick.AddListener(ApplySettings);
         _settingsBackButton.onClick.AddListener(DisableSettings);
+        _settingsLanguageDropdown.onValueChanged.AddListener(ApplyLanguage);
+        _settingsControlButton.onClick.AddListener(GotoControls);
+
+        // Controls Button Events
+        _controlsApplyButton.onClick.AddListener(ApplyControls);
+        _controlsBackButton.onClick.AddListener(DisableControls);
+        _controlsForwardChangeButton.onClick.AddListener(OnForwardButtonChange);
+        _controlsLeftChangeButton.onClick.AddListener(OnLeftButtonChange);
+        _controlsBackChangeButton.onClick.AddListener(OnBackButtonChange);
+        _controlsRightChangeButton.onClick.AddListener(OnRightButtonChange);
 
         //Camera Start Position
         _cameraStartTransform = _mainCamera.transform;
@@ -146,9 +178,16 @@ public class UIManager : MonoBehaviour
     // Pause UI Methods
     public void EnablePause() { isPaused = true; _pauseScreenUI.SetActive(true); }
     public void DisablePause() { isPaused = false; _pauseScreenUI.SetActive(false); _settingsScreenUI.SetActive(false); }
-    public void EnableSettings() { LoadSettings(); _settingsScreenUI.SetActive(true); }
+    public void EnableSettings() { EnableMenu(MenuState.Settings); }
     public void DisableSettings() { _settingsScreenUI.SetActive(false); if (!titleScreenMode) { EnablePause(); } }
     public void PauseStartSettings() { _pauseScreenUI.SetActive(false); EnableSettings(); }
+    public void EnableControls() 
+    {
+        EnableMenu(MenuState.Control);
+    }
+    public void DisableControls() {
+        EnableMenu(MenuState.Settings);
+    }
 
     // Quit lobby and return to title screen
     private async void QuitLobbyReturnToTitle()
@@ -157,7 +196,7 @@ public class UIManager : MonoBehaviour
         ReturnToTitle();
     }
 
-    // returns to rile screen
+    // returns to title screen
     public void ReturnToTitle()
     {
         DeactivateHUD();
@@ -176,7 +215,7 @@ public class UIManager : MonoBehaviour
     public void SetOneHandModeToggle(bool value) => oneHandMode = value;
     public void SetLanguageDropdown(int value) => language = value;
 
-    public void InitializetLanguageDropdown()
+    private void InitializetLanguageDropdown()
     {
         var currentLocale = LocalizationSettings.SelectedLocale;
         var locales = LocalizationSettings.AvailableLocales.Locales;
@@ -185,7 +224,6 @@ public class UIManager : MonoBehaviour
             if (locales[i] == currentLocale)
             {
                 _settingsLanguageDropdown.value = i;
-                Debug.Log("Current locale: " + currentLocale + " at index: " + i);
             }
         }
 
@@ -210,21 +248,55 @@ public class UIManager : MonoBehaviour
     {
         Debug.Log("Applying settings");
         SettingsData sData = DataManager.instance.GetSettingsData();
+        // apply all settings
         sData.cameraSensitivity = settingsSensitivity;
-        sData.language = language;
+        // language is applied on when it is changed, so do not need to apply it now
 
         DataManager.instance.SetSettingsData(sData);
 
-        Debug.Log("Is Locale active: " + localeActive);
+        DisableSettings();
+    }
 
+    public void ApplyLanguage(int lang)
+    {
+        SettingsData sData = DataManager.instance.GetSettingsData();
+        sData.language = lang;
+        DataManager.instance.SetSettingsData(sData);
+        
         if (!localeActive) { StartCoroutine(SetLocale(language)); }
+    }
+
+    public void GotoControls()
+    {
+        EnableControls();
+    }
+
+    public void ApplyControls() 
+    {
+        Debug.Log("Controls applied!");
+    }
+
+    public void OnForwardButtonChange() {
+        Debug.Log("forward");
+    }
+
+    public void OnLeftButtonChange() {
+        Debug.Log("left");
+    }
+    
+    public void OnBackButtonChange() {
+        Debug.Log("back");
+    }
+
+    public void OnRightButtonChange() {
+        Debug.Log("Right");
     }
 
     public void EnableUI(UIState state)
     {
         _titleScreenUI.SetActive(false);
         _lobbyUI.SetActive(false);
-
+        
         switch (state)
         {
             case UIState.Title:
@@ -232,6 +304,26 @@ public class UIManager : MonoBehaviour
                 break;
             case UIState.Lobby:
                 _lobbyUI.SetActive(true);
+                break;
+        }
+    }
+
+    public void EnableMenu(MenuState state)
+    {
+        _settingsScreenUI.SetActive(false);
+        _controlsScreenUI.SetActive(false);
+        menuState = state;
+
+        switch (state) 
+        {
+            case MenuState.Settings:
+                LoadSettings();
+                _settingsScreenUI.SetActive(true);
+                break;
+            case MenuState.Control:
+                _controlsScreenUI.SetActive(true);
+                break;
+            default:
                 break;
         }
     }
