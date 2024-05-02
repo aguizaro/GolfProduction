@@ -5000,6 +5000,34 @@ PrefabInstance:
       propertyPath: _lobbyManager
       value: 
       objectReference: {fileID: 1606576232}
+    - target: {fileID: 1582775901338165307, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: _controlsScreenUI
+      value: 
+      objectReference: {fileID: 1032021422}
+    - target: {fileID: 1582775901338165307, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: _controlsBackButton
+      value: 
+      objectReference: {fileID: 120384969}
+    - target: {fileID: 1582775901338165307, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: _controlsApplyButton
+      value: 
+      objectReference: {fileID: 1146019407}
+    - target: {fileID: 1582775901338165307, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: _controlsBackChangeButton
+      value: 
+      objectReference: {fileID: 1524487457}
+    - target: {fileID: 1582775901338165307, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: _controlsLeftChangeButton
+      value: 
+      objectReference: {fileID: 1364580596}
+    - target: {fileID: 1582775901338165307, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: _controlsRightChangeButton
+      value: 
+      objectReference: {fileID: 972248091}
+    - target: {fileID: 1582775901338165307, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: _controlsForwardChangeButton
+      value: 
+      objectReference: {fileID: 750341078}
     - target: {fileID: 1714348633560604140, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_fontAsset
       value: 
