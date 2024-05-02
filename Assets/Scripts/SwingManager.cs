@@ -76,6 +76,7 @@ public class SwingManager : NetworkBehaviour
         _playerNetworkData = GetComponent<PlayerNetworkData>();
         _playerController = GetComponent<BasicPlayerController>();
     }
+
     // Update is called once per frame
     void Update()
     {
@@ -96,15 +97,9 @@ public class SwingManager : NetworkBehaviour
             }
             else if (powerMeterRef.GetShotStatus() == true) // Perform swing
             {
-                if (ragdolled_player_id != -1) // Perform swing on ragdolled player
-                {
-                    PerformSwingOnPlayer();
-                }
-                else
-                {
-                    PerformSwingOnBall();
-                }
-
+                // Start swing animation, when the club is halfway through the swing it will call PerformSwing()
+                playerAnimator.SetTrigger("Swing");
+                playerAnimator.ResetTrigger("Stance");
             }
             return; // Don't execute further logic if waiting for swing
         }
@@ -230,12 +225,20 @@ public class SwingManager : NetworkBehaviour
         cameraFollowScript.SetSwingState(true);
     }
 
-
+    void PerformSwing()     // Called by the animation event in Swing animation
+    {
+        if (ragdolled_player_id != -1)
+            {
+                PerformSwingOnPlayer();
+            }
+            else
+            {
+                PerformSwingOnBall();
+            }
+    }
 
     void PerformSwingOnBall()
     {
-        playerAnimator.SetTrigger("Swing");
-        playerAnimator.ResetTrigger("Stance");
         // set waitingForSwing to false to exit swing mode after animations finished
         waitingForSwing = false;
 
@@ -266,7 +269,6 @@ public class SwingManager : NetworkBehaviour
 
     void PerformSwingOnPlayer()
     {
-        playerAnimator.SetTrigger("Swing");
         // set waitingForSwing to false to exit swing mode after animations finished
         waitingForSwing = false;
 
@@ -318,6 +320,9 @@ public class SwingManager : NetworkBehaviour
         cameraFollowScript.SetSwingState(false);
         // Make sure its no longer waiting for swing
         waitingForSwing = false;
+
+        playerAnimator.ResetTrigger("Swing");
+
     }
 
 
