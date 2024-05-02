@@ -77,10 +77,10 @@ public class UIManager : MonoBehaviour
 
     [SerializeField] private Button _controlsApplyButton;
     [SerializeField] private Button _controlsBackButton;
-    [SerializeField] private Button _controlsUpButton;
-    [SerializeField] private Button _controlsLeftButton;
-    [SerializeField] private Button _controlsDownButton;
-    [SerializeField] private Button _controlsRightButton;
+    [SerializeField] private Button _controlsForwardChangeButton;
+    [SerializeField] private Button _controlsLeftChangeButton;
+    [SerializeField] private Button _controlsBackChangeButton;
+    [SerializeField] private Button _controlsRightChangeButton;
 
     [Header("Other")]
     [SerializeField] private TMP_Text _holeCountText;
@@ -121,6 +121,14 @@ public class UIManager : MonoBehaviour
         _settingsBackButton.onClick.AddListener(DisableSettings);
         _settingsLanguageDropdown.onValueChanged.AddListener(ApplyLanguage);
         _settingsControlButton.onClick.AddListener(GotoControls);
+
+        // Controls Button Events
+        _controlsApplyButton.onClick.AddListener(ApplyControls);
+        _controlsBackButton.onClick.AddListener(DisableControls);
+        _controlsForwardChangeButton.onClick.AddListener(OnForwardButtonChange);
+        _controlsLeftChangeButton.onClick.AddListener(OnLeftButtonChange);
+        _controlsBackChangeButton.onClick.AddListener(OnBackButtonChange);
+        _controlsRightChangeButton.onClick.AddListener(OnRightButtonChange);
 
         //Camera Start Position
         _cameraStartTransform = _mainCamera.transform;
@@ -176,6 +184,9 @@ public class UIManager : MonoBehaviour
     public void EnableControls() 
     {
         EnableMenu(MenuState.Control);
+    }
+    public void DisableControls() {
+        EnableMenu(MenuState.Settings);
     }
 
     // Quit lobby and return to title screen
@@ -257,7 +268,12 @@ public class UIManager : MonoBehaviour
 
     public void GotoControls()
     {
-        Debug.Log("Controls!");
+        EnableControls();
+    }
+
+    public void ApplyControls() 
+    {
+        Debug.Log("Controls applied!");
     }
 
     public void OnForwardButtonChange() {
