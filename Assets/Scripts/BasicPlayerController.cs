@@ -36,6 +36,11 @@ public class BasicPlayerController : NetworkBehaviour
 
     // Spawning
     private bool _isSpawnedAtPos = false; // used to check if player has been spawned in correct position
+    // Cosmetics
+    private PlayerHatController _playerHat;
+    private int _playerHatMeshId;
+    private int _playerHatTextureId;
+
 
     // Activation
     public bool IsActive = false;
@@ -65,13 +70,14 @@ public class BasicPlayerController : NetworkBehaviour
     {
         _rb = gameObject.GetComponent<Rigidbody>();
         _animator = GetComponent<Animator>();
+        _playerHat = GetComponent<PlayerHatController>();
         _swingManager = GetComponent<SwingManager>();
         _ragdollOnOff = GetComponent<RagdollOnOff>();
         _flagPoles = GameObject.FindGameObjectsWithTag("HoleFlagPole");
 
         _swingManager.Activate(); // activate swing mode
         _ragdollOnOff.Activate(); // activate ragdoll
-
+        //_playerHat.RandomizeHatTexture();
         if (!IsOwner) return;
 
 #if ENABLE_INPUT_SYSTEM
@@ -93,6 +99,9 @@ public class BasicPlayerController : NetworkBehaviour
 #endif
         // activate player controller - controller will activate the player movement, animations, shooting and ragdoll
         //Activate();
+        _playerHat.RandomizeHatTexture();
+        _playerHatMeshId = _playerHat.GetCurrentMeshId();
+        _playerHatTextureId = _playerHat.GetCurrentTextureId();
     }
 
     // Update Loop -------------------------------------------------------------------------------------------------------------
