@@ -285,7 +285,6 @@ public class UIManager : MonoBehaviour
         {
             case UIState.Title:
                 _titleScreenUI.SetActive(true);
-                
                 break;
             case UIState.Lobby:
                 _lobbyUI.SetActive(true);
