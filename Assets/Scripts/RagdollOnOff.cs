@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
+using Unity.VisualScripting;
 
 public class RagdollOnOff : NetworkBehaviour
 {
@@ -77,7 +78,7 @@ public class RagdollOnOff : NetworkBehaviour
     // Dev Note: Use this public function to activate the ragdoll mode
     public void PerformRagdoll()
     {
-        Debug.Log("PerformRagdoll called for " + OwnerClientId);
+        //Debug.Log("PerformRagdoll called for " + OwnerClientId);
 
         if (IsServer) RagdollModeOnClientRpc();
         else RagdollModeOnServerRpc();
@@ -175,7 +176,7 @@ public class RagdollOnOff : NetworkBehaviour
     [ServerRpc]
     public void RagdollModeOnServerRpc()
     {
-        Debug.Log("RagdollModeOnServerRpc called for " + OwnerClientId);
+        //Debug.Log("RagdollModeOnServerRpc called for " + OwnerClientId);
         RagdollModeOnClientRpc();
         RagdollModeOn();
     }
@@ -184,13 +185,13 @@ public class RagdollOnOff : NetworkBehaviour
     public void RagdollModeOffServerRpc()
     {
         RagdollModeOffClientRpc();
-        RagdollModeOff();
+        RagdollModeOff(); // this may be redundant - idk if we need to call this on the server since it will be called on each client anyway
     }
 
     [ClientRpc]
     public void RagdollModeOnClientRpc()
     {
-        Debug.Log("RagdollModeOnClientRpc called for " + OwnerClientId);
+        //Debug.Log("RagdollModeOnClientRpc called for " + OwnerClientId);
         RagdollModeOn();
     }
 
@@ -207,6 +208,33 @@ public class RagdollOnOff : NetworkBehaviour
     public bool IsRagdoll()
     {
         return isRagdoll;
+    }
+
+    public void AddForceToSelf(Vector3 force)
+    {
+        Debug.Log("RagDollOnOff: AddForceToSelf running on player " + OwnerClientId + " from client " + NetworkManager.Singleton.LocalClientId + " is owner: " + IsOwner);
+
+        if (IsOwner)
+        {
+            playerRB.isKinematic = false; //this needs to be set back to true later but idk how to find out when the force is done being applied
+            playerRB.AddForce(force);
+
+        }
+    }
+
+    [ServerRpc]
+    private void AddForceToSelfServerRpc(Vector3 force)
+    {
+        Debug.Log("RagDollOnOff: AddForceToSelfServerRpc running on " + OwnerClientId + " from client " + NetworkManager.Singleton.LocalClientId);
+        AddForceToSelfClientRpc(force);
+    }
+
+    [ClientRpc]
+    private void AddForceToSelfClientRpc(Vector3 force)
+    {
+        Debug.Log("RagDollOnOff: AddForceToSelfClientRpc running on " + OwnerClientId + " from client " + NetworkManager.Singleton.LocalClientId);
+        playerRB.isKinematic = false; //this needs to be set back to true later but idk how to find out when the force is done being applied
+        playerRB.AddForce(force);
     }
 
 }

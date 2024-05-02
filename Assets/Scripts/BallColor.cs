@@ -27,14 +27,12 @@ public class BallColor : NetworkBehaviour
     {
         if (IsOwner)
         {
-            Debug.Log("ball owned by " + OwnerClientId + " looking for player");
             Color playerColor = GetOwnersColor();
             CommitNetworkColorServerRpc(playerColor);
         }
         else
         {
             _renderer.material.color = _netColor.Value;
-            Debug.Log("client: " + NetworkManager.Singleton.LocalClientId + " IsConnectedClient: " + NetworkManager.Singleton.IsConnectedClient + "\nis not owner: " + OwnerClientId + " - setting color to " + _netColor.Value);
         }
     }
 
@@ -42,7 +40,6 @@ public class BallColor : NetworkBehaviour
     private void CommitNetworkColorServerRpc(Color color)
     {
         _netColor.Value = color;
-        Debug.Log("ServerRpc: Ball color set to " + color);
     }
 
     private Color GetOwnersColor()
@@ -51,11 +48,9 @@ public class BallColor : NetworkBehaviour
 
         foreach (GameObject playerObject in playerObjects)
         {
-            Debug.Log("Player " + playerObject.GetComponent<NetworkObject>().OwnerClientId + " found - isOwner: " + playerObject.GetComponent<NetworkObject>().IsOwner + " - is local player: " + playerObject.GetComponent<NetworkObject>().IsLocalPlayer);
             if (playerObject.GetComponent<NetworkObject>().IsOwner && playerObject.GetComponent<NetworkObject>().OwnerClientId == OwnerClientId)
             {
                 Color playerColor = playerObject.GetComponent<PlayerColor>()._netColor.Value;
-                Debug.Log("Player " + OwnerClientId + " color is " + playerColor);
                 return playerColor;
             }
         }

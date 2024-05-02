@@ -32,14 +32,13 @@ public class PlayerColor : NetworkBehaviour
     private void OnValueChanged(Color prev, Color next)
     {
         _renderer.material.color = next;
-        Debug.Log($"Player {OwnerClientId} color changed from {prev} to {next}");
         CurrentColor = next;
-        Debug.Log($"Player {OwnerClientId} color is now {CurrentColor}");
+        //Debug.Log($"Player {OwnerClientId} color is now {CurrentColor}");
 
         //find all objects owned by this player
         GameObject[] BallObjects = GameObject.FindGameObjectsWithTag("Ball");
 
-        Debug.Log($"player {NetworkManager.Singleton.LocalClientId} found " + BallObjects.Length + " ball objects");
+        //Debug.Log($"player {NetworkManager.Singleton.LocalClientId} found " + BallObjects.Length + " ball objects");
         foreach (GameObject playerObject in BallObjects)
         {
             playerObject.GetComponent<BallColor>().Activate();

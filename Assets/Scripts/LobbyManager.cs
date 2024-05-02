@@ -587,13 +587,13 @@ public class LobbyManager : MonoBehaviour
         switch (state)
         {
             case LobbyEventConnectionState.Unsubscribed:
-                Debug.LogWarning("Lobby event connection state is unsubscribed.");
+                //Debug.LogWarning("Lobby event connection state is unsubscribed.");
                 break;
             case LobbyEventConnectionState.Subscribing:
-                Debug.Log("Lobby event connection state is subscribing.");
+                //Debug.Log("Lobby event connection state is subscribing.");
                 break;
             case LobbyEventConnectionState.Subscribed:
-                Debug.Log("Lobby event connection state is subscribed.");
+                //Debug.Log("Lobby event connection state is subscribed.");
                 break;
             case LobbyEventConnectionState.Unsynced:
                 Debug.LogWarning("Lobby event connection state is unsynced. This should not happen. Will attempt to resync.");
@@ -657,7 +657,15 @@ public class LobbyManager : MonoBehaviour
         int tick = 0;
         while (!NetworkManager.Singleton.IsConnectedClient)
         {
-            Debug.Log("still waiting for connection... " + tick);
+            if (tick % 10 == 0) Debug.Log("still waiting for connection... " + tick + "\n IsConnectedClient: " + NetworkManager.Singleton.IsConnectedClient + "\nIsClient: " + NetworkManager.Singleton.IsClient + "\nIsApproved: " + NetworkManager.Singleton.IsApproved + "\nIsListening: " + NetworkManager.Singleton.IsListening);
+
+            if (ConnectedLobby == null)
+            {
+                Debug.LogWarning("Lobby is null");
+                await PlayerExit();
+                return;
+            }
+
             tick++;
             if (tick > 160)
             {
@@ -665,6 +673,7 @@ public class LobbyManager : MonoBehaviour
                 await PlayerExit();
                 return;
             }
+
             await Task.Yield();
         }
         // do something here to indicate that the client is connected and start making calls to the server -------
@@ -679,7 +688,7 @@ public class LobbyManager : MonoBehaviour
         while (true)
         {
             Lobbies.Instance.SendHeartbeatPingAsync(lobbyId);
-            Debug.Log("Heartbeat Ping Sent by " + NetworkManager.Singleton.LocalClientId);
+            //Debug.Log("Heartbeat Ping Sent by " + NetworkManager.Singleton.LocalClientId);
             yield return delay;
         }
     }
@@ -800,17 +809,10 @@ public class LobbyManager : MonoBehaviour
 
     public async Task TryQuitLobby()
     {
-        await UnsubscribeFromLobbyEvents();
+        if (ConnectedLobbyyEvents != null) await UnsubscribeFromLobbyEvents();
         if (subscribedToNetworkManagerEvents) UnsubscribeFromNetworkManagerEvents();
 
         Debug.Log("TryQuit: NetworkManager.Singleton.IsConnectedClient: " + NetworkManager.Singleton.IsConnectedClient + "\nTryQuit: NetworkManager.Singleton.IsClient: " + NetworkManager.Singleton.IsClient + "\nTryQuit: NetworkManager.Singleton.IsApproved" + NetworkManager.Singleton.IsApproved + "\nTryQuit: NetworkManager.Singleton.IsListening" + NetworkManager.Singleton.IsListening);
-
-
-        if (NetworkManager.Singleton.IsClient)
-        {
-            Debug.LogWarning("Disconnecting Client: " + NetworkManager.Singleton.LocalClientId);
-            NetworkManager.Singleton.Shutdown();
-        }
 
         if (ConnectedLobby != null)
         {
@@ -823,6 +825,12 @@ public class LobbyManager : MonoBehaviour
             {
                 Debug.LogWarning("Client Leaving Lobby");
                 await LeaveLobby();
+            }
+
+            if (NetworkManager.Singleton.IsClient)
+            {
+                Debug.LogWarning("Disconnecting Client: " + NetworkManager.Singleton.LocalClientId);
+                NetworkManager.Singleton.Shutdown();
             }
         }
 
@@ -890,6 +898,9 @@ public class LobbyManager : MonoBehaviour
             // configure unity tranport to use websockets for webGL support
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(allocation, _encrptionType));
             NetworkManager.Singleton.GetComponent<UnityTransport>().UseWebSockets = true;
+
+            //check if instance is already running
+            if (NetworkManager.Singleton.IsListening) throw new Exception("NetworkManager is already listening");
 
             // Join the game room as a client
             NetworkManager.Singleton.StartClient();
