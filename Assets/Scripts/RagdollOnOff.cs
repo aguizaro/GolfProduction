@@ -217,11 +217,13 @@ public class RagdollOnOff : NetworkBehaviour
         if (IsOwner)
         {
             playerRB.isKinematic = false; //this needs to be set back to true later but idk how to find out when the force is done being applied
-            playerRB.AddForce(force);
+
+            playerRB.AddForce(new Vector3(0, 100, 0), ForceMode.Impulse);
 
         }
     }
 
+    /*
     [ServerRpc]
     private void AddForceToSelfServerRpc(Vector3 force)
     {
@@ -241,5 +243,6 @@ public class RagdollOnOff : NetworkBehaviour
         }
         //playerRB.AddForce(new Vector3(0, 100, 0), ForceMode.Impulse);
     }
+    */
 
 }
