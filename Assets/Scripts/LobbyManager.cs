@@ -826,15 +826,12 @@ public class LobbyManager : MonoBehaviour
                 Debug.LogWarning("Client Leaving Lobby");
                 await LeaveLobby();
             }
-
-            if (NetworkManager.Singleton.IsClient)
-            {
-                Debug.LogWarning("Disconnecting Client: " + NetworkManager.Singleton.LocalClientId);
-                NetworkManager.Singleton.Shutdown();
-            }
         }
-
-
+        if (NetworkManager.Singleton.IsClient)
+        {
+            Debug.LogWarning("Disconnecting Client: " + NetworkManager.Singleton.LocalClientId);
+            NetworkManager.Singleton.Shutdown();
+        }
     }
 
     // method for host to delete the current lobby

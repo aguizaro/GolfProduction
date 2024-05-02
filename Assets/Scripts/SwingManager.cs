@@ -371,14 +371,20 @@ public class SwingManager : NetworkBehaviour
     [ServerRpc]
     private void AddForceToPlayerServerRpc(Vector3 force, ulong playerID)
     {
+        AddForceToPlayerClientRpc(force, playerID);
+    }
+
+    [ClientRpc]
+    private void AddForceToPlayerClientRpc(Vector3 force, ulong playerID)
+    {
         //get player object of ragdolled player
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
         foreach (GameObject player in players)
         {
-            Debug.Log("Swing Manager - ServerRpc: running on player " + OwnerClientId + "\n----- checking playerObj " + player.GetComponent<NetworkObject>().OwnerClientId + " - is this object the owner? " + player.GetComponent<RagdollOnOff>().IsOwner + " is this the playerID we want? " + (player.GetComponent<NetworkObject>().OwnerClientId == playerID));
+            Debug.Log("Swing Manager - ClientRpc: running on player " + OwnerClientId + "\n----- checking playerObj " + player.GetComponent<NetworkObject>().OwnerClientId + " - is this object the owner? " + player.GetComponent<RagdollOnOff>().IsOwner + " is this the playerID we want? " + (player.GetComponent<NetworkObject>().OwnerClientId == playerID));
             if (player.GetComponent<NetworkObject>().OwnerClientId == playerID && player.GetComponent<RagdollOnOff>().IsOwner)
             {
-                Debug.Log("Swing Manager - ServerRpc calling " + player.GetComponent<NetworkObject>().OwnerClientId + "s  AddForceToSelf()");
+                Debug.Log("Swing Manager - clientRpc calling " + player.GetComponent<NetworkObject>().OwnerClientId + "s  AddForceToSelf()");
                 player.GetComponent<RagdollOnOff>().AddForceToSelf(force);
             }
         }
