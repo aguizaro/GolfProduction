@@ -63,6 +63,10 @@ public class HoleFlagPoleManager : NetworkBehaviour
         Debug.Log("OnTriggerEnter: Player " + playerID + " should match playerController " + playerController.OwnerClientId + " and playerNetworkData " + playerNetworkData.OwnerClientId);
 
         playerController._currentPlayerState.currentHole++;
+        if (playerController._currentPlayerState.currentHole > 9)
+        {
+            playerController._currentPlayerState.currentHole = 9;
+        }
 
         playerController.UpdatePlayerState(playerController._currentPlayerState);
         uiManager.UpdateHoleCountText(playerController._currentPlayerState.currentHole);

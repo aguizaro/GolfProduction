@@ -51,7 +51,8 @@ public class PlayerNetworkData : NetworkBehaviour
 
     private void OnPlayerDataChanged(PlayerData prevData, PlayerData newData)
     {
-        Debug.Log("OnPlayerDataChanged: called by owner: " + OwnerClientId + " isOwner: " + IsOwner + "\n\nfor player: " + newData.playerID + " - strokes: " + _currentPlayerData.strokes + " hole: " + _currentPlayerData.currentHole + _currentPlayerData.enemiesDefeated + " score: " + _currentPlayerData.score);
+        //Debug.Log("OnPlayerDataChanged: called by owner: " + OwnerClientId + " isOwner: " + IsOwner + "\n\nfor player: " + newData.playerID + " - strokes: " + _currentPlayerData.strokes + " hole: " + _currentPlayerData.currentHole + _currentPlayerData.enemiesDefeated + " score: " + _currentPlayerData.score);
+
         _currentPlayerData = newData;
 
         if (IsOwner)
@@ -59,7 +60,7 @@ public class PlayerNetworkData : NetworkBehaviour
             if (prevData.currentHole != newData.currentHole) // check for current hole change
             {
                 // check player data for win - or moves ball to next hole
-                GetComponent<PlayerShoot>().CheckForWin(newData);
+                GetComponent<SwingManager>().CheckForWin(newData);
             }
         }
 
