@@ -35,7 +35,7 @@ public class BasicPlayerController : NetworkBehaviour
     // Activation
     [SerializeField] private bool _isActive = false;
 
-//#if ENABLE_INPUT_SYSTEM
+#if ENABLE_INPUT_SYSTEM
     [Header("For Input System Only")]
     public Vector2 _moveInput;
     public Vector2 _lookInput;
@@ -157,7 +157,6 @@ public class BasicPlayerController : NetworkBehaviour
             flagPole.GetComponent<HoleFlagPoleManager>().Deactivate();
         }
         _ragdollOnOff.Deactivate();
-        _playerShoot.Deactivate();
         _inputActionAsset.FindActionMap("Gameplay").Disable();
     }
 
