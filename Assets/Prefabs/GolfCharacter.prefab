@@ -428,9 +428,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1fd370f29e289db4c99cfa0477a63c65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  gameManagerPrefab: {fileID: 5831013797825701885, guid: 31cf9695843eb9a4096a93bfb4c70e9d, type: 3}
+  spiderPrefab: {fileID: 0}
   _moveSpeed: 2
-  _sprintMultiplier: 3
   _rotationSpeed: 100
+  _ragdollOnOff: {fileID: 0}
   _isActive: 0
   _moveInput: {x: 0, y: 0}
   _lookInput: {x: 0, y: 0}
