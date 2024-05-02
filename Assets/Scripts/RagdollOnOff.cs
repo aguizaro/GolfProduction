@@ -10,14 +10,16 @@ public class RagdollOnOff : NetworkBehaviour
     public GameObject playerRig;
     private Animator _playerAnimator;
     private BasicPlayerController _basicPlayerController;
+    public PlayerNetworkData _playerNetworkData;
     private BoxCollider _golfClubCollider;
+    private SwingManager _swingManager;
 
     public float ragdollDelay = 0.5f; //Slight delay defore ragdoll mode is activated
     public float getUpDelay = 10f;
     private float delay;
     private bool isRagdoll = false; //is player in ragdoll mode
-
     private bool isActive = false; //is player instance active
+
 
 
     // Activation -------------------------------------------------------------------------------------------------------------
@@ -29,6 +31,7 @@ public class RagdollOnOff : NetworkBehaviour
         _basicPlayerController = GetComponent<BasicPlayerController>();
         _playerAnimator = GetComponent<Animator>();
         _golfClubCollider = GetComponentInChildren<BoxCollider>();
+        _swingManager = GetComponentInChildren<SwingManager>();
         delay = getUpDelay;
 
         if (IsOwner) ResetRagdoll(); // owners deactivate ragdoll using RPCs
@@ -96,6 +99,10 @@ public class RagdollOnOff : NetworkBehaviour
     // Dev Note: Don't call this function directly. Use the RPCs instead. - this will only exectute locally
     void RagdollModeOn()
     {
+        if (_swingManager.isInSwingState())
+        {
+            _swingManager.ExitSwingMode();
+        }
         _playerAnimator.enabled = false;
         _basicPlayerController.enabled = false;
 
@@ -111,6 +118,7 @@ public class RagdollOnOff : NetworkBehaviour
         mainCollider.enabled = false;
         playerRB.isKinematic = true;
         isRagdoll = true;
+
 
     }
     // Dev Note: Don't call this function directly. Use the RPCs instead. - this will only exectute locally

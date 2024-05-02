@@ -10,7 +10,7 @@ public class GameData
     public float tempValue;
 
     // Class constructor defines initial default values
-    public GameData() 
+    public GameData()
     {
         // Initialize Game Settings Data
         this.language = "English";

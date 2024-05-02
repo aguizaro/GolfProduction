@@ -7,20 +7,25 @@ using UnityEngine.InputSystem;
 // Needs: simple way to deactivate everything on game over / game exit, so players can play again without having to re-launch the game
 public class BasicPlayerController : NetworkBehaviour
 {
+    // prefabs
+    public GameObject gameManagerPrefab;
+    public GameObject spiderPrefab;
+
     // Movement
     public float _moveSpeed = 2f;
-    public float _sprintMultiplier = 4f;
+    private float _sprintMultiplier = 2.5f;
     public float _rotationSpeed = 100f;
     [SerializeField] private bool _isSprinting = false;
 
     // Physics
     private Rigidbody _rb;
-    private PlayerShoot _playerShoot;
+    //private PlayerShoot _playerShoot;
+    private SwingManager _swingManager;
 
     // State Management
     public PlayerData _currentPlayerState;
     private PlayerNetworkData _playerNetworkData;
-    private RagdollOnOff _ragdollOnOff;
+    public RagdollOnOff _ragdollOnOff;
     private bool _canMove = true;
 
     // Animation
@@ -30,7 +35,7 @@ public class BasicPlayerController : NetworkBehaviour
     // Activation
     [SerializeField] private bool _isActive = false;
 
-#if ENABLE_INPUT_SYSTEM
+//#if ENABLE_INPUT_SYSTEM
     [Header("For Input System Only")]
     public Vector2 _moveInput;
     public Vector2 _lookInput;
@@ -54,7 +59,7 @@ public class BasicPlayerController : NetworkBehaviour
     {
         _rb = gameObject.GetComponent<Rigidbody>();
         _animator = GetComponent<Animator>();
-        _playerShoot = GetComponent<PlayerShoot>();
+        _swingManager = GetComponent<SwingManager>();
         _ragdollOnOff = GetComponent<RagdollOnOff>();
         _flagPoles = GameObject.FindGameObjectsWithTag("HoleFlagPole");
 
@@ -99,12 +104,26 @@ public class BasicPlayerController : NetworkBehaviour
     {
         // Debug.Log("Activating player controller for " + OwnerClientId + " isOwner: " + IsOwner);
         _playerNetworkData = GetComponent<PlayerNetworkData>();
+        _ragdollOnOff._playerNetworkData = _playerNetworkData;
 
         if (!IsOwner) return;
 
-        // activate player movement, animations, shooting and ragdoll
+        // activate player movement, animations, shooting and ragdoll\
         _isActive = true;
-        _playerShoot.Activate();
+        _swingManager.Activate();
+
+        if (IsServer)
+        {
+            //activate game manager
+            GameObject gameManager = Instantiate(gameManagerPrefab, new Vector3(0, 0, 0), Quaternion.identity);
+            gameManager.GetComponent<NetworkObject>().Spawn();
+
+            //activate spider
+            // GameObject spider = Instantiate(spiderPrefab, new Vector3(391, 72.1f, 289), Quaternion.identity);
+            // spider.GetComponent<NetworkObject>().Spawn();
+        }
+
+
 
         // activate flag poles
         foreach (GameObject flagPole in _flagPoles)
@@ -159,14 +178,10 @@ public class BasicPlayerController : NetworkBehaviour
 
             // update local player state with network data ?
         }
-        // Check for pause input
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            if (!UIManager.isPaused) { UIManager.isPaused = true; UIManager.instance.EnablePause(); Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
-            else { UIManager.isPaused = false; UIManager.instance.DisablePause(); Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; }
-        }
+
         if (UIManager.isPaused) { return; }
         else { if (!UIManager.instance.titleScreenMode) { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; } }
+
 #if ENABLE_INPUT_SYSTEM
         InputSystemRotation();
         InputSystemMovement();
@@ -199,23 +214,19 @@ public class BasicPlayerController : NetworkBehaviour
     {
         if (!_isActive) return; //prevent updates to state manager until player is fully activated
 
-        // Update player state if position or rotation has changed
-        if (transform.position != _currentPlayerState.playerPos || transform.rotation != _currentPlayerState.playerRot)
+        _currentPlayerState = new PlayerData
         {
-            _currentPlayerState = new PlayerData
-            {
-                playerID = OwnerClientId,
-                playerPos = transform.position,
-                playerRot = transform.rotation,
-                currentHole = _currentPlayerState.currentHole,
-                strokes = _currentPlayerState.strokes,
-                enemiesDefeated = _currentPlayerState.enemiesDefeated,
-                score = _currentPlayerState.score
-            };
+            playerID = OwnerClientId,
+            playerPos = transform.position,
+            playerRot = transform.rotation,
+            currentHole = _currentPlayerState.currentHole,
+            strokes = _currentPlayerState.strokes,
+            enemiesDefeated = _currentPlayerState.enemiesDefeated,
+            score = _currentPlayerState.score
+        };
 
-            //Debug.Log("BasicPlayerController: sending to PlayerNetworkData.cs\nOwner: " + OwnerClientId + "\nstrokes: " + _currentPlayerState.strokes + "\nhole: " + _currentPlayerState.currentHole + "\npos: " + _currentPlayerState.playerPos);
-            UpdatePlayerState(_currentPlayerState);
-        }
+        //Debug.Log("BasicPlayerController: sending to PlayerNetworkData.cs\nOwner: " + OwnerClientId + "\nstrokes: " + _currentPlayerState.strokes + "\nhole: " + _currentPlayerState.currentHole + "\npos: " + _currentPlayerState.playerPos);
+        UpdatePlayerState(_currentPlayerState);
     }
 
     // Animation -------------------------------------------------------------------------------------------------------------
@@ -361,6 +372,7 @@ public class BasicPlayerController : NetworkBehaviour
     public void UpdatePlayerState(PlayerData playerState)
     {
         if (!IsOwner) return;
+
         _playerNetworkData.StorePlayerState(playerState);
     }
     #region  Input Actions Functions
@@ -384,7 +396,8 @@ public class BasicPlayerController : NetworkBehaviour
             }
             _playerYaw += _lookInput.x * deltaTimeMultiplier;
             _playerYaw = ClampAngle(_playerYaw, float.MinValue, float.MaxValue);
-            _rb.MoveRotation(Quaternion.Euler(0f, _playerYaw, 0f));
+            SettingsData sData = DataManager.instance.GetSettingsData();
+            _rb.MoveRotation(Quaternion.Euler(0f, _playerYaw * sData.cameraSensitivity, 0f));
         }
     }
     public static float ClampAngle(float lfAngle, float lfMin, float lfMax)
