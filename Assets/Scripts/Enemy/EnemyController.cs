@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using UnityEngine.AI;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEditor.Localization.Plugins.XLIFF.V12;
 
 
 public enum EnemyState
@@ -35,13 +34,15 @@ public class NetworkEnemyController : NetworkBehaviour
     private float remainLookAtTime;
     private Quaternion guardRotation;
     public LayerMask targetLayer;
+    public float groundCheckDistance = 1.0f;
+    public LayerMask groundLayer;
 
     public float patrolRange;
     private Vector3 wayPoint;
     public Vector3 guardPos;
 
-    public float deathDuration = 5f;
-    private float deathTimer = 0f;
+    public float deathDuration;
+    private float deathTimer;
 
     private bool isWalk;
     private bool isChase;
@@ -80,9 +81,6 @@ public class NetworkEnemyController : NetworkBehaviour
     private void OnSpiderStateChange(EnemyState prev, EnemyState next)
     {
         _currentState = next;
-        Debug.Log($"Spider state changed to {next}");
-        Debug.Log($"is local client: {IsLocalPlayer}\nCurrent State:  {_currentState}, ");
-
     }
 
     public override void OnDestroy()
@@ -97,6 +95,7 @@ public class NetworkEnemyController : NetworkBehaviour
             SwitchState();
             lastAttackTime.Value -= Time.deltaTime;
             SwitchAnimation();
+            AdaptToTerrain();
         }
 
     }
@@ -232,7 +231,7 @@ public class NetworkEnemyController : NetworkBehaviour
                 //transform.rotation = Quaternion.Lerp(transform.rotation, guardRotation, 0.01f);
                 isReturnToOrigin = false;
             }
-            //Debug.Log("Absolute distance: " + Math.Abs(guardPos.x - transform.position.x) + " " + Math.Abs(guardPos.z - transform.position.z));
+
         }
     }
 
@@ -264,21 +263,6 @@ public class NetworkEnemyController : NetworkBehaviour
 
         agent.speed = speed;
 
-        // if (attackTarget != null) //stop chasing if player is ragdolled
-        // {
-        //     if (attackTarget.GetComponent<NetworkObject>().IsOwner)
-        //     {
-        //         if (!attackTarget.GetComponent<BasicPlayerController>().enabled)
-        //         {
-        //             Debug.Log("Player is ragdolled. Spider will return to origin");
-        //             attackTarget = null;
-        //             isReturnToOrigin = true;
-        //             enemyState.Value = isGuard ? EnemyState.GUARD : EnemyState.PATROL;
-        //             return;
-        //         }
-        //     }
-        // }
-
         if (!FoundPlayer())
         {
             isFollow = false;
@@ -306,6 +290,7 @@ public class NetworkEnemyController : NetworkBehaviour
         {
             isFollow = false;
             agent.isStopped = true;
+            remainLookAtTime = lookAtTime;
             if (lastAttackTime.Value <= 0)
             {
                 lastAttackTime.Value = characterStats.attackData.coolDown;
@@ -313,7 +298,6 @@ public class NetworkEnemyController : NetworkBehaviour
                 {
                     AttackServerRpc();
                 }
-                Debug.Log("Spider attacked player");
             }
         }
 
@@ -321,7 +305,6 @@ public class NetworkEnemyController : NetworkBehaviour
 
     private void DeadBehavior()
     {
-        Debug.Log("Spider is dead");
         isWalk = false;
         isChase = false;
         isFollow = false;
@@ -355,15 +338,12 @@ public class NetworkEnemyController : NetworkBehaviour
 
     private void PerformDead(Collider other)
     {
-        Debug.Log("Spider is dead: " + isDead);
         if (isDead) return;
 
         if (other.gameObject.CompareTag("Player"))
         {
-            Debug.Log("Spider is dead2: " + isDead);
             if (other.GetComponent<BasicPlayerController>().enabled && other.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
             {
-                Debug.Log("Player attacked spider");
                 if (!IsOwner) return;
                 DeadStateServerRpc();
             }
@@ -392,11 +372,11 @@ public class NetworkEnemyController : NetworkBehaviour
         if (targetNetworkObject != null && targetNetworkObject.IsOwner)
         {
             Debug.Log("Spider attacked player: " + targetNetworkObject.name);
-            if(!targetNetworkObject.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
+            if (!targetNetworkObject.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
             {
-                StartCoroutine(DelayedPlayerRagdoll(targetNetworkObject)); 
+                StartCoroutine(DelayedPlayerRagdoll(targetNetworkObject));
             }
-                
+
         }
     }
 
@@ -440,13 +420,24 @@ public class NetworkEnemyController : NetworkBehaviour
         }
     }
 
-    void OnDrawGizmosSelected()
+    private void AdaptToTerrain()
     {
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(transform.position, sightRadius);
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(guardPos, 0.1f);
+        RaycastHit hit;
+        if (Physics.Raycast(transform.position, -transform.up, out hit, groundCheckDistance, groundLayer))
+        {
+            Debug.DrawRay(transform.position, -transform.up * groundCheckDistance, Color.red);
+            Quaternion toRotation = Quaternion.FromToRotation(transform.up, hit.normal) * transform.rotation;
+            transform.rotation = Quaternion.Slerp(transform.rotation, toRotation, Time.deltaTime * 5);
+        }
     }
+
+    // void OnDrawGizmosSelected()
+    // {
+    //     Gizmos.color = Color.blue;
+    //     Gizmos.DrawWireSphere(transform.position, sightRadius);
+    //     Gizmos.color = Color.green;
+    //     Gizmos.DrawWireSphere(guardPos, 0.1f);
+    // }
 
 
 }

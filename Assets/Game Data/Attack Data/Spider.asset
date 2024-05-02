@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 736f79922a515d34abdd8aa7b7c0e983, type: 3}
   m_Name: Spider
   m_EditorClassIdentifier: 
-  attackRange: 1
+  attackRange: 1.5
   skillRange: 0
   coolDown: 1.5
   minDamage: 5
