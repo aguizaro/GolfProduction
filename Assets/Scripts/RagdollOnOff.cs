@@ -15,13 +15,11 @@ public class RagdollOnOff : NetworkBehaviour
     private BoxCollider _golfClubCollider;
     private SwingManager _swingManager;
 
-    public float ragdollDelay = 0.5f; //Slight delay defore ragdoll mode is activated
-    public float getUpDelay = 10f;
+    private float ragdollDelay = 0.5f; //Slight delay defore ragdoll mode is activated
+    private float getUpDelay = 10f;
     private float delay;
     private bool isRagdoll = false; //is player in ragdoll mode
     private bool isActive = false; //is player instance active
-    private bool autoReset = true; //auto reset ragdoll mode after delay
-
 
 
     // Activation -------------------------------------------------------------------------------------------------------------
@@ -58,15 +56,14 @@ public class RagdollOnOff : NetworkBehaviour
         if (!IsOwner) return;
 
         // dev cheat keys
-        if (Input.GetKey("q")) PerformRagdoll();
-        if (Input.GetKey("r")) ResetRagdoll();
+        if (Input.GetKeyDown("q")) PerformRagdoll();
+        if (Input.GetKeyDown("r")) ResetRagdoll();
         if (Input.GetKeyDown("t"))
         {
-            AddForceToSelf(new Vector3(0, 20, 10));
-
+            AddForceToSelf(transform.forward * 60 + transform.up * 25);
         }
 
-        if (isRagdoll && autoReset) //auto reset ragdoll after delay
+        if (isRagdoll) //auto reset ragdoll after delay
         {
             delay -= Time.deltaTime;
             if (delay <= 0)
@@ -74,8 +71,17 @@ public class RagdollOnOff : NetworkBehaviour
                 delay = getUpDelay;
                 ResetRagdoll();
             }
-        }
+        }// else delay = getUpDelay; //reset delay every time ragdoll mode is deactivated - avoids instant reset
 
+    }
+
+    // this coroutine is required to set the gravity after a delay - if the gravity is immediately set true, the player will not have its position updated correctly - this is a hack fix
+
+    private IEnumerator DelayedGravityActivation()
+    {
+        yield return new WaitForSeconds(ragdollDelay);
+        playerRB.useGravity = true;
+        Debug.Log("Update: Set gravity to: " + playerRB.useGravity + " current pos: " + transform.position);
     }
 
 
@@ -97,6 +103,7 @@ public class RagdollOnOff : NetworkBehaviour
         else RagdollModeOffServerRpc();
 
         RagdollModeOff();
+
     }
 
     Collider[] ragdollColliders;
@@ -119,11 +126,13 @@ public class RagdollOnOff : NetworkBehaviour
         }
         foreach (Rigidbody rb in limbsRigidBodies)
         {
-            rb.isKinematic = false;
+            if (rb != playerRB) rb.isKinematic = false;
         }
 
         mainCollider.enabled = false;
         playerRB.isKinematic = true;
+        //playerRB.useGravity = false;
+        //Debug.Log($"RagdollModeOn: clientID: {NetworkManager.Singleton.LocalClientId} - turned gravity off on player {OwnerClientId} rigidbody - isOwner: {IsOwner}\npos: {transform.position}");
         isRagdoll = true;
 
 
@@ -137,25 +146,26 @@ public class RagdollOnOff : NetworkBehaviour
         }
         foreach (Rigidbody rb in limbsRigidBodies)
         {
-            rb.isKinematic = true;
+            if (rb != playerRB) rb.isKinematic = true;
+        }
+
+        foreach (Transform child in transform)
+        {
+            if (child.CompareTag("Hips"))
+            {
+                transform.position = child.GetComponent<HipsLocation>().endPosition;
+                Debug.Log("RagdollOnOff: Moved player to hips end position: " + transform.position + "\n gravity on? " + playerRB.useGravity);
+                break;
+            }
         }
 
         _playerAnimator.enabled = true;
         _basicPlayerController.enabled = true;
         mainCollider.enabled = true;
         playerRB.isKinematic = false;
+        //Debug.Log($"RagdollModeOff: clientID: {NetworkManager.Singleton.LocalClientId} - turned gravity on on player {OwnerClientId} rigidbody - isOwner: {IsOwner}\npos: {transform.position}");
         isRagdoll = false;
-
-        //move player to hips position
-        foreach (Transform child in transform)
-        {
-            if (child.CompareTag("Hips"))
-            {
-                transform.position = child.position;
-                Debug.Log("RagdollOnOff: Moved player to hips position: " + child.position);
-                break;
-            }
-        }
+        StartCoroutine(DelayedGravityActivation());
     }
 
     // Collision Detection ------------------------------------------------------------------------------------------------------------
@@ -185,7 +195,6 @@ public class RagdollOnOff : NetworkBehaviour
             }
         }
     }
-
 
 
     // Remote Procedure Calls ------------------------------------------------------------------------------------------------------------
@@ -233,9 +242,14 @@ public class RagdollOnOff : NetworkBehaviour
 
         if (IsOwner)
         {
-            autoReset = false;
+            //playerRB.useGravity = false;
+
             PerformRagdoll();
             AddForceToSelfServerRpc(force);
+
+            playerRB.useGravity = false;
+            playerRB.isKinematic = false;
+
         }
     }
 
