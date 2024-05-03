@@ -532,6 +532,8 @@ public class LobbyManager : MonoBehaviour
         foreach (var playerEntry in players)
         {
             Debug.LogWarning($"player: {playerEntry.Player.Data[playerNameKey].Value} joined lobby");
+            // Sync players 
+            Debug.Log(ConnectedLobby);
         }
         // Refresh the UI in some way
     }

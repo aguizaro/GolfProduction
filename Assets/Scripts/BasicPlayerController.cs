@@ -509,11 +509,3 @@ public class BasicPlayerController : NetworkBehaviour
         Debug.Log("Player " + OwnerClientId + " spawned at " + transform.position);
     }
 }
-
-
-
-
-
-
-
-
