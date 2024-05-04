@@ -72,16 +72,17 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TMP_Dropdown _settingsLanguageDropdown;
 
     // Controls UI Elements
+
     [Header("Controls UI Elements")]
     [SerializeField] private GameObject _controlsScreenUI;
-
     [SerializeField] private Button _controlsApplyButton;
     [SerializeField] private Button _controlsBackButton;
+    /*
     [SerializeField] private Button _controlsForwardChangeButton;
     [SerializeField] private Button _controlsLeftChangeButton;
     [SerializeField] private Button _controlsBackChangeButton;
     [SerializeField] private Button _controlsRightChangeButton;
-
+    */
     [Header("Other")]
     [SerializeField] private TMP_Text _holeCountText;
 
@@ -97,7 +98,7 @@ public class UIManager : MonoBehaviour
     public static bool isPaused { get; set; } = false;
     private bool localeActive = false;
     private Transform _cameraStartTransform;
-    private MenuState menuState = MenuState.None; 
+    private MenuState menuState = MenuState.None;
 
     private void Awake()
     {
@@ -125,11 +126,12 @@ public class UIManager : MonoBehaviour
         // Controls Button Events
         _controlsApplyButton.onClick.AddListener(ApplyControls);
         _controlsBackButton.onClick.AddListener(DisableControls);
+        /*
         _controlsForwardChangeButton.onClick.AddListener(OnForwardButtonChange);
         _controlsLeftChangeButton.onClick.AddListener(OnLeftButtonChange);
         _controlsBackChangeButton.onClick.AddListener(OnBackButtonChange);
         _controlsRightChangeButton.onClick.AddListener(OnRightButtonChange);
-
+        */
         //Camera Start Position
         _cameraStartTransform = _mainCamera.transform;
 
@@ -181,11 +183,13 @@ public class UIManager : MonoBehaviour
     public void EnableSettings() { EnableMenu(MenuState.Settings); }
     public void DisableSettings() { _settingsScreenUI.SetActive(false); if (!titleScreenMode) { EnablePause(); } }
     public void PauseStartSettings() { _pauseScreenUI.SetActive(false); EnableSettings(); }
-    public void EnableControls() 
+    public void EnableControls()
     {
         EnableMenu(MenuState.Control);
     }
-    public void DisableControls() {
+    public void DisableControls()
+    {
+        Debug.Log("Disable Control");
         EnableMenu(MenuState.Settings);
     }
 
@@ -262,7 +266,7 @@ public class UIManager : MonoBehaviour
         SettingsData sData = DataManager.instance.GetSettingsData();
         sData.language = lang;
         DataManager.instance.SetSettingsData(sData);
-        
+
         if (!localeActive) { StartCoroutine(SetLocale(language)); }
     }
 
@@ -271,24 +275,28 @@ public class UIManager : MonoBehaviour
         EnableControls();
     }
 
-    public void ApplyControls() 
+    public void ApplyControls()
     {
         Debug.Log("Controls applied!");
     }
 
-    public void OnForwardButtonChange() {
+    public void OnForwardButtonChange()
+    {
         Debug.Log("forward");
     }
 
-    public void OnLeftButtonChange() {
+    public void OnLeftButtonChange()
+    {
         Debug.Log("left");
     }
-    
-    public void OnBackButtonChange() {
+
+    public void OnBackButtonChange()
+    {
         Debug.Log("back");
     }
 
-    public void OnRightButtonChange() {
+    public void OnRightButtonChange()
+    {
         Debug.Log("Right");
     }
 
@@ -296,7 +304,7 @@ public class UIManager : MonoBehaviour
     {
         _titleScreenUI.SetActive(false);
         _lobbyUI.SetActive(false);
-        
+
         switch (state)
         {
             case UIState.Title:
@@ -314,7 +322,7 @@ public class UIManager : MonoBehaviour
         _controlsScreenUI.SetActive(false);
         menuState = state;
 
-        switch (state) 
+        switch (state)
         {
             case MenuState.Settings:
                 LoadSettings();
