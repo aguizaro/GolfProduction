@@ -34,7 +34,7 @@ public class NetworkEnemyController : NetworkBehaviour
     private float remainLookAtTime;
     private Quaternion guardRotation;
     public LayerMask targetLayer;
-    public float groundCheckDistance = 1.0f;
+    public float groundCheckDistance = 5.0f;
     public LayerMask groundLayer;
 
     public float patrolRange;
@@ -342,11 +342,17 @@ public class NetworkEnemyController : NetworkBehaviour
 
         if (other.gameObject.CompareTag("Player"))
         {
+            if(attackTarget != null && attackTarget != other.gameObject && other.GetComponent<BasicPlayerController>().enabled)
+            {
+                attackTarget = other.gameObject;
+            }
+
             if (other.GetComponent<BasicPlayerController>().enabled && other.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
             {
                 if (!IsOwner) return;
                 DeadStateServerRpc();
             }
+            
         }
     }
 
@@ -384,10 +390,10 @@ public class NetworkEnemyController : NetworkBehaviour
     [ClientRpc]
     public void HitClientRpc()
     {
-        float attackRange = characterStats.attackData.attackRange;
-        float attackAngle = 45f;
-        int numberOfRays = 10;
-        Vector3 origin = transform.position + new Vector3(0, 0.5f, 0);
+        float attackRange = characterStats.attackData.attackRange + 1f;
+        float attackAngle = 60f;
+        int numberOfRays = 100;
+        Vector3 origin = transform.TransformPoint(new Vector3(0, 0.5f, -1f)); 
         float startAngle = -attackAngle;
         float angleIncrement = attackAngle * 2 / numberOfRays;
         HashSet<GameObject> hitTargets = new HashSet<GameObject>();
@@ -427,7 +433,7 @@ public class NetworkEnemyController : NetworkBehaviour
         {
             Debug.DrawRay(transform.position, -transform.up * groundCheckDistance, Color.red);
             Quaternion toRotation = Quaternion.FromToRotation(transform.up, hit.normal) * transform.rotation;
-            transform.rotation = Quaternion.Slerp(transform.rotation, toRotation, Time.deltaTime * 5);
+            transform.rotation = Quaternion.Slerp(transform.rotation, toRotation, Time.deltaTime * 20);
         }
     }
 
