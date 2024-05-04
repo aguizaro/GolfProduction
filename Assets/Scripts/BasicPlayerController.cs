@@ -35,14 +35,14 @@ public class BasicPlayerController : NetworkBehaviour
     // Activation
     [SerializeField] private bool _isActive = false;
 
-//#if ENABLE_INPUT_SYSTEM
+    //#if ENABLE_INPUT_SYSTEM
     [Header("For Input System Only")]
     public Vector2 _moveInput;
     public Vector2 _lookInput;
     public const float _inputThreshold = 0.001f;
     public Actions _actions;
     public float _playerYaw = 0f;
-//#endif
+    //#endif
     [Header("Hybrid Variables For Both Input Systems")]
     public bool _forwardPressed;
     public bool _backPressed;
@@ -110,8 +110,11 @@ public class BasicPlayerController : NetworkBehaviour
             gameManager.GetComponent<NetworkObject>().Spawn();
 
             //activate spider
-            // GameObject spider = Instantiate(spiderPrefab, new Vector3(391, 72.1f, 289), Quaternion.identity);
-            // spider.GetComponent<NetworkObject>().Spawn();
+            if (IsServer)
+            {
+                GameObject spider = Instantiate(spiderPrefab, new Vector3(391, 72.1f, 289), Quaternion.identity);
+                spider.GetComponent<NetworkObject>().Spawn();
+            }
         }
 
 
