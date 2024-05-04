@@ -157,7 +157,7 @@ public class BasicPlayerController : NetworkBehaviour
             flagPole.GetComponent<HoleFlagPoleManager>().Deactivate();
         }
         _ragdollOnOff.Deactivate();
-        _inputActionAsset.FindActionMap("Gameplay").Disable();
+        _inputActionAsset?.FindActionMap("Gameplay").Disable();
     }
 
     public override void OnDestroy()
@@ -346,8 +346,8 @@ public class BasicPlayerController : NetworkBehaviour
     public void DisableInput()
     {
 #if ENABLE_INPUT_SYSTEM
-        _inputActionAsset.FindActionMap("Gameplay", false).Disable();
-        _inputActionAsset.FindActionMap("UI", false).Enable();
+        _inputActionAsset?.FindActionMap("Gameplay", false).Disable();
+        _inputActionAsset?.FindActionMap("UI", false).Enable();
 #endif
         _animator.SetBool("isWalking", false);
         _animator.SetBool("isRunning", false);
@@ -361,8 +361,8 @@ public class BasicPlayerController : NetworkBehaviour
     public void EnableInput()
     {
 #if ENABLE_INPUT_SYSTEM
-        _inputActionAsset.FindActionMap("Gameplay", false).Enable();
-        _inputActionAsset.FindActionMap("UI", false).Disable();
+        _inputActionAsset?.FindActionMap("Gameplay", false).Enable();
+        _inputActionAsset?.FindActionMap("UI", false).Disable();
 #endif
         _canMove = true;
     }
@@ -464,58 +464,6 @@ public class BasicPlayerController : NetworkBehaviour
         _strikePressed = false;
     }
     #endregion
-    #region Actions Rebinding
-    [ContextMenu("Rebind Actions")]
-    public void TestRebinding()
-    {
-        RebindActions(targetActionName);
-        _testValue++;
-    }
-    public void CheckTest(InputAction.CallbackContext ctx)
-    {
-        Debug.Log($"{ctx.action.name}: {_strikePressed}");
-    }
-    public void RebindActions(string name)
-    {
-        _gameplayActionMap.Disable();
-        _inputActionAsset.FindActionMap("UI", false).Enable();
-        InputAction action = _gameplayActionMap[name];
-        Debug.Log($"Rebinding Start for {name},binding count {action.bindings.Count}");
-        for (int i = 0; i < action.bindings.Count; i++)
-        {
-            Debug.Log($"{action.bindings[i].effectivePath}");
-        }
-
-        _newInputPath = InputControlPath.ToHumanReadableString(action.bindings[0].effectivePath, InputControlPath.HumanReadableStringOptions.OmitDevice);
-
-        action.Disable();
-
-        _rebindingOperation = action.PerformInteractiveRebinding()
-            .WithControlsExcluding("<Gamepad or Keyboard>")
-            .WithControlsExcluding("<Mouse>/position")
-            .WithControlsExcluding("<Mouse>/scroll")
-            .WithControlsExcluding("<Mouse>/delta")
-            .WithControlsExcluding("<Keyboard>/escape")
-            .OnMatchWaitForAnother(0.1f)
-            .OnComplete(operation =>
-            {
-                int bindingIndex = operation.action.GetBindingIndexForControl(operation.action.controls[0]);
-                var newBinding = operation.action.bindings[bindingIndex];
-                _newInputPath = InputControlPath.ToHumanReadableString(newBinding.effectivePath, InputControlPath.HumanReadableStringOptions.OmitDevice);
-                action.ApplyBindingOverride(bindingIndex, newBinding.effectivePath);
-                operation.action.started += CheckTest;
-                _inputActionAsset.FindActionMap("Gameplay", false).Enable();
-                _inputActionAsset.FindActionMap("UI", false).Disable();
-                _rebindingOperation.Dispose();
-                Debug.Log($"Rebinding Completed for {name},binding count {action.bindings.Count}");
-                for (int i = 0; i < action.bindings.Count; i++)
-                {
-                    Debug.Log($"{action.bindings[i].effectivePath}");
-                }
-            })
-            .Start();
-    }
-    #endregion 
 }
 
 
