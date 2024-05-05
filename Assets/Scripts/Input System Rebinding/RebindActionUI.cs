@@ -273,7 +273,7 @@ namespace UnityEngine.InputSystem.Samples.RebindUI
 
         private void PerformInteractiveRebind(InputAction action, int bindingIndex, bool allCompositeParts = false)
         {
-            m_RebindButton?.onClick.AddListener(CancelRebind);
+            m_RebindCancelButton?.onClick.AddListener(CancelRebind);
             m_RebindOperation?.Cancel(); // Will null out m_RebindOperation.
 
             void CleanUp()
@@ -297,8 +297,7 @@ namespace UnityEngine.InputSystem.Samples.RebindUI
                         m_RebindOverlay?.SetActive(false);
                         UpdateBindingDisplay();
                         CleanUp();
-                        Debug.Log("Canceling rebind");
-                        m_RebindButton?.onClick.RemoveListener(CancelRebind);
+                        m_RebindCancelButton?.onClick.RemoveListener(CancelRebind);
                     })
                     .OnMatchWaitForAnother(0.1f)
                 .OnComplete(
@@ -326,22 +325,22 @@ namespace UnityEngine.InputSystem.Samples.RebindUI
                             if (nextBindingIndex < action.bindings.Count && action.bindings[nextBindingIndex].isPartOfComposite)
                                 PerformInteractiveRebind(action, nextBindingIndex, true);
                         }
-                        m_RebindButton?.onClick.RemoveListener(CancelRebind);
+                        m_RebindCancelButton?.onClick.RemoveListener(CancelRebind);
                     });
 
             // If it's a part binding, show the name of the part in the UI.
             var partName = default(string);
             if (action.bindings[bindingIndex].isPartOfComposite)
-                partName = $"Binding '{action.bindings[bindingIndex].name}'. ";
+                partName = $"Binding '{action.bindings[bindingIndex].name}'. \n";
 
             // Bring up rebind overlay, if we have one.
             m_RebindOverlay?.SetActive(true);
             if (m_RebindText != null)
             {
                 var text = !string.IsNullOrEmpty(m_RebindOperation.expectedControlType)
-                    ? $"{partName}Waiting for {m_RebindOperation.expectedControlType} input...\nPress [ESC] to cancel."
-                    : $"{partName}Waiting for input...\nPress [ESC] to cancel.";
-                m_RebindText.text = text;
+                    ? $"{partName}Waiting for {m_RebindOperation.expectedControlType} input..."
+                    : $"{partName}Waiting for input...";
+                m_RebindText.text = text + "\nPress <color=#FF0>[ESC]</color> to cancel.";
             }
 
             // If we have no rebind overlay and no callback but we have a binding text label,
@@ -452,7 +451,7 @@ namespace UnityEngine.InputSystem.Samples.RebindUI
         [SerializeField]
         private GameObject m_RebindOverlay;
         [SerializeField]
-        private Button m_RebindButton;
+        private Button m_RebindCancelButton;
 
         [Tooltip("Optional text label that will be updated with prompt for user input.")]
         [SerializeField]
@@ -510,7 +509,7 @@ namespace UnityEngine.InputSystem.Samples.RebindUI
         {
             m_ActionLabel = m_ActionLabel ?? GetComponentInChildren<TextMeshProUGUI>();
             m_BindingText = m_BindingText ?? transform.Find("TriggerRebindButton").GetComponentInChildren<TextMeshProUGUI>();
-            m_RebindButton = m_RebindButton ?? m_RebindOverlay?.transform.Find("BG/CancelButton").GetComponentInChildren<Button>();
+            m_RebindCancelButton = m_RebindCancelButton ?? m_RebindOverlay?.transform.Find("BG/CancelButton").GetComponentInChildren<Button>();
         }
         public void CancelRebind()
         {
