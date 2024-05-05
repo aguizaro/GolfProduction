@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine.Events;
 using UnityEngine.UI;
 using TMPro;
-
 ////TODO: localization support
 
 ////TODO: deal with composites that have parts bound in different control schemes
@@ -274,6 +273,7 @@ namespace UnityEngine.InputSystem.Samples.RebindUI
 
         private void PerformInteractiveRebind(InputAction action, int bindingIndex, bool allCompositeParts = false)
         {
+            m_RebindButton?.onClick.AddListener(CancelRebind);
             m_RebindOperation?.Cancel(); // Will null out m_RebindOperation.
 
             void CleanUp()
@@ -284,7 +284,6 @@ namespace UnityEngine.InputSystem.Samples.RebindUI
             action.Disable();
             // Configure the rebind.
             m_RebindOperation = action.PerformInteractiveRebinding(bindingIndex)
-            .WithControlsExcluding("Mouse")
             .WithControlsExcluding("<Gamepad or Keyboard>")
             .WithControlsExcluding("<Mouse>/position")
             .WithControlsExcluding("<Mouse>/scroll")
@@ -298,6 +297,8 @@ namespace UnityEngine.InputSystem.Samples.RebindUI
                         m_RebindOverlay?.SetActive(false);
                         UpdateBindingDisplay();
                         CleanUp();
+                        Debug.Log("Canceling rebind");
+                        m_RebindButton?.onClick.RemoveListener(CancelRebind);
                     })
                     .OnMatchWaitForAnother(0.1f)
                 .OnComplete(
@@ -325,6 +326,7 @@ namespace UnityEngine.InputSystem.Samples.RebindUI
                             if (nextBindingIndex < action.bindings.Count && action.bindings[nextBindingIndex].isPartOfComposite)
                                 PerformInteractiveRebind(action, nextBindingIndex, true);
                         }
+                        m_RebindButton?.onClick.RemoveListener(CancelRebind);
                     });
 
             // If it's a part binding, show the name of the part in the UI.
@@ -337,8 +339,8 @@ namespace UnityEngine.InputSystem.Samples.RebindUI
             if (m_RebindText != null)
             {
                 var text = !string.IsNullOrEmpty(m_RebindOperation.expectedControlType)
-                    ? $"{partName}Waiting for {m_RebindOperation.expectedControlType} input..."
-                    : $"{partName}Waiting for input...";
+                    ? $"{partName}Waiting for {m_RebindOperation.expectedControlType} input...\nPress [ESC] to cancel."
+                    : $"{partName}Waiting for input...\nPress [ESC] to cancel.";
                 m_RebindText.text = text;
             }
 
@@ -449,6 +451,8 @@ namespace UnityEngine.InputSystem.Samples.RebindUI
         [Tooltip("Optional UI that will be shown while a rebind is in progress.")]
         [SerializeField]
         private GameObject m_RebindOverlay;
+        [SerializeField]
+        private Button m_RebindButton;
 
         [Tooltip("Optional text label that will be updated with prompt for user input.")]
         [SerializeField]
@@ -506,6 +510,11 @@ namespace UnityEngine.InputSystem.Samples.RebindUI
         {
             m_ActionLabel = m_ActionLabel ?? GetComponentInChildren<TextMeshProUGUI>();
             m_BindingText = m_BindingText ?? transform.Find("TriggerRebindButton").GetComponentInChildren<TextMeshProUGUI>();
+            m_RebindButton = m_RebindButton ?? m_RebindOverlay?.transform.Find("BG/CancelButton").GetComponentInChildren<Button>();
+        }
+        public void CancelRebind()
+        {
+            m_RebindOperation?.Cancel();
         }
     }
 }
