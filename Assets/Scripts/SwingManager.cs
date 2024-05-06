@@ -89,13 +89,13 @@ public class SwingManager : NetworkBehaviour
 
 
         // Check if player is already in swing mode and waiting to swing
-        if (inSwingMode && waitingForSwing)
+        if (inSwingMode)
         {
             if (Input.GetKeyDown(KeyCode.Space)) // Exit swing mode without performing swing
             {
                 ExitSwingMode();
             }
-            else if (powerMeterRef.GetShotStatus() == true) // Perform swing
+            else if (powerMeterRef.GetShotStatus() == true && waitingForSwing) // Perform swing
             {
                 // Start swing animation, when the club is halfway through the swing it will call PerformSwing()
                 playerAnimator.SetTrigger("Swing");
@@ -216,15 +216,52 @@ public class SwingManager : NetworkBehaviour
         meterCanvasObject.SetActive(true);
 
         inSwingMode = true;
-        waitingForSwing = true;
 
         // Lock player controls
         _playerController.DisableInput();
 
         // Set camera to swing state
         cameraFollowScript.SetSwingState(true);
+
+        StartCoroutine(MovePlayerToStancePos());
     }
 
+    IEnumerator MovePlayerToStancePos()
+    {
+        // Define the target position for the player
+        Vector3 targetPosition = thisBall.transform.position + (-playerTransform.forward * 0.12f) + playerTransform.right * -.75f;    // Floats represents offset to the left and forward
+        targetPosition.y -= 0.12f;
+
+        // Define the duration over which to move the player
+        float duration = 2.3f; // Adjust as needed
+
+        // Store the initial position of the player
+        Vector3 initialPosition = playerTransform.position;
+
+        // Move the player smoothly over time
+        float elapsedTime = 0f;
+        while (elapsedTime < duration)
+        {
+            // Calculate the interpolation factor based on elapsed time
+            float t = elapsedTime / duration;
+
+            // Interpolate between the initial and target positions
+            playerTransform.position = Vector3.Lerp(initialPosition, targetPosition, t);
+
+            // Update the elapsed time
+            elapsedTime += Time.deltaTime;
+
+            yield return null;
+        }
+
+        // Ensure the player reaches the exact target position
+        playerTransform.position = targetPosition;
+    }
+
+    void WaitingForSwing()  // Called by the animation event in Stance animation
+    {
+        waitingForSwing = true;
+    }
     void PerformSwing()     // Called by the animation event in Swing animation
     {
         if (ragdolled_player_id != -1)
@@ -306,7 +343,7 @@ public class SwingManager : NetworkBehaviour
         ExitSwingMode();
     }
 
-    // Exit swing state without performing swing, will need rpcs
+    // Exit swing state without performing swing
     public void ExitSwingMode()
     {
         inSwingMode = false;
@@ -322,7 +359,7 @@ public class SwingManager : NetworkBehaviour
         waitingForSwing = false;
 
         playerAnimator.ResetTrigger("Swing");
-
+        playerAnimator.ResetTrigger("Stance");
     }
 
 
