@@ -138,7 +138,7 @@ public class UIManager : MonoBehaviour
         RefreshDisplayList();
     }
 
-    private void Start() { DisablePause(); DisableSettings(); EnableUI(UIState.Title); InitializetLanguageDropdown();}
+    private void Start() { DisablePause(); DisableSettings(); EnableUI(UIState.Title); LoadSettings();}
 
     // Title Screen Methods
     private void TitleStart() => EnableUI(UIState.Lobby);
@@ -223,10 +223,10 @@ public class UIManager : MonoBehaviour
             if (locales[i] == currentLocale)
             {
                 _settingsLanguageDropdown.value = i;
+                ApplyLanguage(i);
+                break;
             }
         }
-
-
     }
 
     public void LoadSettings()
@@ -240,7 +240,15 @@ public class UIManager : MonoBehaviour
         language = sData.language;
 
         _settingsSensitivitySlider.value = settingsSensitivity;
-        //_settingsLanguageDropdown.value = language;
+        _settingsLanguageDropdown.value = language;
+        if(sData.playTimes == 0)
+        {
+            InitializetLanguageDropdown();
+        }
+        else
+        {
+            ApplyLanguage(language);
+        }
     }
 
     public void ApplySettings()
