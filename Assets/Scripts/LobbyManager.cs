@@ -812,8 +812,18 @@ public class LobbyManager : MonoBehaviour
         if (ConnectedLobbyyEvents != null) await UnsubscribeFromLobbyEvents();
         if (subscribedToNetworkManagerEvents) UnsubscribeFromNetworkManagerEvents();
 
-        Debug.Log("TryQuit: NetworkManager.Singleton.IsConnectedClient: " + NetworkManager.Singleton.IsConnectedClient + "\nTryQuit: NetworkManager.Singleton.IsClient: " + NetworkManager.Singleton.IsClient + "\nTryQuit: NetworkManager.Singleton.IsApproved" + NetworkManager.Singleton.IsApproved + "\nTryQuit: NetworkManager.Singleton.IsListening" + NetworkManager.Singleton.IsListening);
+        await UnsubscribeFromLobbyEvents();
 
+        if (NetworkManager.Singleton.IsConnectedClient)
+        {
+            NetworkManager.Singleton.Shutdown();
+            Debug.LogWarning("Connected Client disconnected from Relay Server");
+        }
+        else if (NetworkManager.Singleton.IsClient)
+        {
+            NetworkManager.Singleton.Shutdown();
+            Debug.LogWarning("Client disconnected from Relay Server");
+        }
         if (ConnectedLobby != null)
         {
             if (ConnectedLobby.HostId == _playerId)
