@@ -144,25 +144,11 @@ public class SwingManager : NetworkBehaviour
         if (thisBall == null) return false;
 
         float distance = Vector3.Distance(playerTransform.position + Vector3.down, thisBall.transform.position);
-        //Debug.Log("DISTANCE IS: " + distance + " " + startSwingMaxDistance);
 
         if (distance <= startSwingMaxDistance)
         {
-            /*
-            Ray ray = new Ray(transform.position, transform.forward);
-
-            RaycastHit hit;
-            if(Physics.Raycast(ray, out hit, 2f))
-            {
-                if (hit.collider.gameObject == thisBall)
-                {
-                    return true;
-                }
-            }
-            */
             return true;
         }
-        //Debug.DrawRay(transform.position, transform.forward * 3, Color.red, 0.5f);
 
         return false; // Ball exists but player is not close enough/looking at it
     }
@@ -230,7 +216,17 @@ public class SwingManager : NetworkBehaviour
     {
         // Define the target position for the player
         Vector3 targetPosition = thisBall.transform.position + (-playerTransform.forward * 0.12f) + playerTransform.right * -.75f;    // Floats represents offset to the left and forward
-        targetPosition.y -= 0.12f;
+        //targetPosition.y -= 0.12f;    // Instead of moving targ pos down, use a raycast to touch the ground
+        // Perform a raycast downwards to find the ground position beneath the target position
+        RaycastHit hit;
+        if (Physics.Raycast(targetPosition, Vector3.down, out hit, 3))
+        {
+            targetPosition = hit.point; // Adjust the target position to the ground position
+        }
+        else
+        {
+            Debug.LogWarning("Failed to find ground beneath target position!");
+        }
 
         // Define the duration over which to move the player
         float duration = 2.3f; // Adjust as needed
