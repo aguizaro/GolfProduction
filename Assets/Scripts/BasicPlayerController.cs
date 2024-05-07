@@ -88,7 +88,6 @@ public class BasicPlayerController : NetworkBehaviour
         Activate();
     }
 
-
     // Update Loop -------------------------------------------------------------------------------------------------------------
     void Update()
     {
@@ -122,8 +121,8 @@ public class BasicPlayerController : NetworkBehaviour
             gameManager.GetComponent<NetworkObject>().Spawn();
 
             //activate spider
-            // GameObject spider = Instantiate(spiderPrefab, new Vector3(391, 72.1f, 289), Quaternion.identity);
-            // spider.GetComponent<NetworkObject>().Spawn();
+            GameObject spider = Instantiate(spiderPrefab, new Vector3(391, 72.1f, 289), Quaternion.identity);
+            spider.GetComponent<NetworkObject>().Spawn();
         }
 
 
