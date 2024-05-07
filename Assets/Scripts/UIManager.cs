@@ -136,10 +136,9 @@ public class UIManager : MonoBehaviour
         instance = this;
 
         RefreshDisplayList();
-        InitializetLanguageDropdown();
     }
 
-    private void Start() { DisablePause(); DisableSettings(); EnableUI(UIState.Title); }
+    private void Start() { DisablePause(); DisableSettings(); EnableUI(UIState.Title); InitializetLanguageDropdown();}
 
     // Title Screen Methods
     private void TitleStart() => EnableUI(UIState.Lobby);
