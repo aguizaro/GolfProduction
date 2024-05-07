@@ -216,36 +216,42 @@ namespace UnityEngine.InputSystem.Samples.RebindUI
         {
             if (!ResolveActionAndBinding(out var action, out var bindingIndex))
                 return;
-
-            // if (action.bindings[bindingIndex].isComposite)
-            // {
-            //     // It's a composite. Remove overrides from part bindings.
-            //     for (var i = bindingIndex + 1; i < action.bindings.Count && action.bindings[i].isPartOfComposite; ++i)
-            //         action.RemoveBindingOverride(i);
-            // }
-            // else
-            // {
-            //     action.RemoveBindingOverride(bindingIndex);
-            // }
             InputBinding newBinding = action.bindings[bindingIndex];
             string oldOverridePath = newBinding.overridePath;
-            action.RemoveBindingOverride(bindingIndex);
-            foreach (var otherAction in action.actionMap.actions)
+            void RemoveBindingOverrides()
             {
-                if (otherAction == action)
+                foreach (var otherAction in action.actionMap.actions)
                 {
-                    continue;
-                }
-
-                for (int i = 0; i < otherAction.bindings.Count; i++)
-                {
-                    InputBinding binding = otherAction.bindings[i];
-                    if (binding.overridePath == newBinding.path)
+                    if (otherAction == action)
                     {
-                        otherAction.ApplyBindingOverride(i, oldOverridePath);
+                        continue;
+                    }
+
+                    for (int i = 0; i < otherAction.bindings.Count; i++)
+                    {
+                        InputBinding binding = otherAction.bindings[i];
+                        if (binding.overridePath == newBinding.path)
+                        {
+                            otherAction.ApplyBindingOverride(i, oldOverridePath);
+                        }
                     }
                 }
             }
+            if (action.bindings[bindingIndex].isComposite)
+            {
+                // It's a composite. Remove overrides from part bindings.
+                for (var i = bindingIndex + 1; i < action.bindings.Count && action.bindings[i].isPartOfComposite; ++i)
+                {
+                    action.RemoveBindingOverride(i);
+                    RemoveBindingOverrides();
+                }
+            }
+            else
+            {
+                action.RemoveBindingOverride(bindingIndex);
+                RemoveBindingOverrides();
+            }
+
             UpdateBindingDisplay();
         }
 
