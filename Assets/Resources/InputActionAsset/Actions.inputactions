@@ -51,9 +51,9 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Strike",
+                    "name": "Ball Spawn/Exit Swing",
                     "type": "Button",
-                    "id": "f8ec200a-fc0c-4f42-b699-51122e61e44c",
+                    "id": "449a33e5-7255-4ee2-9c43-7b243b466da0",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -162,12 +162,12 @@
                 },
                 {
                     "name": "",
-                    "id": "89a4c930-ce83-4def-80ce-2bd449a80010",
-                    "path": "<Keyboard>/e",
+                    "id": "514e3e5c-7657-4107-82f7-6e8ea5fef4cf",
+                    "path": "<Mouse>/rightButton",
                     "interactions": "",
                     "processors": "",
-                    "groups": "Keyboard&Mouse",
-                    "action": "Strike",
+                    "groups": "",
+                    "action": "Ball Spawn/Exit Swing",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -53,7 +53,8 @@ public class BasicPlayerController : NetworkBehaviour
     public bool _backPressed;
     public bool _leftPressed;
     public bool _rightPressed;
-    public bool _strikePressed;
+    public bool _swingPressed;
+    public bool _ballSpawnPressed;
 
     public override void OnNetworkSpawn()
     {
@@ -76,8 +77,10 @@ public class BasicPlayerController : NetworkBehaviour
         _gameplayActionMap["Pause"].started += HandlePauseStarted;
         _gameplayActionMap["Sprint"].started += HandleSprintStarted;
         _gameplayActionMap["Sprint"].canceled += HandleSprintCanceled;
-        _gameplayActionMap["Strike"].started += HandleStrikeStarted;
-        _gameplayActionMap["Strike"].canceled += HandleStrikeCanceled;
+        _gameplayActionMap["Swing"].started += HandleSwingStarted;
+        _gameplayActionMap["Swing"].canceled += HandleSwingCanceled;
+        _gameplayActionMap["Ball Spawn/Exit Swing"].started += HandleBallSpawnStarted;
+        _gameplayActionMap["Ball Spawn/Exit Swing"].canceled += HandleBallSpawnCanceled;
         #endregion
 #endif
         transform.position = new Vector3(Random.Range(390, 400), 69.1f, Random.Range(318, 320));
@@ -246,7 +249,7 @@ public class BasicPlayerController : NetworkBehaviour
         _backPressed = Input.GetKey("s") || Input.GetKey("down");
         _rightPressed = Input.GetKey("d") || Input.GetKey("right");
         _leftPressed = Input.GetKey("a") || Input.GetKey("left");
-        _strikePressed = Input.GetKeyDown("e");
+        _swingPressed = Input.GetKeyDown("e");
 #endif
 
 
@@ -307,7 +310,7 @@ public class BasicPlayerController : NetworkBehaviour
                 _animator.SetBool("isRight", false);
             }
 
-            if (_strikePressed && !isStriking)
+            if (_swingPressed && !isStriking)
             {
                 _animator.SetBool("isStriking", true);
                 _animator.SetBool("justStriked", true);
@@ -316,7 +319,7 @@ public class BasicPlayerController : NetworkBehaviour
 
             if (isStriking)
             {
-                if (!_strikePressed)
+                if (!_swingPressed)
                 {
                     _animator.SetBool("justStriked", false);
                 }
@@ -455,13 +458,21 @@ public class BasicPlayerController : NetworkBehaviour
     {
         _isSprinting = false;
     }
-    public void HandleStrikeStarted(InputAction.CallbackContext ctx)
+    public void HandleSwingStarted(InputAction.CallbackContext ctx)
     {
-        _strikePressed = true;
+        _swingPressed = true;
     }
-    public void HandleStrikeCanceled(InputAction.CallbackContext ctx)
+    public void HandleSwingCanceled(InputAction.CallbackContext ctx)
     {
-        _strikePressed = false;
+        _swingPressed = false;
+    }
+    public void HandleBallSpawnStarted(InputAction.CallbackContext ctx)
+    {
+        _ballSpawnPressed = true;
+    }
+    public void HandleBallSpawnCanceled(InputAction.CallbackContext ctx)
+    {
+        _ballSpawnPressed = false;
     }
     #endregion
 }

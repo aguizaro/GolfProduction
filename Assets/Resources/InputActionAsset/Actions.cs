@@ -73,9 +73,9 @@ public partial class @Actions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""Strike"",
+                    ""name"": ""Ball Spawn/Exit Swing"",
                     ""type"": ""Button"",
-                    ""id"": ""f8ec200a-fc0c-4f42-b699-51122e61e44c"",
+                    ""id"": ""449a33e5-7255-4ee2-9c43-7b243b466da0"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """",
@@ -184,12 +184,12 @@ public partial class @Actions: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""89a4c930-ce83-4def-80ce-2bd449a80010"",
-                    ""path"": ""<Keyboard>/e"",
+                    ""id"": ""514e3e5c-7657-4107-82f7-6e8ea5fef4cf"",
+                    ""path"": ""<Mouse>/rightButton"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": ""Keyboard&Mouse"",
-                    ""action"": ""Strike"",
+                    ""groups"": """",
+                    ""action"": ""Ball Spawn/Exit Swing"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -782,7 +782,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
         m_Gameplay_Swing = m_Gameplay.FindAction("Swing", throwIfNotFound: true);
         m_Gameplay_Sprint = m_Gameplay.FindAction("Sprint", throwIfNotFound: true);
         m_Gameplay_Pause = m_Gameplay.FindAction("Pause", throwIfNotFound: true);
-        m_Gameplay_Strike = m_Gameplay.FindAction("Strike", throwIfNotFound: true);
+        m_Gameplay_BallSpawnExitSwing = m_Gameplay.FindAction("Ball Spawn/Exit Swing", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -861,7 +861,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Gameplay_Swing;
     private readonly InputAction m_Gameplay_Sprint;
     private readonly InputAction m_Gameplay_Pause;
-    private readonly InputAction m_Gameplay_Strike;
+    private readonly InputAction m_Gameplay_BallSpawnExitSwing;
     public struct GameplayActions
     {
         private @Actions m_Wrapper;
@@ -871,7 +871,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
         public InputAction @Swing => m_Wrapper.m_Gameplay_Swing;
         public InputAction @Sprint => m_Wrapper.m_Gameplay_Sprint;
         public InputAction @Pause => m_Wrapper.m_Gameplay_Pause;
-        public InputAction @Strike => m_Wrapper.m_Gameplay_Strike;
+        public InputAction @BallSpawnExitSwing => m_Wrapper.m_Gameplay_BallSpawnExitSwing;
         public InputActionMap Get() { return m_Wrapper.m_Gameplay; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -896,9 +896,9 @@ public partial class @Actions: IInputActionCollection2, IDisposable
             @Pause.started += instance.OnPause;
             @Pause.performed += instance.OnPause;
             @Pause.canceled += instance.OnPause;
-            @Strike.started += instance.OnStrike;
-            @Strike.performed += instance.OnStrike;
-            @Strike.canceled += instance.OnStrike;
+            @BallSpawnExitSwing.started += instance.OnBallSpawnExitSwing;
+            @BallSpawnExitSwing.performed += instance.OnBallSpawnExitSwing;
+            @BallSpawnExitSwing.canceled += instance.OnBallSpawnExitSwing;
         }
 
         private void UnregisterCallbacks(IGameplayActions instance)
@@ -918,9 +918,9 @@ public partial class @Actions: IInputActionCollection2, IDisposable
             @Pause.started -= instance.OnPause;
             @Pause.performed -= instance.OnPause;
             @Pause.canceled -= instance.OnPause;
-            @Strike.started -= instance.OnStrike;
-            @Strike.performed -= instance.OnStrike;
-            @Strike.canceled -= instance.OnStrike;
+            @BallSpawnExitSwing.started -= instance.OnBallSpawnExitSwing;
+            @BallSpawnExitSwing.performed -= instance.OnBallSpawnExitSwing;
+            @BallSpawnExitSwing.canceled -= instance.OnBallSpawnExitSwing;
         }
 
         public void RemoveCallbacks(IGameplayActions instance)
@@ -1108,7 +1108,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
         void OnSwing(InputAction.CallbackContext context);
         void OnSprint(InputAction.CallbackContext context);
         void OnPause(InputAction.CallbackContext context);
-        void OnStrike(InputAction.CallbackContext context);
+        void OnBallSpawnExitSwing(InputAction.CallbackContext context);
     }
     public interface IUIActions
     {
