@@ -181,7 +181,7 @@ public class SwingManager : NetworkBehaviour
         return false;
     }
 
-    void StartSwingMode()
+    public void StartSwingMode()
     {
         if (_ragdollOnOff.IsRagdoll()) return;
 
@@ -439,7 +439,7 @@ public class SwingManager : NetworkBehaviour
     // helper functions -------------------------------------------------------------------------------------------------------------
 
 
-    private void ReturnBallToPlayer()
+    public void ReturnBallToPlayer()
     {
         if (thisBall == null) return;
 
