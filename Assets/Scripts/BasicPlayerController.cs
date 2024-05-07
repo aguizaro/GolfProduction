@@ -15,7 +15,7 @@ public class BasicPlayerController : NetworkBehaviour
     public float _moveSpeed = 2f;
     private float _sprintMultiplier = 2.5f;
     public float _rotationSpeed = 100f;
-    private bool _isSprinting = false;
+    [SerializeField] private bool _isSprinting = false;
 
     // Physics
     private Rigidbody _rb;
@@ -35,20 +35,26 @@ public class BasicPlayerController : NetworkBehaviour
     // Activation
     [SerializeField] private bool _isActive = false;
 
-    //#if ENABLE_INPUT_SYSTEM
+#if ENABLE_INPUT_SYSTEM
     [Header("For Input System Only")]
     public Vector2 _moveInput;
     public Vector2 _lookInput;
     public const float _inputThreshold = 0.001f;
-    public Actions _actions;
+    public InputActionAsset _inputActionAsset;
+    public InputActionMap _gameplayActionMap = new InputActionMap();
     public float _playerYaw = 0f;
-    //#endif
+    public InputActionRebindingExtensions.RebindingOperation _rebindingOperation;
+    public string targetActionName = "Sprint";
+    public string _newInputPath;
+    public int _testValue = 0;
+#endif
     [Header("Hybrid Variables For Both Input Systems")]
     public bool _forwardPressed;
     public bool _backPressed;
     public bool _leftPressed;
     public bool _rightPressed;
-    public bool _strikePressed;
+    public bool _swingPressed;
+    public bool _ballSpawnPressed;
 
     public override void OnNetworkSpawn()
     {
@@ -62,20 +68,25 @@ public class BasicPlayerController : NetworkBehaviour
         if (!IsOwner) return;
 #if ENABLE_INPUT_SYSTEM
         #region Input Actions Initialization
-        _actions = new Actions();
-        _actions.Enable();
-        _actions.Gameplay.Pause.started += HandlePauseStarted;
-        _actions.Gameplay.Sprint.started += HandleSprintStarted;
-        _actions.Gameplay.Sprint.canceled += HandleSprintCanceled;
-        _actions.Gameplay.Strike.started += HandleStrikeStarted;
-        _actions.Gameplay.Strike.canceled += HandleStrikeCanceled;
+        _inputActionAsset = _inputActionAsset??Resources.Load<InputActionAsset>("InputActionAsset/Actions");
+        _inputActionAsset.Enable();
+        _gameplayActionMap = _inputActionAsset.FindActionMap("Gameplay",throwIfNotFound: true);
+        _gameplayActionMap.Enable();
+        _inputActionAsset.FindActionMap("UI").Disable();
+
+        _gameplayActionMap["Pause"].started += HandlePauseStarted;
+        _gameplayActionMap["Sprint"].started += HandleSprintStarted;
+        _gameplayActionMap["Sprint"].canceled += HandleSprintCanceled;
+        _gameplayActionMap["Swing"].started += HandleSwingStarted;
+        _gameplayActionMap["Swing"].canceled += HandleSwingCanceled;
+        _gameplayActionMap["Ball Spawn/Exit Swing"].started += HandleBallSpawnStarted;
+        _gameplayActionMap["Ball Spawn/Exit Swing"].canceled += HandleBallSpawnCanceled;
         #endregion
 #endif
         transform.position = new Vector3(Random.Range(390, 400), 69.1f, Random.Range(318, 320));
         // activate player controller - controller will activate the player movement, animations, shooting and ragdoll
         Activate();
     }
-
 
     // Update Loop -------------------------------------------------------------------------------------------------------------
     void Update()
@@ -110,11 +121,8 @@ public class BasicPlayerController : NetworkBehaviour
             gameManager.GetComponent<NetworkObject>().Spawn();
 
             //activate spider
-            if (IsServer)
-            {
-                GameObject spider = Instantiate(spiderPrefab, new Vector3(391, 72.1f, 289), Quaternion.identity);
-                spider.GetComponent<NetworkObject>().Spawn();
-            }
+            GameObject spider = Instantiate(spiderPrefab, new Vector3(391, 72.1f, 289), Quaternion.identity);
+            spider.GetComponent<NetworkObject>().Spawn();
         }
 
 
@@ -151,9 +159,7 @@ public class BasicPlayerController : NetworkBehaviour
             flagPole.GetComponent<HoleFlagPoleManager>().Deactivate();
         }
         _ragdollOnOff.Deactivate();
-        _swingManager.Deactivate();
-        //_playerShoot.Deactivate();
-        _actions.Disable();
+        _inputActionAsset?.FindActionMap("Gameplay").Disable();
     }
 
     public override void OnDestroy()
@@ -242,7 +248,7 @@ public class BasicPlayerController : NetworkBehaviour
         _backPressed = Input.GetKey("s") || Input.GetKey("down");
         _rightPressed = Input.GetKey("d") || Input.GetKey("right");
         _leftPressed = Input.GetKey("a") || Input.GetKey("left");
-        _strikePressed = Input.GetKeyDown("e");
+        _swingPressed = Input.GetKeyDown("e");
 #endif
 
 
@@ -251,7 +257,7 @@ public class BasicPlayerController : NetworkBehaviour
         if (IsOwner)
         {
 #if ENABLE_INPUT_SYSTEM
-            _moveInput = _actions.Gameplay.Move.ReadValue<Vector2>().normalized;
+            _moveInput = _gameplayActionMap["Move"].ReadValue<Vector2>().normalized;
             _animator.SetFloat("moveX", _moveInput.x);
             _animator.SetFloat("moveY", _moveInput.y);
 #else
@@ -303,7 +309,7 @@ public class BasicPlayerController : NetworkBehaviour
                 _animator.SetBool("isRight", false);
             }
 
-            if (_strikePressed && !isStriking)
+            if (_swingPressed && !isStriking)
             {
                 _animator.SetBool("isStriking", true);
                 _animator.SetBool("justStriked", true);
@@ -312,7 +318,7 @@ public class BasicPlayerController : NetworkBehaviour
 
             if (isStriking)
             {
-                if (!_strikePressed)
+                if (!_swingPressed)
                 {
                     _animator.SetBool("justStriked", false);
                 }
@@ -342,8 +348,8 @@ public class BasicPlayerController : NetworkBehaviour
     public void DisableInput()
     {
 #if ENABLE_INPUT_SYSTEM
-        _actions.asset.FindActionMap("Gameplay", false).Disable();
-        _actions.asset.FindActionMap("UI", false).Enable();
+        _inputActionAsset?.FindActionMap("Gameplay", false).Disable();
+        _inputActionAsset?.FindActionMap("UI", false).Enable();
 #endif
         _animator.SetBool("isWalking", false);
         _animator.SetBool("isRunning", false);
@@ -357,8 +363,8 @@ public class BasicPlayerController : NetworkBehaviour
     public void EnableInput()
     {
 #if ENABLE_INPUT_SYSTEM
-        _actions.asset.FindActionMap("Gameplay", false).Enable();
-        _actions.asset.FindActionMap("UI", false).Disable();
+        _inputActionAsset?.FindActionMap("Gameplay", false).Enable();
+        _inputActionAsset?.FindActionMap("UI", false).Disable();
 #endif
         _canMove = true;
     }
@@ -373,7 +379,7 @@ public class BasicPlayerController : NetworkBehaviour
     #region  Input Actions Functions
     public void InputSystemRotation()
     {
-        _lookInput = _actions.Gameplay.Look.ReadValue<Vector2>();
+        _lookInput = _gameplayActionMap["Look"].ReadValue<Vector2>();
         if (_lookInput.sqrMagnitude > _inputThreshold)
         {
             float deltaTimeMultiplier = 0f;
@@ -451,13 +457,21 @@ public class BasicPlayerController : NetworkBehaviour
     {
         _isSprinting = false;
     }
-    public void HandleStrikeStarted(InputAction.CallbackContext ctx)
+    public void HandleSwingStarted(InputAction.CallbackContext ctx)
     {
-        _strikePressed = true;
+        _swingPressed = true;
     }
-    public void HandleStrikeCanceled(InputAction.CallbackContext ctx)
+    public void HandleSwingCanceled(InputAction.CallbackContext ctx)
     {
-        _strikePressed = false;
+        _swingPressed = false;
+    }
+    public void HandleBallSpawnStarted(InputAction.CallbackContext ctx)
+    {
+        _ballSpawnPressed = true;
+    }
+    public void HandleBallSpawnCanceled(InputAction.CallbackContext ctx)
+    {
+        _ballSpawnPressed = false;
     }
     #endregion
 }
