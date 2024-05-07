@@ -12,8 +12,6 @@ public class SwingManager : NetworkBehaviour
     public StartCameraFollow cameraFollowScript;
     public Canvas meterCanvas;
     public GameObject meterCanvasObject;
-
-    private PlayerNetworkData _playerNetworkData;
     private UIManager _uiManager;
     private RagdollOnOff _ragdollOnOff;
 
@@ -28,14 +26,18 @@ public class SwingManager : NetworkBehaviour
     private GameObject thisBall;    // Reference to this player's ball
     private Rigidbody thisBallRb;
     private BasicPlayerController _playerController;
+    private PlayerNetworkData _playerNetworkData;
     private float swingForce = 50f;
     private bool first = true;
 
+    // reference to the player that is ragdolled that we use to enter swing state
+    private int ragdolled_player_id = -1; // this will be -1 if no ragdolled player is nearby
+
     [SerializeField] private float verticalAngle = 0.50f;
 
-    public Vector3[] holeStartPositions = new Vector3[]
+    private Vector3[] holeStartPositions = new Vector3[]
     {
-        new Vector3(395.840759f, 71f, 321.73f),
+        new Vector3(390f, 69.5f, 321f),
         new Vector3(417.690155f, 79f, 234.9218f),
         new Vector3(451.415436f, 80f, 172.0176f),
         new Vector3(374.986023f, 93.3f, 99.01516f),
@@ -51,7 +53,6 @@ public class SwingManager : NetworkBehaviour
     public void Activate()
     {
         _isActive = true;
-        // spawn ball on activation
         if (IsOwner)
         {
             SpawnBallOnServerRpc(OwnerClientId);
@@ -75,6 +76,7 @@ public class SwingManager : NetworkBehaviour
         _playerNetworkData = GetComponent<PlayerNetworkData>();
         _playerController = GetComponent<BasicPlayerController>();
     }
+
     // Update is called once per frame
     void Update()
     {
@@ -87,15 +89,17 @@ public class SwingManager : NetworkBehaviour
 
 
         // Check if player is already in swing mode and waiting to swing
-        if (inSwingMode && waitingForSwing)
+        if (inSwingMode)
         {
             if (Input.GetKeyDown(KeyCode.Space)) // Exit swing mode without performing swing
             {
                 ExitSwingMode();
             }
-            else if (powerMeterRef.GetShotStatus() == true) // Perform swing
+            else if (powerMeterRef.GetShotStatus() == true && waitingForSwing) // Perform swing
             {
-                PerformSwing();
+                // Start swing animation, when the club is halfway through the swing it will call PerformSwing()
+                playerAnimator.SetTrigger("Swing");
+                playerAnimator.ResetTrigger("Stance");
             }
             return; // Don't execute further logic if waiting for swing
         }
@@ -103,20 +107,16 @@ public class SwingManager : NetworkBehaviour
         // Check for input to enter swing mode
         if (!inSwingMode && Input.GetKeyDown(KeyCode.Space) && IsCloseToBall())
         {
-            Debug.Log("Called StartSwingMode()");
+            StartSwingMode();
+        }
+        else if (!inSwingMode && Input.GetKeyDown(KeyCode.Space) && isCloseToRagdolledPlayer())
+        {
             StartSwingMode();
         }
         // Check for input to exit swing mode
         //else if (inSwingMode && Input.GetKeyDown(KeyCode.Space))
         //{
         //  ExitSwingMode();
-        //}
-
-
-        // Spawn a ball when pressing a certain key (e.g., 'B')
-        //if (Input.GetKeyDown(KeyCode.B) && (thisBall == null))
-        //{
-        //  SpawnBallOnServerRpc();
         //}
 
         if (Input.GetKeyDown(KeyCode.F) && (thisBall != null))
@@ -127,9 +127,13 @@ public class SwingManager : NetworkBehaviour
                 first = false;
                 return;
             }
-            _playerController._currentPlayerState.strokes++;
-            _playerNetworkData.StorePlayerState(_playerController._currentPlayerState);
-            _uiManager.UpdateStrokesUI(_playerController._currentPlayerState.strokes);
+
+            if (!_playerController.IsActive) return; // do not count strokes if the player is in pre-game lobby
+
+            PlayerData _currentPlayerData = _playerNetworkData.GetPlayerData();
+            _currentPlayerData.strokes++;
+            _playerNetworkData.StorePlayerState(_currentPlayerData);
+            _uiManager.UpdateStrokesUI(_currentPlayerData.strokes);
         }
 
     }
@@ -140,36 +144,55 @@ public class SwingManager : NetworkBehaviour
         if (thisBall == null) return false;
 
         float distance = Vector3.Distance(playerTransform.position + Vector3.down, thisBall.transform.position);
-        Debug.Log("DISTANCE IS: " + distance + " " + startSwingMaxDistance);
 
         if (distance <= startSwingMaxDistance)
         {
-            /*
-            Ray ray = new Ray(transform.position, transform.forward);
-
-            RaycastHit hit;
-            if(Physics.Raycast(ray, out hit, 2f))
-            {
-                if (hit.collider.gameObject == thisBall)
-                {
-                    return true;
-                }
-            }
-            */
             return true;
         }
-        //Debug.DrawRay(transform.position, transform.forward * 3, Color.red, 0.5f);
 
         return false; // Ball exists but player is not close enough/looking at it
     }
 
-    void StartSwingMode()
+    // finds nearby players and checks if they are ragdolled - returns true if a ragdolled player is found and sets the ragdolled_player_id
+    bool isCloseToRagdolledPlayer()
     {
-        if(_ragdollOnOff.IsRagdoll())
+        //find nearby players
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        foreach (GameObject player in players)
         {
-            return;
+            // dont find ourselves
+            if (player.GetComponent<NetworkObject>().OwnerClientId != OwnerClientId)
+            {
+                float distance = Vector3.Distance(player.transform.position, transform.position); ;
+                //Debug.Log($"{OwnerClientId} is {distance} units away from {player.GetComponent<NetworkObject>().OwnerClientId}'s player");
+                if (!player.GetComponent<BasicPlayerController>().enabled)
+                {
+                    //Debug.Log("Player " + player.GetComponent<NetworkObject>().OwnerClientId + " is ragdolled");
+                    if (distance <= 2f)
+                    {
+                        ragdolled_player_id = (int)player.GetComponent<NetworkObject>().OwnerClientId;
+                        return true;
+                    }
+                }
+
+            }
         }
-        Debug.Log("Swing State entered");
+        ragdolled_player_id = -1;
+        return false;
+    }
+
+    public void StartSwingMode()
+    {
+        if (_ragdollOnOff.IsRagdoll()) return;
+
+        playerAnimator.ResetTrigger("isWalking");
+        playerAnimator.ResetTrigger("isRunning");
+        playerAnimator.ResetTrigger("isStriking");
+        playerAnimator.ResetTrigger("isRight");
+        playerAnimator.ResetTrigger("isLeft");
+        playerAnimator.ResetTrigger("isReversing");
+        playerAnimator.SetTrigger("Stance");
+        //Debug.Log("Swing State entered");
 
         RemoveForces(); //  prevent ball from rolling
         stopRotation();
@@ -179,25 +202,76 @@ public class SwingManager : NetworkBehaviour
         meterCanvasObject.SetActive(true);
 
         inSwingMode = true;
-        waitingForSwing = true;
 
         // Lock player controls
-        Debug.Log(_playerController);
         _playerController.DisableInput();
 
         // Set camera to swing state
         cameraFollowScript.SetSwingState(true);
-        // Trigger stance animation
-        playerAnimator.SetTrigger("Stance");
+
+        StartCoroutine(MovePlayerToStancePos());
     }
 
-    // perform swing and exit swing state, will need rpcs
-    void PerformSwing()
+    IEnumerator MovePlayerToStancePos()
     {
-        // Calculate swing force and direction
-        // Apply the force to the ball
-        // Trigger swing animation
-        playerAnimator.SetTrigger("Swing");
+        // Define the target position for the player
+        Vector3 targetPosition = thisBall.transform.position + (-playerTransform.forward * 0.12f) + playerTransform.right * -.75f;    // Floats represents offset to the left and forward
+        //targetPosition.y -= 0.12f;    // Instead of moving targ pos down, use a raycast to touch the ground
+        // Perform a raycast downwards to find the ground position beneath the target position
+        RaycastHit hit;
+        if (Physics.Raycast(targetPosition, Vector3.down, out hit, 3))
+        {
+            targetPosition = hit.point; // Adjust the target position to the ground position
+        }
+        else
+        {
+            Debug.LogWarning("Failed to find ground beneath target position!");
+        }
+
+        // Define the duration over which to move the player
+        float duration = 2.3f; // Adjust as needed
+
+        // Store the initial position of the player
+        Vector3 initialPosition = playerTransform.position;
+
+        // Move the player smoothly over time
+        float elapsedTime = 0f;
+        while (elapsedTime < duration)
+        {
+            // Calculate the interpolation factor based on elapsed time
+            float t = elapsedTime / duration;
+
+            // Interpolate between the initial and target positions
+            playerTransform.position = Vector3.Lerp(initialPosition, targetPosition, t);
+
+            // Update the elapsed time
+            elapsedTime += Time.deltaTime;
+
+            yield return null;
+        }
+
+        // Ensure the player reaches the exact target position
+        playerTransform.position = targetPosition;
+    }
+
+    void WaitingForSwing()  // Called by the animation event in Stance animation
+    {
+        waitingForSwing = true;
+    }
+    void PerformSwing()     // Called by the animation event in Swing animation
+    {
+        if (ragdolled_player_id != -1)
+            {
+                PerformSwingOnPlayer();
+            }
+            else
+            {
+                PerformSwingOnBall();
+            }
+    }
+
+    void PerformSwingOnBall()
+    {
         // set waitingForSwing to false to exit swing mode after animations finished
         waitingForSwing = false;
 
@@ -206,12 +280,55 @@ public class SwingManager : NetworkBehaviour
         thisBallRb.AddForce(dir * swingForce * meterCanvas.GetComponent<PowerMeter>().GetPowerValue(), ForceMode.Impulse);
         thisBallMoving = true;
 
+        // only count strokes if the game is active / not in pre-game lobby
+        if (_playerController.IsActive)
+        {
+            PlayerData _currentPlayerData = _playerNetworkData.GetPlayerData();
+            _currentPlayerData.strokes++;
+            _playerNetworkData.StorePlayerState(_currentPlayerData);
+            _uiManager.UpdateStrokesUI(_currentPlayerData.strokes);
+        }
 
-        // Increment the number of strokes? idk if this should be located here but prob
+        // Set camera to default state
+        cameraFollowScript.SetSwingState(false);
 
-        _playerController._currentPlayerState.strokes++;
-        _playerNetworkData.StorePlayerState(_playerController._currentPlayerState);
-        _uiManager.UpdateStrokesUI(_playerController._currentPlayerState.strokes);
+        // Unlock player controls
+        inSwingMode = false;
+
+        ExitSwingMode();
+
+    }
+
+
+    void PerformSwingOnPlayer()
+    {
+        // set waitingForSwing to false to exit swing mode after animations finished
+        waitingForSwing = false;
+
+        // calc direction
+        var dir = transform.forward + new Vector3(0, verticalAngle, 0);
+        // add forces
+        Vector3 swingForceVector = dir * swingForce * meterCanvas.GetComponent<PowerMeter>().GetPowerValue();
+
+        Debug.Log("force dir: " + dir);
+        Debug.Log("force vector: " + swingForceVector);
+        //ask the ragdolled player to add force on themselves
+        if (ragdolled_player_id != -1)
+        {
+            Debug.Log("PerformSwingOnPlayer() on ownerID " + ragdolled_player_id + " from client " + NetworkManager.Singleton.LocalClientId);
+            AddForceToPlayerServerRpc(swingForceVector, (ulong)ragdolled_player_id);
+        }
+        //AddForceToPlayerServerRpc(swingForceVector);
+
+
+        // only count strokes if the game is active / not in pre-game lobby
+        if (_playerController.IsActive)
+        {
+            PlayerData _currentPlayerData = _playerNetworkData.GetPlayerData();
+            _currentPlayerData.strokes++;
+            _playerNetworkData.StorePlayerState(_currentPlayerData);
+            _uiManager.UpdateStrokesUI(_currentPlayerData.strokes);
+        }
 
         // Set camera to default state
         cameraFollowScript.SetSwingState(false);
@@ -222,7 +339,7 @@ public class SwingManager : NetworkBehaviour
         ExitSwingMode();
     }
 
-    // Exit swing state without performing swing, will need rpcs
+    // Exit swing state without performing swing
     public void ExitSwingMode()
     {
         inSwingMode = false;
@@ -236,6 +353,9 @@ public class SwingManager : NetworkBehaviour
         cameraFollowScript.SetSwingState(false);
         // Make sure its no longer waiting for swing
         waitingForSwing = false;
+
+        playerAnimator.ResetTrigger("Swing");
+        playerAnimator.ResetTrigger("Stance");
     }
 
 
@@ -244,7 +364,7 @@ public class SwingManager : NetworkBehaviour
     [ServerRpc]
     void SpawnBallOnServerRpc(ulong ownerId)
     {
-        Vector3 spawnPosition = new Vector3(394.55f + Random.Range(-1f, 1f), 70.7f, 0); // 322.09f is intended z
+        Vector3 spawnPosition = new Vector3(94.2144241f + OwnerClientId * 2, 102.18f, -136.345001f + 1f); // spawn ball in front of player
         thisBall = Instantiate(ballPrefab, spawnPosition, Quaternion.identity);
         thisBallRb = thisBall.GetComponent<Rigidbody>();
         //thisBallRb.velocity = playerTransform.forward * 10f; // Example velocity
@@ -252,6 +372,8 @@ public class SwingManager : NetworkBehaviour
         if (ballNetworkObject != null)
         {
             ballNetworkObject.SpawnWithOwnership(ownerId);
+            //Debug.Log("Ball spawned for player " + ownerId);
+
         }
 
         //RemoveForces(); //  prevent ball from rolling
@@ -280,11 +402,34 @@ public class SwingManager : NetworkBehaviour
         {
             thisBallRb.velocity = Vector3.zero;
             thisBallRb.angularVelocity = Vector3.zero; // maybe get rid of this ? sometimes get a warning
-            Vector2 randStartPos = holeStartPositions[data.currentHole - 1] + new Vector3(Random.Range(-0.5f, 0.5f), 0, Random.Range(-0.5f, 0.5f));
+            Vector3 randStartPos;
+            // if on first hole, space balls out by 2 units to match player start positions, otherwise spawn them only 1 unit apart
+            if (data.currentHole == 1) randStartPos = holeStartPositions[0] + new Vector3(OwnerClientId * 2, 0, -1);
+            else randStartPos = holeStartPositions[data.currentHole - 1] + new Vector3(OwnerClientId, 0, 0);
+
             MoveProjectileToPosition(randStartPos);
-            Debug.Log("Hole " + (data.currentHole - 1) + " completed!\nMoving to next position " + thisBall.transform.position);
+            Debug.Log("Ball for player " + data.playerID + " moved to " + randStartPos + " currentHole: " + data.currentHole);
         }
     }
+
+    [ServerRpc]
+    private void AddForceToPlayerServerRpc(Vector3 force, ulong playerID)
+    {
+        //get player object of ragdolled player
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        foreach (GameObject player in players)
+        {
+            Debug.Log("Swing Manager - ServerRpc: running on player " + OwnerClientId + "\n----- checking playerObj " + player.GetComponent<NetworkObject>().OwnerClientId + " - is this object the owner? " + player.GetComponent<RagdollOnOff>().IsOwner + " is this the playerID we want? " + (player.GetComponent<NetworkObject>().OwnerClientId == playerID));
+            if (player.GetComponent<NetworkObject>().OwnerClientId == playerID && player.GetComponent<RagdollOnOff>().IsOwner)
+            {
+                Debug.Log("Swing Manager - ServerRpc calling " + player.GetComponent<NetworkObject>().OwnerClientId + "s  AddForceToSelf()");
+                player.GetComponent<RagdollOnOff>().AddForceToSelf(force);
+            }
+        }
+    }
+
+
+
 
     public bool isInSwingState()
     {
@@ -294,7 +439,7 @@ public class SwingManager : NetworkBehaviour
     // helper functions -------------------------------------------------------------------------------------------------------------
 
 
-    private void ReturnBallToPlayer()
+    public void ReturnBallToPlayer()
     {
         if (thisBall == null) return;
 
@@ -325,21 +470,14 @@ public class SwingManager : NetworkBehaviour
         }
     }
 
+    //not using rotation to avoid ball moving too much down hills
+
     private void enableRotation()
     {
         if (thisBall != null && thisBallRb != null)
         {
             if (IsOwner) thisBallRb.freezeRotation = false;
         }
-    }
-
-    public void SpawnProjectile(ulong ownerId)
-    {
-        if (!IsOwner) return; //redundnat check since this is a public function
-
-        Vector3 ballSpawnPos = new Vector3(395.5f + Random.Range(-5, 5), 75f, 322.0f + Random.Range(-3, 3));
-        Debug.Log("Spawning at: " + ballSpawnPos + "for " + ownerId);
-        //RequestBallSpawnServerRpc(OwnerClientId, ballSpawnPos);
     }
 
     public void MoveProjectileToPosition(Vector3 destination)
@@ -349,7 +487,7 @@ public class SwingManager : NetworkBehaviour
         RemoveForces(); //  prevent ball from rolling
         stopRotation();
 
-        Debug.Log("The given destination position: " + destination);
+        Debug.Log("ball moved to: " + destination + "for player " + OwnerClientId);
 
         //  move ball to point
         thisBall.transform.position = destination;

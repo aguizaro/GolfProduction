@@ -31,6 +31,7 @@ public class SpawnManager : NetworkBehaviour
     {
         _stateManager = Instantiate(_stateManagerPrefab);
         _stateManager.GetComponent<NetworkObject>().SpawnWithOwnership(clientID);
+        base.OnDestroy();
 
     }
 
