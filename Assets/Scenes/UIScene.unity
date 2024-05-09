@@ -1201,7 +1201,7 @@ GameObject:
   - component: {fileID: 1606576233}
   - component: {fileID: 1606576234}
   m_Layer: 0
-  m_Name: LobbyManager
+  m_Name: NetManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1234,8 +1234,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6960e84d07fb87f47956e7a81d71c4e6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_ProtocolType: 0
-  m_UseWebSockets: 1
+  m_ProtocolType: 1
+  m_UseWebSockets: 0
   m_UseEncryption: 0
   m_MaxPacketQueueSize: 256
   m_MaxPayloadSize: 6144
@@ -1301,8 +1301,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mainCameraTransform: {fileID: 1963442867}
-  _UIManager: {fileID: 4300147152962470403}
-  encryption: 1
+  encryption: 0
   maxLobbySize: 10
 --- !u!114 &1606576233
 MonoBehaviour:
@@ -1311,7 +1310,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1606576227}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b9d3aa222702843e793fdff3a2572c22, type: 3}
   m_Name: 
@@ -2710,17 +2709,6 @@ PrefabInstance:
       addedObject: {fileID: 1693065036}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
---- !u!114 &4300147152962470403 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1582775901338165307, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
-  m_PrefabInstance: {fileID: 4300147152962470402}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b95036f86dd7641718b6ae24d0ceb66f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!33 &4816176388156945111
 MeshFilter:
   m_ObjectHideFlags: 0

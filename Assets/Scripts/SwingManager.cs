@@ -28,10 +28,9 @@ public class SwingManager : NetworkBehaviour
     private BasicPlayerController _playerController;
     private PlayerNetworkData _playerNetworkData;
     private float swingForce = 50f;
-    private bool first = true;
 
     // reference to the player that is ragdolled that we use to enter swing state
-    private int ragdolled_player_id = -1; // this will be -1 if no ragdolled player is nearby
+    private GameObject ragdolled_player = null;
 
     [SerializeField] private float verticalAngle = 0.50f;
 
@@ -94,44 +93,39 @@ public class SwingManager : NetworkBehaviour
             {
                 ExitSwingMode();
             }
-            else if (powerMeterRef.GetShotStatus() == true) // Perform swing
+
+            if (ragdolled_player != null)
             {
-                if (ragdolled_player_id != -1) // Perform swing on ragdolled player
+                if (ragdolled_player.GetComponent<BasicPlayerController>().enabled) // Player has gotten up
+                {
+                    ragdolled_player = null;
+                    ExitSwingMode();
+                }
+                else if (powerMeterRef.GetShotStatus() == true) // Perform swing on player
                 {
                     PerformSwingOnPlayer();
                 }
-                else
-                {
-                    PerformSwingOnBall();
-                }
+
+            }
+            else if (powerMeterRef.GetShotStatus() == true) // Perform swing on ball
+            {
+                PerformSwingOnBall();
 
             }
             return; // Don't execute further logic if waiting for swing
         }
 
         // Check for input to enter swing mode
-        if (!inSwingMode && Input.GetKeyDown(KeyCode.Space) && IsCloseToBall())
+        if (!inSwingMode && Input.GetKeyDown(KeyCode.Space))
         {
-            StartSwingMode();
+            // keep these cheks separate to avoid short circuiting the second check
+            if (isCloseToRagdolledPlayer()) StartSwingMode();
+            else if (IsCloseToBall()) StartSwingMode();
         }
-        else if (!inSwingMode && Input.GetKeyDown(KeyCode.Space) && isCloseToRagdolledPlayer())
-        {
-            StartSwingMode();
-        }
-        // Check for input to exit swing mode
-        //else if (inSwingMode && Input.GetKeyDown(KeyCode.Space))
-        //{
-        //  ExitSwingMode();
-        //}
 
         if (Input.GetKeyDown(KeyCode.F) && (thisBall != null))
         {
             ReturnBallToPlayer();
-            if (first)
-            {
-                first = false;
-                return;
-            }
 
             if (!_playerController.IsActive) return; // do not count strokes if the player is in pre-game lobby
 
@@ -179,24 +173,22 @@ public class SwingManager : NetworkBehaviour
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
         foreach (GameObject player in players)
         {
-            // dont find ourselves
+            // make sure we dont find ourselves
             if (player.GetComponent<NetworkObject>().OwnerClientId != OwnerClientId)
             {
                 float distance = Vector3.Distance(player.transform.position, transform.position); ;
-                //Debug.Log($"{OwnerClientId} is {distance} units away from {player.GetComponent<NetworkObject>().OwnerClientId}'s player");
                 if (!player.GetComponent<BasicPlayerController>().enabled)
                 {
-                    //Debug.Log("Player " + player.GetComponent<NetworkObject>().OwnerClientId + " is ragdolled");
                     if (distance <= 2f)
                     {
-                        ragdolled_player_id = (int)player.GetComponent<NetworkObject>().OwnerClientId;
+                        ragdolled_player = player;
                         return true;
                     }
                 }
 
             }
         }
-        ragdolled_player_id = -1;
+        ragdolled_player = null;
         return false;
     }
 
@@ -269,13 +261,10 @@ public class SwingManager : NetworkBehaviour
         // add forces
         Vector3 swingForceVector = dir * swingForce * meterCanvas.GetComponent<PowerMeter>().GetPowerValue();
 
-        Debug.Log("force dir: " + dir);
-        Debug.Log("force vector: " + swingForceVector);
         //ask the ragdolled player to add force on themselves
-        if (ragdolled_player_id != -1)
+        if (ragdolled_player != null)
         {
-            Debug.Log("PerformSwingOnPlayer() on ownerID " + ragdolled_player_id + " from client " + NetworkManager.Singleton.LocalClientId);
-            AddForceToPlayerServerRpc(swingForceVector, (ulong)ragdolled_player_id);
+            AddForceToPlayerServerRpc(swingForceVector, ragdolled_player.GetComponent<NetworkObject>().OwnerClientId);
         }
         //AddForceToPlayerServerRpc(swingForceVector);
 
@@ -328,7 +317,6 @@ public class SwingManager : NetworkBehaviour
         if (ballNetworkObject != null)
         {
             ballNetworkObject.SpawnWithOwnership(ownerId);
-            //Debug.Log("Ball spawned for player " + ownerId);
 
         }
 
@@ -381,11 +369,9 @@ public class SwingManager : NetworkBehaviour
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
         foreach (GameObject player in players)
         {
-            Debug.Log("Swing Manager - ClientRpc: running on player " + OwnerClientId + "\n----- checking playerObj " + player.GetComponent<NetworkObject>().OwnerClientId + " - is this object the owner? " + player.GetComponent<RagdollOnOff>().IsOwner + " is this the playerID we want? " + (player.GetComponent<NetworkObject>().OwnerClientId == playerID));
             if (player.GetComponent<NetworkObject>().OwnerClientId == playerID && player.GetComponent<RagdollOnOff>().IsOwner)
             {
-                Debug.Log("Swing Manager - clientRpc calling " + player.GetComponent<NetworkObject>().OwnerClientId + "s  AddForceToSelf()");
-                player.GetComponent<RagdollOnOff>().AddForceToSelf(force);
+                player.GetComponent<RagdollOnOff>().AddForceToSelf(force * 2);
             }
         }
     }

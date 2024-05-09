@@ -4,6 +4,7 @@ using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.InputSystem;
 using Unity.VisualScripting;
+using UnityEngine.Video;
 
 // Needs: simple way to deactivate everything on game over / game exit, so players can play again without having to re-launch the game
 public class BasicPlayerController : NetworkBehaviour
@@ -58,8 +59,8 @@ public class BasicPlayerController : NetworkBehaviour
         _ragdollOnOff = GetComponent<RagdollOnOff>();
         _flagPoles = GameObject.FindGameObjectsWithTag("HoleFlagPole");
 
-        _ragdollOnOff.Activate(); // activate ragdoll
         _swingManager.Activate(); // activate swing mode
+        _ragdollOnOff.Activate(); // activate ragdoll
 
         if (!IsOwner) return;
 
@@ -81,23 +82,17 @@ public class BasicPlayerController : NetworkBehaviour
     // Update Loop -------------------------------------------------------------------------------------------------------------
     void Update()
     {
-        // move player to a different position based on their client id - this must happen here b/c the player position is at (0,0,0) until first frame of update
-        if (!_isSpawnedAtPos && IsOwner)
-        {
-            transform.position += new Vector3(OwnerClientId * 2, 0, 0); //space players out by 2 units each
-            Debug.Log("Player " + OwnerClientId + " spawned at " + transform.position);
-            _isSpawnedAtPos = true;
-        }
 
+        if (!IsOwner) return;
 
         //prevent updates until player is fully activated
         if (!IsActive)
         {
             // activate game for all players if host presses space in pre-game lobby
-            if (IsOwner && IsServer && Input.GetKeyDown(KeyCode.P))
+            if (IsServer && Input.GetKeyDown(KeyCode.P))
             {
                 //close lobby for new players
-                _ = GameObject.Find("LobbyManager").GetComponent<LobbyManager>().LockLobby(); // no await here - does not block main thread but thats okay, as long as lobby starts lock process
+                _ = LobbyManager.Instance.LockLobby(); // no await here - does not block main thread but thats okay, as long as lobby starts lock process
 
                 // activate all players
                 foreach (NetworkClient player in NetworkManager.Singleton.ConnectedClientsList)
@@ -396,6 +391,11 @@ public class BasicPlayerController : NetworkBehaviour
             _backPressed = _moveInput.y < -0.2f;
             _leftPressed = _moveInput.x < -0.25f;
             _rightPressed = _moveInput.x > 0.25f;
+
+            Vector3 movement = new Vector3(_moveInput.x, 0f, _moveInput.y);
+            movement = movement.normalized * splayerSpeed * Time.deltaTime;
+            _rb.MovePosition(transform.position + transform.TransformDirection(movement));
+            Debug.Log("Player " + OwnerClientId + " pos: " + transform.position);
         }
         else
         {
@@ -403,11 +403,9 @@ public class BasicPlayerController : NetworkBehaviour
             _backPressed = false;
             _leftPressed = false;
             _rightPressed = false;
-            splayerSpeed = 0;
+            //splayerSpeed = 0;
         }
-        Vector3 movement = new Vector3(_moveInput.x, 0f, _moveInput.y);
-        movement = movement.normalized * splayerSpeed * Time.deltaTime;
-        _rb.MovePosition(transform.position + transform.TransformDirection(movement));
+
     }
     public void HandlePauseStarted(InputAction.CallbackContext ctx)
     {
@@ -455,6 +453,15 @@ public class BasicPlayerController : NetworkBehaviour
     {
         if (!IsOwner) return;
         Activate();
+    }
+
+    // spawn functions -------------------------------------------------------------------------------------------------------------
+    public void SpawnInPreLobby()
+    {
+        if (!IsOwner) return;
+
+        _rb.MovePosition(new Vector3(94.2f + OwnerClientId * 2, 100.5f, -136.3f));//space players out by 2 units each
+        Debug.Log("Player " + OwnerClientId + " spawned at " + transform.position);
     }
 }
 
