@@ -206,6 +206,9 @@ public class SwingManager : NetworkBehaviour
         thisBallRb.AddForce(dir * swingForce * meterCanvas.GetComponent<PowerMeter>().GetPowerValue(), ForceMode.Impulse);
         thisBallMoving = true;
 
+        // Play sound effect for swinging the ball
+        AudioManager.instance.PlayOneShot(FMODEvents.instance.playerGolfSwing, _playerController.transform.position);
+
 
         // Increment the number of strokes? idk if this should be located here but prob
 

@@ -163,6 +163,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5af595ec8b368714e99b414fe9183feb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <playerGolfSwing>k__BackingField:
+    Guid:
+      Data1: -322936877
+      Data2: 1158729915
+      Data3: 185113227
+      Data4: 1611160647
+    Path: event:/GolfSwing
   <playerFootsteps>k__BackingField:
     Guid:
       Data1: 1457570406

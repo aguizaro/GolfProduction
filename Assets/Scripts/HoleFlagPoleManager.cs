@@ -42,6 +42,9 @@ public class HoleFlagPoleManager : NetworkBehaviour
 
             if (!_playerIDs.Contains(playerID))
             {
+                // Play sound effect for sinking in the ball
+                AudioManager.instance.PlayOneShot(FMODEvents.instance.golfHoleEnter, this.transform.position);
+
                 _playerIDs.Add(playerID);
                 HandlePlayerScoreClientRpc(playerID);
             }

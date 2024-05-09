@@ -9,6 +9,11 @@ using FMODUnity;
 public class FMODEvents : MonoBehaviour
 {
     // Assign Event References
+    [field: Header("Golf Swing")]
+    [field: SerializeField] public EventReference playerGolfSwing { get; private set; }
+    [field: Header("Golf Hole Enter")]
+    [field: SerializeField] public EventReference golfHoleEnter { get; private set; }
+
     [field: Header("Footsteps")]
     [field: SerializeField] public EventReference playerFootsteps { get; private set; }
 
