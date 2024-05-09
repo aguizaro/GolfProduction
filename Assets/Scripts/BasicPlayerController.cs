@@ -33,7 +33,7 @@ public class BasicPlayerController : NetworkBehaviour
     private GameObject[] _flagPoles;
 
     // Activation
-    [SerializeField] private bool _isActive = false;
+    public bool IsActive = false;
 
 #if ENABLE_INPUT_SYSTEM
     [Header("For Input System Only")]
@@ -91,7 +91,7 @@ public class BasicPlayerController : NetworkBehaviour
     // Update Loop -------------------------------------------------------------------------------------------------------------
     void Update()
     {
-        if (!_isActive) return; //prevent updates until player is fully activated
+        if (!IsActive) return; //prevent updates until player is fully activated
 
         Animate();
         if (_canMove)
@@ -111,7 +111,7 @@ public class BasicPlayerController : NetworkBehaviour
         if (!IsOwner) return;
 
         // activate player movement, animations, shooting and ragdoll\
-        _isActive = true;
+        IsActive = true;
         _swingManager.Activate();
 
         if (IsServer)
@@ -140,8 +140,6 @@ public class BasicPlayerController : NetworkBehaviour
         _currentPlayerState = new PlayerData
         {
             playerID = OwnerClientId,
-            playerPos = transform.position,
-            playerRot = transform.rotation,
             currentHole = 1,
             strokes = 0,
             enemiesDefeated = 0,
@@ -153,7 +151,7 @@ public class BasicPlayerController : NetworkBehaviour
 
     public void Deactivate()
     {
-        _isActive = false;
+        IsActive = false;
         foreach (GameObject flagPole in _flagPoles)
         {
             flagPole.GetComponent<HoleFlagPoleManager>().Deactivate();
@@ -175,7 +173,7 @@ public class BasicPlayerController : NetworkBehaviour
     {
         if (!IsOwner)
         {
-            if (!_isActive) return; //prevent updates until state manager is fully activated
+            if (!IsActive) return; //prevent updates until state manager is fully activated
 
             // update local player state with network data ?
         }
@@ -213,13 +211,11 @@ public class BasicPlayerController : NetworkBehaviour
 
     public void AfterMoveStateUpdate()
     {
-        if (!_isActive) return; //prevent updates to state manager until player is fully activated
+        if (!IsActive) return; //prevent updates to state manager until player is fully activated
 
         _currentPlayerState = new PlayerData
         {
             playerID = OwnerClientId,
-            playerPos = transform.position,
-            playerRot = transform.rotation,
             currentHole = _currentPlayerState.currentHole,
             strokes = _currentPlayerState.strokes,
             enemiesDefeated = _currentPlayerState.enemiesDefeated,
