@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
 using Unity.VisualScripting;
+using Unity.VisualScripting;
 
 public class RagdollOnOff : NetworkBehaviour
 {
@@ -208,6 +209,7 @@ public class RagdollOnOff : NetworkBehaviour
     public void RagdollModeOnServerRpc()
     {
         //Debug.Log("RagdollModeOnServerRpc called for " + OwnerClientId);
+        //Debug.Log("RagdollModeOnServerRpc called for " + OwnerClientId);
         RagdollModeOnClientRpc();
     }
 
@@ -220,6 +222,7 @@ public class RagdollOnOff : NetworkBehaviour
     [ClientRpc]
     public void RagdollModeOnClientRpc()
     {
+        //Debug.Log("RagdollModeOnClientRpc called for " + OwnerClientId);
         //Debug.Log("RagdollModeOnClientRpc called for " + OwnerClientId);
         RagdollModeOn();
     }
