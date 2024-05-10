@@ -5,6 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Localization.Settings;
+using Unity.Netcode;
 
 
 public enum UIState
@@ -45,8 +46,6 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button _joinButton;
     [SerializeField] private Button _playButton;
     [SerializeField] private Button _refreshButton;
-
-    [SerializeField] private LobbyManager _lobbyManager;
     private const int maxDisplayLen = 5; //5 lobby slots at a time
 
     // Game UI Elements
@@ -100,7 +99,7 @@ public class UIManager : MonoBehaviour
     private Transform _cameraStartTransform;
     private MenuState menuState = MenuState.None;
 
-    private void Awake()
+    private async void Start()
     {
         // Title Button Events
         _titleStartButton.onClick.AddListener(TitleStart);
@@ -137,22 +136,28 @@ public class UIManager : MonoBehaviour
 
         instance = this;
 
-        RefreshDisplayList();
+        InitializetLanguageDropdown();
+        await LobbyManager.Instance.Authenticate(); //does not block main thread while being atuthenticated
+
+        DisablePause(); DisableSettings(); EnableUI(UIState.Title); // start with title screen
     }
 
-    private void Start() { DisablePause(); DisableSettings(); EnableUI(UIState.Title); InitializetLanguageDropdown();}
 
     // Title Screen Methods
-    private void TitleStart() => EnableUI(UIState.Lobby);
+    private void TitleStart()
+    {
+        RefreshDisplayList();
+        EnableUI(UIState.Lobby);
+    }
     private void TitleSettings() => EnableSettings();
 
     // Lobby UI Methods
-    private void PlayNow() => _lobbyManager.PlayNow();
-    private void CreateLobby() => _lobbyManager.Create(_inputField.text, 5);
-    private void JoinLobby() => _lobbyManager.Join(joinCode: _inputField.text);
+    private void PlayNow() => LobbyManager.Instance.PlayNow();
+    private void CreateLobby() => LobbyManager.Instance.Create(_inputField.text, 5);
+    private async void JoinLobby() => await LobbyManager.Instance.Join(joinCode: _inputField.text);
 
 
-    public void DeactivateUI() { _lobbyUI.SetActive(false); Debug.Log("Deactivated Lobby UI: " + _lobbyUI.activeSelf); titleScreenMode = false; }
+    public void DeactivateUI() { _lobbyUI.SetActive(false); titleScreenMode = false; }
     public void DeactivateHUD()
     {
         // need thes checks here in case TMPro objects are destroyed during applicatino quit
@@ -165,7 +170,7 @@ public class UIManager : MonoBehaviour
     public void ActivateHUD() { _gamePlayerStrokesText.gameObject.SetActive(true); _holeCountText.gameObject.SetActive(true); _lobbyJoinCodeText.gameObject.SetActive(true); _lobbyNameText.gameObject.SetActive(true); }
     public void DisplayCode(string code) => _lobbyJoinCodeText.text = code;
     public void DisplayLobbyName(string name) => _lobbyNameText.text = name;
-    public async void DisplaySignedIn() => _lobbySignedInText.text = await _lobbyManager.GetPlayerName();
+    public async void DisplaySignedIn() => _lobbySignedInText.text = await LobbyManager.Instance.GetPlayerName();
 
     public string GetInputText() { return _inputField.text; }
     public void DisableUIText()
@@ -195,7 +200,7 @@ public class UIManager : MonoBehaviour
     // Quit lobby and return to title screen
     private async void QuitLobbyReturnToTitle()
     {
-        await _lobbyManager.TryQuitLobby();
+        await LobbyManager.Instance.TryQuitLobby();
         ReturnToTitle();
     }
 
@@ -349,7 +354,7 @@ public class UIManager : MonoBehaviour
         try
         {
             ClearDisplayList();
-            List<LobbyEntry> foundLobbies = await _lobbyManager.FindOpenLobbies();
+            List<LobbyEntry> foundLobbies = await LobbyManager.Instance.FindOpenLobbies();
             if (foundLobbies.Count == 0)
             {
                 Debug.Log("No lobbies found");
@@ -382,7 +387,7 @@ public class UIManager : MonoBehaviour
                             delim = "\n";
                         }
 
-                        _lobbyEntries[i].transform.Find("JoinLobbyButton").GetComponent<Button>().onClick.AddListener(() => _lobbyManager.Join(lobbyID: entry.Id)); // join lobby, on button click
+                        _lobbyEntries[i].transform.Find("JoinLobbyButton").GetComponent<Button>().onClick.AddListener(() => HandleJoinLobbyButton(entry)); // join lobby, on button click
                     }
                 }
 
@@ -394,6 +399,25 @@ public class UIManager : MonoBehaviour
         {
             Debug.LogWarning("Error refreshing lobby list: " + e.Message);
         }
+    }
+
+
+    ulong timesPressed = 0;
+    bool isJoining = false;
+
+    private async void HandleJoinLobbyButton(LobbyEntry entry)
+    {
+        Debug.Log($"pressed join button - count : {++timesPressed}");
+
+        if (isJoining) return;
+        isJoining = true;
+
+        Debug.Log($"calling lobbymanager join() with id: {entry.Id}");
+        bool success = await LobbyManager.Instance.Join(lobbyID: entry.Id);
+
+        if (!success) Debug.LogWarning("Failed to join lobby");
+        isJoining = false;
+
     }
 
     public void ClearDisplayList()
@@ -408,7 +432,7 @@ public class UIManager : MonoBehaviour
     public void ResetHUD()
     {
         _gamePlayerStrokesText.text = "0";
-        _holeCountText.text = "1";
+        _holeCountText.text = "0";
 
     }
 

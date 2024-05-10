@@ -86,6 +86,7 @@ public class NetworkEnemyController : NetworkBehaviour
     public override void OnDestroy()
     {
         enemyState.OnValueChanged -= OnSpiderStateChange;
+        base.OnDestroy();
     }
 
     void Update()

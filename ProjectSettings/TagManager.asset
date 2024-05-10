@@ -9,6 +9,7 @@ TagManager:
   - Ball
   - PlayerCollision
   - HoleFlagPole
+  - Hips
   layers:
   - Default
   - TransparentFX
