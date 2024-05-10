@@ -143,6 +143,17 @@ public class BasicPlayerController : NetworkBehaviour
 
         IsActive = true;
 
+        if (IsServer)
+        {
+            //activate game manager
+            GameObject gameManager = Instantiate(gameManagerPrefab, new Vector3(0, 0, 0), Quaternion.identity);
+            gameManager.GetComponent<NetworkObject>().Spawn();
+
+            //activate spider
+            GameObject spider = Instantiate(spiderPrefab, new Vector3(391, 72.1f, 289), Quaternion.identity);
+            spider.GetComponent<NetworkObject>().Spawn();
+        }
+
         // activate flag poles - in scene placed network objects (server auth) -update this later to be dynamically spawned by server
         foreach (GameObject flagPole in _flagPoles)
         {
@@ -168,7 +179,7 @@ public class BasicPlayerController : NetworkBehaviour
     public void Deactivate()
     {
         IsActive = false;
-        IsActive = false;
+
         foreach (GameObject flagPole in _flagPoles)
         {
             flagPole.GetComponent<HoleFlagPoleManager>().Deactivate();
