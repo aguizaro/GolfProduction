@@ -48,23 +48,7 @@ public class PlayerHatController : NetworkBehaviour
         meshes = serializedMeshDictionary.ToDictionary();
         textures = serializedTextureDictionary.ToDictionary();
 
-        if (IsOwner)
-        {
-            // Get random texture. We can change how the player's hat initially spawns
-            PlayerHatConfig newPlayerConfig = new PlayerHatConfig()
-            {
-                meshID = 0,
-                textureID = GetRandomHatTextureID()
-            };
-            _currentHatConfig = newPlayerConfig;
-            CommitNetworkHatConfigServerRpc(_currentHatConfig);
-        }
-        else
-        {
-            // Apply config from network variable
-            _currentHatConfig = _networkPlayerHatConfig.Value;
-            ApplyCurrentHatConfig();
-        }
+        SetHatConfig(GetRandomHatMeshID(), GetRandomHatTextureID());
     }
     public override void OnDestroy()
     {
@@ -80,6 +64,7 @@ public class PlayerHatController : NetworkBehaviour
     public void ApplyCurrentHatConfig()
     {
         // TODO: Update player mesh
+        hatMesh.mesh = meshes[_currentHatConfig.meshID];
 
         // Update player texture
         hatMaterial.mainTexture = textures[_currentHatConfig.textureID];
@@ -88,20 +73,9 @@ public class PlayerHatController : NetworkBehaviour
     // Takes ulong arg which represents the texture ID
     public void SetHatMesh(ulong id)
     {
-        if (IsOwner)
+        if (meshes.ContainsKey(id))
         {
-            if (meshes.ContainsKey(id))
-            {
-                PlayerHatConfig newdata = new PlayerHatConfig() 
-                {
-                    meshID = id,
-                    textureID = _currentHatConfig.textureID
-                };
-                //TODO: Update mesh
-            }
-        }
-        else{
-            //_currentHatConfig = 
+            SetHatConfig(id, _currentHatConfig.textureID);
         }
     }
 
@@ -109,8 +83,28 @@ public class PlayerHatController : NetworkBehaviour
     {
         if (textures.ContainsKey(id))
         {
-            //currentTextureId = id;
-            //hatMaterial.mainTexture = textures[id];
+            SetHatConfig(_currentHatConfig.meshID, id);
+        }
+    }
+
+    public void SetHatConfig(ulong meshID, ulong textureID)
+    {
+        if (IsOwner)
+        {
+            // Get random texture. We can change how the player's hat initially spawns
+            PlayerHatConfig newPlayerConfig = new PlayerHatConfig()
+            {
+                meshID = meshID,
+                textureID = textureID
+            };
+            _currentHatConfig = newPlayerConfig;
+            CommitNetworkHatConfigServerRpc(_currentHatConfig);
+        }
+        else
+        {
+            // Apply config from network variable
+            _currentHatConfig = _networkPlayerHatConfig.Value;
+            ApplyCurrentHatConfig();
         }
     }
 
@@ -120,16 +114,18 @@ public class PlayerHatController : NetworkBehaviour
         _networkPlayerHatConfig.Value = config;
     }
 
-    public void RandomizeHatTexture()
+    public void RandomizeHatConfig()
+    {
+        SetHatConfig(GetRandomHatMeshID(), GetRandomHatTextureID());
+    }
+
+    public ulong GetRandomHatMeshID()
     {
         // Convert keys to an array
-        ulong[] keysArray = new List<ulong>(textures.Keys).ToArray();
+        ulong[] keysArray = new List<ulong>(meshes.Keys).ToArray();
 
         // Get a random key from the array
-        ulong randomId = keysArray[UnityEngine.Random.Range(0, keysArray.Length)];
-
-        //currentTextureId = randomId;
-        //hatMaterial.mainTexture = textures[currentTextureId];
+        return keysArray[UnityEngine.Random.Range(0, keysArray.Length)];
     }
 
     public ulong GetRandomHatTextureID()
@@ -143,20 +139,21 @@ public class PlayerHatController : NetworkBehaviour
 
     public ulong GetCurrentMeshId() => _currentHatConfig.meshID;
     public ulong GetCurrentTextureId() => _currentHatConfig.textureID;
+    public PlayerHatConfig GetCurrentHatConfig() => _currentHatConfig;
 
-    private PlayerHatConfig GetOwnersHatConfig()
-    {
-        GameObject[] playerObjects = GameObject.FindGameObjectsWithTag("Player");
-
-        foreach (GameObject playerObject in playerObjects)
-        {
-            if (playerObject.GetComponent<NetworkObject>().IsOwner && playerObject.GetComponent<NetworkObject>().OwnerClientId == OwnerClientId)
-            {
-                PlayerHatConfig playerConfig = playerObject.GetComponent<PlayerHatController>()._networkPlayerHatConfig.Value;
-                return playerConfig;
-            }
-        }
-        Debug.LogError("Could not find player object with OwnerClientId: " + OwnerClientId);
-        return new PlayerHatConfig();
-    }
+    //private PlayerHatConfig GetOwnersHatConfig()
+    //{
+    //    GameObject[] playerObjects = GameObject.FindGameObjectsWithTag("Player");
+    //
+    //    foreach (GameObject playerObject in playerObjects)
+    //    {
+    //        if (playerObject.GetComponent<NetworkObject>().IsOwner && playerObject.GetComponent<NetworkObject>().OwnerClientId == OwnerClientId)
+    //        {
+    //            PlayerHatConfig playerConfig = playerObject.GetComponent<PlayerHatController>()._networkPlayerHatConfig.Value;
+    //            return playerConfig;
+    //        }
+    //    }
+    //    Debug.LogError("Could not find player object with OwnerClientId: " + OwnerClientId);
+    //    return new PlayerHatConfig();
+    //}
 }

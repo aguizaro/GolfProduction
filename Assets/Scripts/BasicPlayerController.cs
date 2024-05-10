@@ -125,6 +125,12 @@ public class BasicPlayerController : NetworkBehaviour
                 }
 
             }
+
+            // Randomize player's hat config
+            if (IsOwner && Input.GetKeyDown(KeyCode.L))
+            {
+                _playerHat.RandomizeHatConfig();
+            }
         }
 
         Animate();
