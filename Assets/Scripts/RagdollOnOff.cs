@@ -2,8 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
-using Unity.VisualScripting;
-using Unity.VisualScripting;
 
 public class RagdollOnOff : NetworkBehaviour
 {
@@ -17,7 +15,7 @@ public class RagdollOnOff : NetworkBehaviour
     private SwingManager _swingManager;
 
     private float ragdollDelay = 0.5f; //Slight delay defore ragdoll mode is activated
-    private float getUpDelay = 10f;
+    private float getUpDelay = 12f;
     private float delay;
     private bool isRagdoll = false; //is player in ragdoll mode
     private bool isActive = false; //is player instance active
@@ -247,7 +245,7 @@ public class RagdollOnOff : NetworkBehaviour
         if (IsOwner)
         {
             delay = getUpDelay; //reset delay to avoid instant reset after force is applied
-            AddForceToSelfServerRpc(force);
+            AddForceToSelfServerRpc(force * 2.5f);
 
             playerRB.useGravity = false;
             playerRB.isKinematic = false;

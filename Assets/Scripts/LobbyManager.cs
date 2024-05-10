@@ -14,10 +14,6 @@ using Unity.Services.Relay.Models;
 using UnityEngine;
 using Unity.Networking.Transport.Relay;
 using System.Text.RegularExpressions;
-using UnityEngine.SceneManagement;
-
-
-
 
 
 #if UNITY_EDITOR
@@ -781,8 +777,12 @@ public class LobbyManager : MonoBehaviour
 
     public async Task TryQuitLobby()
     {
-
-        if (isQuitting) { Debug.LogWarning("Already Quitting"); return; }
+        if (isQuitting)
+        {
+            Debug.LogWarning("Already Quitting");
+            await Task.Delay(1000); //wait 1 second to allow quit to finish
+            return;
+        }
         isQuitting = true;
 
         if (ConnectedLobbyyEvents != null) await UnsubscribeFromLobbyEvents();
@@ -808,6 +808,7 @@ public class LobbyManager : MonoBehaviour
         {
             NetworkManager.Singleton.Shutdown();
         }
+
     }
 
     // method for host to delete the current lobby
@@ -990,18 +991,4 @@ public class LobbyManager : MonoBehaviour
 
         if (NetworkManager.Singleton == null) throw new Exception($"There is no {nameof(NetworkManager)} for the {nameof(LobbyManager)} to do stuff with! Please add a {nameof(NetworkManager)} to the scene.");
     }
-
-
-    ulong tick = 0;
-    private void Update()
-    {
-        tick++;
-        if (tick % 10 == 0)
-        {
-            Debug.Log($"Update NetManager\nclientID: {NetworkManager.Singleton.LocalClientId} -- IsClient: {NetworkManager.Singleton.IsClient} -- IsConnectedClient: {NetworkManager.Singleton.IsConnectedClient} -- IsApproved: {NetworkManager.Singleton.IsApproved} -- IsListening: {NetworkManager.Singleton.IsListening}\nShutdownInProgress: {NetworkManager.Singleton.ShutdownInProgress} -- isHost: {NetworkManager.Singleton.IsHost}");
-        }
-
-    }
-
-
 }

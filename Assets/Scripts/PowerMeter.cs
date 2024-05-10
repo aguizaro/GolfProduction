@@ -90,7 +90,7 @@ public class PowerMeter : MonoBehaviour
     {
         return power.value;
     }
-    
+
     public bool GetShotStatus()
     {
         return playerShot;
