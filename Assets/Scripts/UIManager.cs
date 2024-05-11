@@ -30,6 +30,7 @@ public class UIManager : MonoBehaviour
 
     [SerializeField] private Button _titleStartButton;
     [SerializeField] private Button _titleSettingsButton;
+    [SerializeField] private Button _titleQuitButton;
     [SerializeField] private Camera _mainCamera;
 
     // Lobby UI Elements
@@ -74,7 +75,6 @@ public class UIManager : MonoBehaviour
 
     [Header("Controls UI Elements")]
     [SerializeField] private GameObject _controlsScreenUI;
-    [SerializeField] private Button _controlsApplyButton;
     [SerializeField] private Button _controlsBackButton;
     [Header("Other")]
     [SerializeField] private TMP_Text _holeCountText;
@@ -98,6 +98,7 @@ public class UIManager : MonoBehaviour
         // Title Button Events
         _titleStartButton.onClick.AddListener(TitleStart);
         _titleSettingsButton.onClick.AddListener(TitleSettings);
+        _titleQuitButton.onClick.AddListener(TitleQuit);
 
         // Lobby Button Events
         _createButton.onClick.AddListener(CreateLobby);
@@ -137,6 +138,7 @@ public class UIManager : MonoBehaviour
         EnableUI(UIState.Lobby);
     }
     private void TitleSettings() => EnableSettings();
+    private void TitleQuit() => Application.Quit();
 
     // Lobby UI Methods
     private void PlayNow() => LobbyManager.Instance.PlayNow();
