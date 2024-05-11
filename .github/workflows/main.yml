@@ -10,6 +10,9 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
     steps:
+      # Clean up
+      - name: Delete huge unnecessary tools folder
+        run: rm -rf /opt/hostedtoolcache
       # Checkout
       - name: Checkout repository
         uses: actions/checkout@v4
