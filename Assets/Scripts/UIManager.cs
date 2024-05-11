@@ -76,12 +76,6 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject _controlsScreenUI;
     [SerializeField] private Button _controlsApplyButton;
     [SerializeField] private Button _controlsBackButton;
-    /*
-    [SerializeField] private Button _controlsForwardChangeButton;
-    [SerializeField] private Button _controlsLeftChangeButton;
-    [SerializeField] private Button _controlsBackChangeButton;
-    [SerializeField] private Button _controlsRightChangeButton;
-    */
     [Header("Other")]
     [SerializeField] private TMP_Text _holeCountText;
 
@@ -123,14 +117,7 @@ public class UIManager : MonoBehaviour
         _settingsControlButton.onClick.AddListener(GotoControls);
 
         // Controls Button Events
-        _controlsApplyButton.onClick.AddListener(ApplyControls);
         _controlsBackButton.onClick.AddListener(DisableControls);
-        /*
-        _controlsForwardChangeButton.onClick.AddListener(OnForwardButtonChange);
-        _controlsLeftChangeButton.onClick.AddListener(OnLeftButtonChange);
-        _controlsBackChangeButton.onClick.AddListener(OnBackButtonChange);
-        _controlsRightChangeButton.onClick.AddListener(OnRightButtonChange);
-        */
         //Camera Start Position
         _cameraStartTransform = _mainCamera.transform;
 
@@ -277,31 +264,6 @@ public class UIManager : MonoBehaviour
     public void GotoControls()
     {
         EnableControls();
-    }
-
-    public void ApplyControls()
-    {
-        Debug.Log("Controls applied!");
-    }
-
-    public void OnForwardButtonChange()
-    {
-        Debug.Log("forward");
-    }
-
-    public void OnLeftButtonChange()
-    {
-        Debug.Log("left");
-    }
-
-    public void OnBackButtonChange()
-    {
-        Debug.Log("back");
-    }
-
-    public void OnRightButtonChange()
-    {
-        Debug.Log("Right");
     }
 
     public void EnableUI(UIState state)
