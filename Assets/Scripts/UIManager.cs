@@ -5,12 +5,21 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Localization.Settings;
+using Unity.Netcode;
 
 
 public enum UIState
 {
     Title,
     Lobby,
+    Game,
+}
+public enum MenuState
+{
+    None,
+    Pause,
+    Settings,
+    Control,
 }
 
 public class UIManager : MonoBehaviour
@@ -21,6 +30,7 @@ public class UIManager : MonoBehaviour
 
     [SerializeField] private Button _titleStartButton;
     [SerializeField] private Button _titleSettingsButton;
+    [SerializeField] private Button _titleQuitButton;
     [SerializeField] private Camera _mainCamera;
 
     // Lobby UI Elements
@@ -37,8 +47,6 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button _joinButton;
     [SerializeField] private Button _playButton;
     [SerializeField] private Button _refreshButton;
-
-    [SerializeField] private LobbyManager _lobbyManager;
     private const int maxDisplayLen = 5; //5 lobby slots at a time
 
     // Game UI Elements
@@ -59,8 +67,16 @@ public class UIManager : MonoBehaviour
 
     [SerializeField] private Button _settingsApplyButton;
     [SerializeField] private Button _settingsBackButton;
+    [SerializeField] private Button _settingsControlButton;
     [SerializeField] private Slider _settingsSensitivitySlider;
     [SerializeField] private TMP_Dropdown _settingsLanguageDropdown;
+
+    // Controls UI Elements
+
+    [Header("Controls UI Elements")]
+    [SerializeField] private GameObject _controlsScreenUI;
+    [SerializeField] private Button _controlsBackButton;
+    [Header("Other")]
     [SerializeField] private TMP_Text _holeCountText;
 
     // UIManager instance
@@ -75,12 +91,14 @@ public class UIManager : MonoBehaviour
     public static bool isPaused { get; set; } = false;
     private bool localeActive = false;
     private Transform _cameraStartTransform;
+    private MenuState menuState = MenuState.None;
 
-    private void Awake()
+    private async void Start()
     {
         // Title Button Events
         _titleStartButton.onClick.AddListener(TitleStart);
         _titleSettingsButton.onClick.AddListener(TitleSettings);
+        _titleQuitButton.onClick.AddListener(TitleQuit);
 
         // Lobby Button Events
         _createButton.onClick.AddListener(CreateLobby);
@@ -96,29 +114,39 @@ public class UIManager : MonoBehaviour
         // Settings Button Events
         _settingsApplyButton.onClick.AddListener(ApplySettings);
         _settingsBackButton.onClick.AddListener(DisableSettings);
+        _settingsLanguageDropdown.onValueChanged.AddListener(ApplyLanguage);
+        _settingsControlButton.onClick.AddListener(GotoControls);
 
+        // Controls Button Events
+        _controlsBackButton.onClick.AddListener(DisableControls);
         //Camera Start Position
         _cameraStartTransform = _mainCamera.transform;
 
         instance = this;
 
-        RefreshDisplayList();
         InitializetLanguageDropdown();
+        await LobbyManager.Instance.Authenticate(); //does not block main thread while being atuthenticated
+
+        DisablePause(); DisableSettings(); EnableUI(UIState.Title); // start with title screen
     }
 
-    private void Start() { DisablePause(); DisableSettings(); EnableUI(UIState.Title); }
 
     // Title Screen Methods
-    private void TitleStart() => EnableUI(UIState.Lobby);
+    private void TitleStart()
+    {
+        RefreshDisplayList();
+        EnableUI(UIState.Lobby);
+    }
     private void TitleSettings() => EnableSettings();
+    private void TitleQuit() => Application.Quit();
 
     // Lobby UI Methods
-    private void PlayNow() => _lobbyManager.PlayNow();
-    private void CreateLobby() => _lobbyManager.Create(_inputField.text, 5);
-    private void JoinLobby() => _lobbyManager.Join(joinCode: _inputField.text);
+    private void PlayNow() => LobbyManager.Instance.PlayNow();
+    private void CreateLobby() => LobbyManager.Instance.Create(_inputField.text, 5);
+    private async void JoinLobby() => await LobbyManager.Instance.Join(joinCode: _inputField.text);
 
 
-    public void DeactivateUI() { _lobbyUI.SetActive(false); Debug.Log("Deactivated Lobby UI: " + _lobbyUI.activeSelf); titleScreenMode = false; }
+    public void DeactivateUI() { _lobbyUI.SetActive(false); titleScreenMode = false; }
     public void DeactivateHUD()
     {
         // need thes checks here in case TMPro objects are destroyed during applicatino quit
@@ -131,7 +159,7 @@ public class UIManager : MonoBehaviour
     public void ActivateHUD() { _gamePlayerStrokesText.gameObject.SetActive(true); _holeCountText.gameObject.SetActive(true); _lobbyJoinCodeText.gameObject.SetActive(true); _lobbyNameText.gameObject.SetActive(true); }
     public void DisplayCode(string code) => _lobbyJoinCodeText.text = code;
     public void DisplayLobbyName(string name) => _lobbyNameText.text = name;
-    public async void DisplaySignedIn() => _lobbySignedInText.text = await _lobbyManager.GetPlayerName();
+    public async void DisplaySignedIn() => _lobbySignedInText.text = await LobbyManager.Instance.GetPlayerName();
 
     public string GetInputText() { return _inputField.text; }
     public void DisableUIText()
@@ -145,18 +173,27 @@ public class UIManager : MonoBehaviour
     // Pause UI Methods
     public void EnablePause() { isPaused = true; _pauseScreenUI.SetActive(true); }
     public void DisablePause() { isPaused = false; _pauseScreenUI.SetActive(false); _settingsScreenUI.SetActive(false); }
-    public void EnableSettings() { LoadSettings(); _settingsScreenUI.SetActive(true); }
+    public void EnableSettings() { EnableMenu(MenuState.Settings); }
     public void DisableSettings() { _settingsScreenUI.SetActive(false); if (!titleScreenMode) { EnablePause(); } }
     public void PauseStartSettings() { _pauseScreenUI.SetActive(false); EnableSettings(); }
+    public void EnableControls()
+    {
+        EnableMenu(MenuState.Control);
+    }
+    public void DisableControls()
+    {
+        Debug.Log("Disable Control");
+        EnableMenu(MenuState.Settings);
+    }
 
     // Quit lobby and return to title screen
     private async void QuitLobbyReturnToTitle()
     {
-        await _lobbyManager.TryQuitLobby();
+        await LobbyManager.Instance.TryQuitLobby();
         ReturnToTitle();
     }
 
-    // returns to rile screen
+    // returns to title screen
     public void ReturnToTitle()
     {
         DeactivateHUD();
@@ -208,16 +245,27 @@ public class UIManager : MonoBehaviour
     {
         Debug.Log("Applying settings");
         SettingsData sData = DataManager.instance.GetSettingsData();
+        // apply all settings
         sData.cameraSensitivity = settingsSensitivity;
-        sData.language = language;
+        // language is applied on when it is changed, so do not need to apply it now
 
         DataManager.instance.SetSettingsData(sData);
 
-        Debug.Log("Is Locale active: " + localeActive);
+        DisableSettings();
+    }
+
+    public void ApplyLanguage(int lang)
+    {
+        SettingsData sData = DataManager.instance.GetSettingsData();
+        sData.language = lang;
+        DataManager.instance.SetSettingsData(sData);
 
         if (!localeActive) { StartCoroutine(SetLocale(language)); }
+    }
 
-        DisableSettings();
+    public void GotoControls()
+    {
+        EnableControls();
     }
 
     public void EnableUI(UIState state)
@@ -236,6 +284,26 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    public void EnableMenu(MenuState state)
+    {
+        _settingsScreenUI.SetActive(false);
+        _controlsScreenUI.SetActive(false);
+        menuState = state;
+
+        switch (state)
+        {
+            case MenuState.Settings:
+                LoadSettings();
+                _settingsScreenUI.SetActive(true);
+                break;
+            case MenuState.Control:
+                _controlsScreenUI.SetActive(true);
+                break;
+            default:
+                break;
+        }
+    }
+
     IEnumerator SetLocale(int _localeID)
     {
         Debug.Log("Locale entered: " + _localeID);
@@ -250,7 +318,7 @@ public class UIManager : MonoBehaviour
         try
         {
             ClearDisplayList();
-            List<LobbyEntry> foundLobbies = await _lobbyManager.FindOpenLobbies();
+            List<LobbyEntry> foundLobbies = await LobbyManager.Instance.FindOpenLobbies();
             if (foundLobbies.Count == 0)
             {
                 Debug.Log("No lobbies found");
@@ -283,7 +351,7 @@ public class UIManager : MonoBehaviour
                             delim = "\n";
                         }
 
-                        _lobbyEntries[i].transform.Find("JoinLobbyButton").GetComponent<Button>().onClick.AddListener(() => _lobbyManager.Join(lobbyID: entry.Id)); // join lobby, on button click
+                        _lobbyEntries[i].transform.Find("JoinLobbyButton").GetComponent<Button>().onClick.AddListener(() => HandleJoinLobbyButton(entry)); // join lobby, on button click
                     }
                 }
 
@@ -295,6 +363,25 @@ public class UIManager : MonoBehaviour
         {
             Debug.LogWarning("Error refreshing lobby list: " + e.Message);
         }
+    }
+
+
+    ulong timesPressed = 0;
+    bool isJoining = false;
+
+    private async void HandleJoinLobbyButton(LobbyEntry entry)
+    {
+        Debug.Log($"pressed join button - count : {++timesPressed}");
+
+        if (isJoining) return;
+        isJoining = true;
+
+        Debug.Log($"calling lobbymanager join() with id: {entry.Id}");
+        bool success = await LobbyManager.Instance.Join(lobbyID: entry.Id);
+
+        if (!success) Debug.LogWarning("Failed to join lobby");
+        isJoining = false;
+
     }
 
     public void ClearDisplayList()
@@ -309,7 +396,7 @@ public class UIManager : MonoBehaviour
     public void ResetHUD()
     {
         _gamePlayerStrokesText.text = "0";
-        _holeCountText.text = "1";
+        _holeCountText.text = "0";
 
     }
 
