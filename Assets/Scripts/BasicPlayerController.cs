@@ -331,6 +331,7 @@ public class BasicPlayerController : NetworkBehaviour
     // Sound -------------------------------------------------------------------------------------------------------------
     private void UpdateSound()
     {
+        /*
         Debug.Log("can update sound?");
         // PLay sounds only when player is moving
         if (_rb.velocity.x != 0 || _rb.velocity.z != 0)
@@ -350,6 +351,7 @@ public class BasicPlayerController : NetworkBehaviour
         {
             playerFootsteps.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
         }
+        */
     }
 
     // Input Management -------------------------------------------------------------------------------------------------------------
