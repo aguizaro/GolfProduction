@@ -30,6 +30,7 @@ public class UIManager : MonoBehaviour
 
     [SerializeField] private Button _titleStartButton;
     [SerializeField] private Button _titleSettingsButton;
+    [SerializeField] private Button _titleQuitButton;
     [SerializeField] private Camera _mainCamera;
 
     // Lobby UI Elements
@@ -74,14 +75,7 @@ public class UIManager : MonoBehaviour
 
     [Header("Controls UI Elements")]
     [SerializeField] private GameObject _controlsScreenUI;
-    [SerializeField] private Button _controlsApplyButton;
     [SerializeField] private Button _controlsBackButton;
-    /*
-    [SerializeField] private Button _controlsForwardChangeButton;
-    [SerializeField] private Button _controlsLeftChangeButton;
-    [SerializeField] private Button _controlsBackChangeButton;
-    [SerializeField] private Button _controlsRightChangeButton;
-    */
     [Header("Other")]
     [SerializeField] private TMP_Text _holeCountText;
 
@@ -104,6 +98,7 @@ public class UIManager : MonoBehaviour
         // Title Button Events
         _titleStartButton.onClick.AddListener(TitleStart);
         _titleSettingsButton.onClick.AddListener(TitleSettings);
+        _titleQuitButton.onClick.AddListener(TitleQuit);
 
         // Lobby Button Events
         _createButton.onClick.AddListener(CreateLobby);
@@ -123,14 +118,7 @@ public class UIManager : MonoBehaviour
         _settingsControlButton.onClick.AddListener(GotoControls);
 
         // Controls Button Events
-        _controlsApplyButton.onClick.AddListener(ApplyControls);
         _controlsBackButton.onClick.AddListener(DisableControls);
-        /*
-        _controlsForwardChangeButton.onClick.AddListener(OnForwardButtonChange);
-        _controlsLeftChangeButton.onClick.AddListener(OnLeftButtonChange);
-        _controlsBackChangeButton.onClick.AddListener(OnBackButtonChange);
-        _controlsRightChangeButton.onClick.AddListener(OnRightButtonChange);
-        */
         //Camera Start Position
         _cameraStartTransform = _mainCamera.transform;
 
@@ -150,6 +138,7 @@ public class UIManager : MonoBehaviour
         EnableUI(UIState.Lobby);
     }
     private void TitleSettings() => EnableSettings();
+    private void TitleQuit() => Application.Quit();
 
     // Lobby UI Methods
     private void PlayNow() => LobbyManager.Instance.PlayNow();
@@ -277,31 +266,6 @@ public class UIManager : MonoBehaviour
     public void GotoControls()
     {
         EnableControls();
-    }
-
-    public void ApplyControls()
-    {
-        Debug.Log("Controls applied!");
-    }
-
-    public void OnForwardButtonChange()
-    {
-        Debug.Log("forward");
-    }
-
-    public void OnLeftButtonChange()
-    {
-        Debug.Log("left");
-    }
-
-    public void OnBackButtonChange()
-    {
-        Debug.Log("back");
-    }
-
-    public void OnRightButtonChange()
-    {
-        Debug.Log("Right");
     }
 
     public void EnableUI(UIState state)
