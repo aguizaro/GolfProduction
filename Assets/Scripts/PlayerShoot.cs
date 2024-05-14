@@ -119,10 +119,10 @@ public class PlayerShoot : NetworkBehaviour
             Debug.DrawRay(_projectileInstance.transform.position, dir * _projectileForce, Color.red, 100f);
 
             // Increment the number of strokes and store data
-            _playerController._currentPlayerState.strokes++;
-            _playerNetworkData.StorePlayerState(_playerController._currentPlayerState);
-
-            _uiManager.UpdateStrokesUI(_playerController._currentPlayerState.strokes);
+            PlayerData _currentPlayerData = _playerNetworkData.GetPlayerData();
+            _currentPlayerData.strokes++;
+            _playerNetworkData.StorePlayerState(_currentPlayerData);
+            _uiManager.UpdateStrokesUI(_currentPlayerData.strokes);
         }
 
         // play audio here
