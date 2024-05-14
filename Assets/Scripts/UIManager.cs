@@ -70,6 +70,10 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button _settingsControlButton;
     [SerializeField] private Slider _settingsSensitivitySlider;
     [SerializeField] private TMP_Dropdown _settingsLanguageDropdown;
+    [SerializeField] private Button _settingsColorblindButton;
+    public List<ColorMapping> colorMappings;
+
+
 
     // Controls UI Elements
 
@@ -88,6 +92,7 @@ public class UIManager : MonoBehaviour
     private int language = 0;
 
     public bool titleScreenMode = true;
+    public bool colorBlindEnabled = false;
     public static bool isPaused { get; set; } = false;
     private bool localeActive = false;
     private Transform _cameraStartTransform;
@@ -114,6 +119,7 @@ public class UIManager : MonoBehaviour
         // Settings Button Events
         _settingsApplyButton.onClick.AddListener(ApplySettings);
         _settingsBackButton.onClick.AddListener(DisableSettings);
+        _settingsColorblindButton.onClick.AddListener(ToggleColorblindMode);
         _settingsLanguageDropdown.onValueChanged.AddListener(ApplyLanguage);
         _settingsControlButton.onClick.AddListener(GotoControls);
 
@@ -212,6 +218,31 @@ public class UIManager : MonoBehaviour
     public void SetOneHandModeToggle(bool value) => oneHandMode = value;
     public void SetLanguageDropdown(int value) => language = value;
 
+    public void ToggleColorblindMode()
+    {
+        colorBlindEnabled = !colorBlindEnabled;
+        ApplyColorblindMode();
+    }
+    void ApplyColorblindMode()
+    {
+        foreach (ColorMapping mapping in colorMappings)
+        {
+            if (mapping.uiElement != null)
+            {
+                Image image = mapping.uiElement.GetComponent<Image>();
+                if (image != null)
+                {
+                    image.color = (colorBlindEnabled) ? mapping.colorBlindFriendlyColor : mapping.originalColor;
+                }
+
+                Text text = mapping.uiElement.GetComponent<Text>();
+                if (text != null)
+                {
+                    text.color = (colorBlindEnabled) ? mapping.colorBlindFriendlyColor : mapping.originalColor;
+                }
+            }
+        }
+    }
     private void InitializetLanguageDropdown()
     {
         var currentLocale = LocalizationSettings.SelectedLocale;
