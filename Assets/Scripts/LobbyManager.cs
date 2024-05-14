@@ -781,8 +781,8 @@ public class LobbyManager : MonoBehaviour
     {
         if (isQuitting)
         {
-            Debug.LogWarning("Already Quitting");
-            await Task.Delay(1000); //wait 1 second to allow quit to finish
+            Debug.LogWarning("Already Quitting - waiting for quit to finish");
+            await Task.Delay(2000); //wait 1 second to allow quit to finish
             return;
         }
         isQuitting = true;

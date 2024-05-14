@@ -198,6 +198,7 @@ public class BasicPlayerController : NetworkBehaviour
             flagPole.GetComponent<HoleFlagPoleManager>().Deactivate();
         }
         _ragdollOnOff.Deactivate();
+        _swingManager.Deactivate();
         _inputActionAsset?.FindActionMap("Gameplay").Disable();
     }
 
@@ -436,7 +437,6 @@ public class BasicPlayerController : NetworkBehaviour
             Vector3 movement = new Vector3(_moveInput.x, 0f, _moveInput.y);
             movement = movement.normalized * splayerSpeed * Time.deltaTime;
             _rb.MovePosition(transform.position + transform.TransformDirection(movement));
-            Debug.Log("Player " + OwnerClientId + " pos: " + transform.position);
         }
         else
         {
@@ -501,7 +501,9 @@ public class BasicPlayerController : NetworkBehaviour
     public void ActivateClientRpc()
     {
         if (!IsOwner) return;
+        //freeze player until game is activated
         Activate();
+        //unfreeze player
     }
 
     // spawn functions -------------------------------------------------------------------------------------------------------------

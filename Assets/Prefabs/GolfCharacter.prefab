@@ -346,6 +346,7 @@ GameObject:
   - component: {fileID: 7363029190862775147}
   - component: {fileID: 1651457965969626016}
   - component: {fileID: 3693991727007100362}
+  - component: {fileID: -1082205881769161889}
   m_Layer: 7
   m_Name: GolfCharacter
   m_TagString: Player
@@ -432,7 +433,8 @@ MonoBehaviour:
   _moveSpeed: 2
   _rotationSpeed: 100
   _isSprinting: 0
-  _isActive: 0
+  _ragdollOnOff: {fileID: 0}
+  IsActive: 0
   _moveInput: {x: 0, y: 0}
   _lookInput: {x: 0, y: 0}
   _inputActionAsset: {fileID: 0}
@@ -445,11 +447,13 @@ MonoBehaviour:
   _playerYaw: 0
   targetActionName: Sprint
   _newInputPath: 
+  _testValue: 0
   _forwardPressed: 0
   _backPressed: 0
   _leftPressed: 0
   _rightPressed: 0
-  _strikePressed: 0
+  _swingPressed: 0
+  _ballSpawnPressed: 0
 --- !u!65 &2556599362540292874
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -637,7 +641,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mainCollider: {fileID: -7954830342355126766}
   playerRB: {fileID: 4649621009289334031}
-  playerRig: {fileID: 420073679474077443}
+  playerRig: {fileID: 3923257223769280674}
   _playerNetworkData: {fileID: 0}
 --- !u!114 &1651457965969626016
 MonoBehaviour:
@@ -1607,6 +1611,7 @@ GameObject:
   - component: {fileID: 7435487435503067238}
   - component: {fileID: 8260069696912657166}
   - component: {fileID: 4093046594653024864}
+  - component: {fileID: 3145515847226739010}
   m_Layer: 7
   m_Name: mixamorig:Hips
   m_TagString: Hips

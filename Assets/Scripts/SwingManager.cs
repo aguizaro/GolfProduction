@@ -28,7 +28,7 @@ public class SwingManager : NetworkBehaviour
     private BasicPlayerController _playerController;
     private PlayerNetworkData _playerNetworkData;
     private float swingForce = 50f;
-    private int ragdolled_player_id = -1; // this will be -1 if no ragdolled player is nearby
+    private GameObject ragdolled_player = null; // this will be null if no ragdolled player is nearby
     private GameObject ragdolledPlayer; // Reference to the ragdolled player
 
     [SerializeField] private float verticalAngle = 0.50f;
@@ -86,26 +86,58 @@ public class SwingManager : NetworkBehaviour
         }
 
 
-        // Check if player is already in swing mode and waiting to swing
+        // Check if player is already in swing mode
         if (inSwingMode)
         {
-            if (Input.GetKeyDown(KeyCode.Space)) // Exit swing mode without performing swing
+            // Exit swing mode without performing swing
+            if (Input.GetKeyDown(KeyCode.Space))
             {
                 ExitSwingMode();
+                return;
             }
-            else if (powerMeterRef.GetShotStatus() == true && waitingForSwing) // Perform swing
+
+            // Check if the ragdolled player has gotten up
+            if (ragdolled_player != null)
             {
-                // Start swing animation, when the club is halfway through the swing it will call PerformSwing()
+                if (ragdolled_player.GetComponent<BasicPlayerController>().enabled)
+                {
+
+                    ragdolled_player = null;
+                    ExitSwingMode();
+                }
+                // otherwise if player shoots, perform swing on player
+                else if (powerMeterRef.GetShotStatus() == true && waitingForSwing)
+                {
+                    Debug.Log("PerformSwing() on ownerID " + ragdolled_player.GetComponent<NetworkObject>().OwnerClientId + " from client " + NetworkManager.Singleton.LocalClientId);
+                    playerAnimator.SetTrigger("Swing");
+                    playerAnimator.ResetTrigger("Stance");
+
+                    PerformSwingOnPlayer();
+                }
+            }
+            else if (powerMeterRef.GetShotStatus() == true && waitingForSwing)
+            {
+                // Start swing animation, when the club is halfway through the swing it will call PerformSwing() - from the animation event
                 playerAnimator.SetTrigger("Swing");
                 playerAnimator.ResetTrigger("Stance");
             }
-            return; // Don't execute further logic if waiting for swing
+
+            return; // Don't execute further logic
         }
 
         // Check for input to enter swing mode - prioritize swing mode on ragdolled players (short circuit evaluation)
-        if (!inSwingMode && Input.GetKeyDown(KeyCode.Space) && (isCloseToRagdolledPlayer() || IsCloseToBall()))
+        if (!inSwingMode && Input.GetKeyDown(KeyCode.Space))
         {
-            StartSwingMode();
+
+            if (isCloseToRagdolledPlayer())
+            {
+                Debug.Log("Update(): Close to ragdolled player - Starting swing mode on player: " + ragdolled_player != null ? ragdolled_player : "null");
+                StartSwingMode();
+            }
+            else if (IsCloseToBall())
+            {
+                StartSwingMode();
+            }
         }
 
         if (Input.GetKeyDown(KeyCode.F) && (thisBall != null))
@@ -124,6 +156,7 @@ public class SwingManager : NetworkBehaviour
 
     bool IsCloseToBall()
     {
+        Debug.Log("Checking is close to ball");
         // Checks if the player is close enough to the ball and looking at it
         if (thisBall == null) return false;
 
@@ -140,6 +173,7 @@ public class SwingManager : NetworkBehaviour
     // finds nearby players and checks if they are ragdolled - returns true if a ragdolled player is found and sets the ragdolled_player_id
     bool isCloseToRagdolledPlayer()
     {
+        Debug.Log("Checking is close to ragdolled player");
         //find nearby players
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
         foreach (GameObject player in players)
@@ -152,15 +186,16 @@ public class SwingManager : NetworkBehaviour
                 {
                     if (distance <= 2f)
                     {
-                        ragdolled_player_id = (int)player.GetComponent<NetworkObject>().OwnerClientId;
+                        setRagdolledPlayerServerRpc((int)player.GetComponent<NetworkObject>().OwnerClientId);
                         ragdolledPlayer = player;
+                        Debug.Log("isCloseToRagdolledPlayer(): Ragdolled player found: " + ragdolled_player != null ? ragdolled_player : "null");
                         return true;
                     }
                 }
 
             }
         }
-        ragdolled_player_id = -1;
+        setRagdolledPlayerServerRpc(-1);
         ragdolledPlayer = null;
         return false;
     }
@@ -199,13 +234,15 @@ public class SwingManager : NetworkBehaviour
     IEnumerator MovePlayerToStancePos()
     {
         Vector3 targetPosition;
-        if (ragdolled_player_id != -1 && ragdolledPlayer != null) // move target pos to ragdolled player if nearby
+        if (ragdolledPlayer != null) // move target pos to ragdolled player if nearby
         {
             targetPosition = ragdolledPlayer.transform.position + (-playerTransform.forward * 0.12f) + playerTransform.right * -.75f;
+            Debug.Log("Moving to ragdolled player");
         }
         else // move taget pos to player's ball if no ragdolled player nearby
         {
             targetPosition = thisBall.transform.position + (-playerTransform.forward * 0.12f) + playerTransform.right * -.75f;
+            Debug.Log("Moving to ball");
 
         }
 
@@ -247,21 +284,22 @@ public class SwingManager : NetworkBehaviour
         playerTransform.position = targetPosition;
     }
 
-    void WaitingForSwing()  // Called by the animation event in Stance animation
+    void WaitingForSwing()  // Called by the animation event in Stance animation - not called from code
     {
         waitingForSwing = true;
     }
-    void PerformSwing()     // Called by the animation event in Swing animation
+    void PerformSwing()     // Called by the animation event in Swing animation - not called from code
     {
         if (!IsOwner) return;
-        if (ragdolled_player_id != -1)
+        if (ragdolled_player != null)
         {
-            PerformSwingOnPlayer();
+            // still need to reset triggers since performSwingonPlayer does not exit swing mode (swing on player is handled in Update())
+            ExitSwingMode();
+            return;
         }
-        else
-        {
-            PerformSwingOnBall();
-        }
+
+        Debug.Log("PerformSwing() on ball");
+        PerformSwingOnBall();
     }
 
     void PerformSwingOnBall()
@@ -284,19 +322,14 @@ public class SwingManager : NetworkBehaviour
             _uiManager.UpdateStrokesUI(_currentPlayerData.strokes);
         }
 
-        // Set camera to default state
-        cameraFollowScript.SetSwingState(false);
-
-        // Unlock player controls
-        inSwingMode = false;
-
         ExitSwingMode();
 
     }
 
-
     void PerformSwingOnPlayer()
     {
+        if (!IsOwner) return;
+
         // set waitingForSwing to false to exit swing mode after animations finished
         waitingForSwing = false;
 
@@ -308,10 +341,10 @@ public class SwingManager : NetworkBehaviour
         Debug.Log("force dir: " + dir);
         Debug.Log("force vector: " + swingForceVector);
         //ask the ragdolled player to add force on themselves
-        if (ragdolled_player_id != -1)
+        if (ragdolled_player != null)
         {
-            Debug.Log("PerformSwingOnPlayer() on ownerID " + ragdolled_player_id + " from client " + NetworkManager.Singleton.LocalClientId);
-            AddForceToPlayerServerRpc(swingForceVector, (ulong)ragdolled_player_id);
+            Debug.Log("PerformSwingOnPlayer() on ownerID " + ragdolled_player.GetComponent<NetworkObject>().OwnerClientId + " from client " + NetworkManager.Singleton.LocalClientId);
+            AddForceToPlayerServerRpc(swingForceVector, ragdolled_player.GetComponent<NetworkObject>().OwnerClientId);
         }
         //AddForceToPlayerServerRpc(swingForceVector);
 
@@ -325,13 +358,6 @@ public class SwingManager : NetworkBehaviour
             _uiManager.UpdateStrokesUI(_currentPlayerData.strokes);
         }
 
-        // Set camera to default state
-        cameraFollowScript.SetSwingState(false);
-
-        // Unlock player controls
-        inSwingMode = false;
-
-        ExitSwingMode();
     }
 
     // Exit swing state without performing swing
@@ -410,6 +436,12 @@ public class SwingManager : NetworkBehaviour
     [ServerRpc]
     private void AddForceToPlayerServerRpc(Vector3 force, ulong playerID)
     {
+        AddForceToPlayerClientRpc(force, playerID);
+    }
+
+    [ClientRpc]
+    private void AddForceToPlayerClientRpc(Vector3 force, ulong playerID)
+    {
         //get player object of ragdolled player
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
         foreach (GameObject player in players)
@@ -421,6 +453,32 @@ public class SwingManager : NetworkBehaviour
         }
     }
 
+    [ServerRpc]
+    private void setRagdolledPlayerServerRpc(int playerID)
+    {
+        setRagdolledPlayerClientRpc(playerID);
+    }
+
+    [ClientRpc]
+    private void setRagdolledPlayerClientRpc(int playerID)
+    {
+        if (playerID == -1)
+        {
+            ragdolled_player = null;
+            return;
+        }
+
+        //get player object of ragdolled player
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        foreach (GameObject player in players)
+        {
+            if (player.GetComponent<NetworkObject>().OwnerClientId == (ulong)playerID)
+            {
+                ragdolled_player = player;
+                Debug.Log("setRagdolledPlayerClientRpc(): Ragdolled player set to " + ragdolled_player != null ? ragdolled_player.GetComponent<NetworkObject>().OwnerClientId : "null");
+            }
+        }
+    }
 
 
 
