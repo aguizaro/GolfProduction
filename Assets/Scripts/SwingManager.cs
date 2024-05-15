@@ -65,7 +65,7 @@ public class SwingManager : NetworkBehaviour
         _isActive = false;
     }
 
-    void Start()
+    public override void OnNetworkSpawn()
     {
         powerMeter = GetComponentInChildren<Slider>();
         powerMeterRef = meterCanvas.GetComponent<PowerMeter>();

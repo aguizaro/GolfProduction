@@ -58,11 +58,7 @@ public class BasicPlayerController : NetworkBehaviour
     public bool _leftPressed;
     public bool _rightPressed;
     public bool _swingPressed;
-    public UnityEvent swingStartedEvent;
-    public UnityEvent swingCanceledEvent;
     public bool _ballSpawnExitSwingPressed;
-    public UnityEvent ballSpawnExitSwingStartedEvent;
-    public UnityEvent ballSpawnExitSwingCanceledEvent;
     [Header("Action Checkers")]
     public bool isStriking;
 
