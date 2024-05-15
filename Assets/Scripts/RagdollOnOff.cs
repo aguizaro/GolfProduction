@@ -33,6 +33,7 @@ public class RagdollOnOff : NetworkBehaviour
         delay = getUpDelay;
 
 
+        // activate and immediately deactivate ragdoll - jank fix
         foreach (Collider col in ragdollColliders)
         {
             col.enabled = false;
@@ -41,7 +42,13 @@ public class RagdollOnOff : NetworkBehaviour
         {
             if (rb != playerRB) rb.isKinematic = true;
         }
+
+        _playerAnimator.enabled = true;
+        _basicPlayerController.enabled = true;
         mainCollider.enabled = true;
+        playerRB.isKinematic = false;
+        isRagdoll = false;
+        playerRB.useGravity = true;
     }
 
     public void Deactivate() => isActive = false;
@@ -173,28 +180,36 @@ public class RagdollOnOff : NetworkBehaviour
     }
 
     // Collision Detection ------------------------------------------------------------------------------------------------------------
+
+    // we might only need ontriggerstay - but it needs testing
     private void OnTriggerStay(Collider other)
     {
+        Debug.Log("OnTriggerStay: " + other.gameObject.name);
         RagdollTrigger(other);
     }
     private void OnTriggerEnter(Collider other)
     {
+        Debug.Log("OnTriggerEnter: " + other.gameObject.name);
         RagdollTrigger(other);
     }
     private void OnTriggerExit(Collider other)
     {
+        Debug.Log("OnTriggerExit: " + other.gameObject.name);
         RagdollTrigger(other);
     }
 
     // called by trigger events
     private void RagdollTrigger(Collider other)
     {
+        Debug.Log("RagdollTrigger: " + other.gameObject.name + " isRagdoll: " + isRagdoll + " isOwner: " + IsOwner);
         if (isRagdoll) return; // don't detect collisions while in ragdoll mode
         if (other.gameObject.CompareTag("Player"))
         {
             if (!isRagdoll && other.gameObject.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
             {
+                Debug.Log("RagdollTrigger: got hit by player strike");
                 if (!IsOwner) return;
+                Debug.Log("RagdollTrigger: Owner - perform ragdoll");
                 PerformRagdoll();
             }
         }
