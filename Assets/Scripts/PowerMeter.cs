@@ -10,15 +10,25 @@ public class PowerMeter : MonoBehaviour
     private Slider power;
     public float changeSpeed = 1.0f;
     private bool increasing = true;
-    private bool mouseDown = false;
-    private bool playerShot = false;
+    [SerializeField] private bool _mouseDown = false;
+    public bool MouseDown
+    {
+        get { return _mouseDown; }
+        set { _mouseDown = value; }
+    }
+    [SerializeField] private bool _playerShot = false;
+    public bool PlayerShot
+    {
+        get { return _playerShot; }
+        set { _playerShot = value; }
+    }
     private Image handleImage;
 
     void OnEnable()
     {
         increasing = true;
-        mouseDown = false;
-        playerShot = false;
+        _mouseDown = false;
+        _playerShot = false;
         power = GetComponentInChildren<Slider>();
         power.value = 0;
     }
@@ -49,22 +59,7 @@ public class PowerMeter : MonoBehaviour
 
     void Update()
     {
-
-        if (Input.GetMouseButton(0))
-        {
-            mouseDown = true;
-        }
-        else
-        {
-            mouseDown = false;
-
-        }
-        if (Input.GetMouseButtonUp(0))
-        {
-            playerShot = true;
-        }
-
-        if (power != null && mouseDown && !playerShot)
+        if (power != null && _mouseDown && !_playerShot)
         {
             if (increasing)
             {
@@ -93,6 +88,6 @@ public class PowerMeter : MonoBehaviour
 
     public bool GetShotStatus()
     {
-        return playerShot;
+        return _playerShot;
     }
 }
