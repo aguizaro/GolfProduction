@@ -75,6 +75,7 @@ public class SwingManager : NetworkBehaviour
 
         _playerNetworkData = GetComponent<PlayerNetworkData>();
         _playerController = GetComponent<BasicPlayerController>();
+        if (!IsOwner) return;
         RegisterActions();
     }
     public void RegisterActions()
