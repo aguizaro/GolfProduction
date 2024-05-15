@@ -860,6 +860,11 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    public void ResetQuit()
+    {
+        quitDone = false;
+    }
+
 
     // Client/Server Methods --------------------------------------------------------------------------------------------------------------
     private async Task<bool> StartHost()
@@ -893,6 +898,8 @@ public class LobbyManager : MonoBehaviour
 
             if (ConnectedLobby == null) throw new Exception("No lobby connected");
             if (NetworkManager.Singleton.IsClient) throw new Exception($"NetManager clientID: {NetworkManager.Singleton.LocalClientId} is already a client");
+
+            Debug.Log("Joining Allocation: " + ConnectedLobby.Data[RelayJoinCodeKey].Value + " connectedLobby: " + ConnectedLobby.Name + " connectedLobby id: " + ConnectedLobby.Id);
 
             JoinAllocation allocation = await RelayService.Instance.JoinAllocationAsync(ConnectedLobby.Data[RelayJoinCodeKey].Value);
             // configure unity tranport to use websockets for webGL support

@@ -134,6 +134,7 @@ public class UIManager : MonoBehaviour
     // Title Screen Methods
     private void TitleStart()
     {
+        LobbyManager.Instance.ResetQuit();
         RefreshDisplayList();
         EnableUI(UIState.Lobby);
     }
