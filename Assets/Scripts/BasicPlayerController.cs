@@ -68,6 +68,7 @@ public class BasicPlayerController : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        Debug.Log("OnNetworkSpawn: " + OwnerClientId + " isOwner: " + IsOwner + " Is local player: " + IsLocalPlayer + " Is server: " + IsServer + " Is client: " + IsClient + " localclientID: " + NetworkManager.Singleton.LocalClientId);
         _rb = gameObject.GetComponent<Rigidbody>();
         _animator = GetComponent<Animator>();
         _playerHat = GetComponent<PlayerHatController>();
@@ -109,9 +110,26 @@ public class BasicPlayerController : NetworkBehaviour
 
         if (!IsOwner) return;
 
+        //handle player falling through the map
+        if (transform.position.y < 40)
+        {
+            Debug.Log("Player " + OwnerClientId + " fell through the map");
+            _rb.useGravity = false;
+            _rb.velocity = Vector3.zero;
+
+            if (!IsActive) SpawnInPreLobby();
+            else transform.position = new Vector3(390 + OwnerClientId * 2, 69.5f, 321); //spawn in first hole
+
+            Debug.Log("Player " + OwnerClientId + " respawn at " + transform.position);
+
+            _rb.useGravity = true;
+        }
+
         //prevent updates until player is fully activated
         if (!IsActive)
         {
+
+
             // activate game for all players if host presses space in pre-game lobby
             if (IsServer && Input.GetKeyDown(KeyCode.P))
             {
@@ -197,7 +215,18 @@ public class BasicPlayerController : NetworkBehaviour
         }
         _ragdollOnOff.Deactivate();
         _swingManager.Deactivate();
+
+        if (!IsOwner) return;
+
+        gameplayActionMap["Pause"].started -= HandlePauseStarted;
+        gameplayActionMap["Sprint"].started -= HandleSprintStarted;
+        gameplayActionMap["Sprint"].canceled -= HandleSprintCanceled;
+        gameplayActionMap["Swing"].started -= HandleSwingStarted;
+        gameplayActionMap["Swing"].canceled -= HandleSwingCanceled;
+        gameplayActionMap["Ball Spawn/Exit Swing"].started -= HandleBallSpawnExitSwingStarted;
+        gameplayActionMap["Ball Spawn/Exit Swing"].canceled -= HandleBallSpawnExitSwingCanceled;
         _inputActionAsset?.FindActionMap("Gameplay").Disable();
+        _inputActionAsset?.FindActionMap("UI").Disable();
     }
 
     public override void OnDestroy()
@@ -381,6 +410,8 @@ public class BasicPlayerController : NetworkBehaviour
     }
     public void HandlePauseStarted(InputAction.CallbackContext ctx)
     {
+        Debug.Log("Pause button pressed");
+
         //Copied from the previous version
         if (!UIManager.isPaused)
         {
@@ -388,6 +419,7 @@ public class BasicPlayerController : NetworkBehaviour
             UIManager.instance.EnablePause();
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+            Debug.Log("Pause! isPaused : " + UIManager.isPaused + " Cursor Lock State : " + Cursor.lockState + " Cursor Visible : " + Cursor.visible);
         }
         else
         {
@@ -395,6 +427,7 @@ public class BasicPlayerController : NetworkBehaviour
             UIManager.instance.DisablePause();
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
+            Debug.Log("Unpause! isPaused : " + UIManager.isPaused + " Cursor Lock State : " + Cursor.lockState + " Cursor Visible : " + Cursor.visible);
         }
     }
 
@@ -432,9 +465,14 @@ public class BasicPlayerController : NetworkBehaviour
     public void ActivateClientRpc()
     {
         if (!IsOwner) return;
-        //freeze player until game is activated
+
+        if (_swingManager == null) _swingManager = GetComponent<SwingManager>();
+        if (_swingManager.isInSwingState()) _swingManager.ExitSwingMode();
+
+        DisableInput();
+
         Activate();
-        //unfreeze player
+        EnableInput();
     }
 
     // spawn functions -------------------------------------------------------------------------------------------------------------
@@ -443,6 +481,5 @@ public class BasicPlayerController : NetworkBehaviour
         if (!IsOwner) return;
 
         _rb.MovePosition(new Vector3(94.2f + OwnerClientId * 2, 100.5f, -136.3f));//space players out by 2 units each
-        Debug.Log("Player " + OwnerClientId + " spawned at " + transform.position);
     }
 }

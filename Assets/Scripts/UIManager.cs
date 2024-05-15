@@ -36,7 +36,7 @@ public class UIManager : MonoBehaviour
     // Lobby UI Elements
     [Header("Lobby UI Elements")]
     [SerializeField] private GameObject _lobbyUI;
-    [SerializeField] private GameObject[] _lobbyEntries;
+    [SerializeField] private GameObject[] _lobbyEntries; //slots for displaying lobbies
     [SerializeField] private TMP_Text _lobbyJoinCodeText;
     [SerializeField] private TMP_Text _lobbyNameText;
     [SerializeField] private TMP_Text _lobbySignedInText;
@@ -134,6 +134,7 @@ public class UIManager : MonoBehaviour
     // Title Screen Methods
     private void TitleStart()
     {
+        LobbyManager.Instance.ResetQuit();
         RefreshDisplayList();
         EnableUI(UIState.Lobby);
     }
@@ -141,9 +142,24 @@ public class UIManager : MonoBehaviour
     private void TitleQuit() => Application.Quit();
 
     // Lobby UI Methods
-    private void PlayNow() => LobbyManager.Instance.PlayNow();
-    private void CreateLobby() => LobbyManager.Instance.Create(_inputField.text, 5);
-    private async void JoinLobby() => await LobbyManager.Instance.Join(joinCode: _inputField.text);
+    private async void PlayNow()
+    {
+        DisableAllLobbyButtons();
+        await LobbyManager.Instance.PlayNow();
+        EnableAllLobbyButtons();
+    }
+    private async void CreateLobby()
+    {
+        DisableAllLobbyButtons();
+        await LobbyManager.Instance.Create(_inputField.text, 5);
+        EnableAllLobbyButtons();
+    }
+    private async void JoinLobby()
+    {
+        DisableAllLobbyButtons();
+        await LobbyManager.Instance.Join(joinCode: _inputField.text);
+        EnableAllLobbyButtons();
+    }
 
 
     public void DeactivateUI() { _lobbyUI.SetActive(false); titleScreenMode = false; }
@@ -371,16 +387,19 @@ public class UIManager : MonoBehaviour
 
     private async void HandleJoinLobbyButton(LobbyEntry entry)
     {
-        Debug.Log($"pressed join button - count : {++timesPressed}");
+        Debug.Log($"pressed join button - count : {++timesPressed} - lobbyID: {entry.Id} lobbyName: {entry.Name}");
 
         if (isJoining) return;
         isJoining = true;
+        DisableAllLobbyButtons();
 
-        Debug.Log($"calling lobbymanager join() with id: {entry.Id}");
+
+        Debug.Log($"calling lobbymanager join() with id: {entry.Id} and name: {entry.Name}");
         bool success = await LobbyManager.Instance.Join(lobbyID: entry.Id);
 
         if (!success) Debug.LogWarning("Failed to join lobby");
         isJoining = false;
+        EnableAllLobbyButtons();
 
     }
 
@@ -389,7 +408,36 @@ public class UIManager : MonoBehaviour
         // reset lobby display list
         foreach (GameObject entry in _lobbyEntries)
         {
+            //remove all listeners
+            entry.transform.Find("JoinLobbyButton").GetComponent<Button>().onClick.RemoveAllListeners();
+            //disable entry
             entry.SetActive(false);
+        }
+    }
+
+    private void DisableAllLobbyButtons()
+    {
+        _createButton.enabled = false;
+        _joinButton.enabled = false;
+        _playButton.enabled = false;
+        _refreshButton.enabled = false;
+
+        foreach (GameObject entry in _lobbyEntries)
+        {
+            entry.transform.Find("JoinLobbyButton").GetComponent<Button>().enabled = false;
+        }
+    }
+
+    private void EnableAllLobbyButtons()
+    {
+        _createButton.enabled = true;
+        _joinButton.enabled = true;
+        _playButton.enabled = true;
+        _refreshButton.enabled = true;
+
+        foreach (GameObject entry in _lobbyEntries)
+        {
+            entry.transform.Find("JoinLobbyButton").GetComponent<Button>().enabled = true;
         }
     }
 
