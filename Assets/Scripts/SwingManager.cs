@@ -63,6 +63,7 @@ public class SwingManager : NetworkBehaviour
     public void Deactivate()
     {
         _isActive = false;
+        if (IsOwner) UnregisterActions();
     }
 
     public override void OnNetworkSpawn()
@@ -84,6 +85,13 @@ public class SwingManager : NetworkBehaviour
         _playerController.gameplayActionMap["Swing"].canceled += HandleSwingCanceled;
         _playerController.gameplayActionMap["Ball Spawn/Exit Swing"].started += HandleBallSpawnExitSwingStarted;
         _playerController.gameplayActionMap["Ball Spawn/Exit Swing"].canceled += HandleBallSpawnExitSwingCanceled;
+    }
+    public void UnregisterActions()
+    {
+        _playerController.gameplayActionMap["Swing"].started -= HandleSwingStarted;
+        _playerController.gameplayActionMap["Swing"].canceled -= HandleSwingCanceled;
+        _playerController.gameplayActionMap["Ball Spawn/Exit Swing"].started -= HandleBallSpawnExitSwingStarted;
+        _playerController.gameplayActionMap["Ball Spawn/Exit Swing"].canceled -= HandleBallSpawnExitSwingCanceled;
     }
     // Update is called once per frame
     void Update()

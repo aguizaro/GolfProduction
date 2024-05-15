@@ -193,6 +193,13 @@ public class BasicPlayerController : NetworkBehaviour
         }
         _ragdollOnOff.Deactivate();
         _swingManager.Deactivate();
+        gameplayActionMap["Pause"].started -= HandlePauseStarted;
+        gameplayActionMap["Sprint"].started -= HandleSprintStarted;
+        gameplayActionMap["Sprint"].canceled -= HandleSprintCanceled;
+        gameplayActionMap["Swing"].started -= HandleSwingStarted;
+        gameplayActionMap["Swing"].canceled -= HandleSwingCanceled;
+        gameplayActionMap["Ball Spawn/Exit Swing"].started -= HandleBallSpawnExitSwingStarted;
+        gameplayActionMap["Ball Spawn/Exit Swing"].canceled -= HandleBallSpawnExitSwingCanceled;
         _inputActionAsset?.FindActionMap("Gameplay").Disable();
     }
 
