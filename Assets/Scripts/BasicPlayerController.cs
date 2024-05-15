@@ -5,6 +5,7 @@ using Unity.Netcode;
 using UnityEngine.InputSystem;
 using Unity.VisualScripting;
 using UnityEngine.Video;
+using UnityEngine.Events;
 
 // Needs: simple way to deactivate everything on game over / game exit, so players can play again without having to re-launch the game
 public class BasicPlayerController : NetworkBehaviour
@@ -28,7 +29,6 @@ public class BasicPlayerController : NetworkBehaviour
     private PlayerData _currentPlayerState;
     private PlayerNetworkData _playerNetworkData;
     public RagdollOnOff _ragdollOnOff;
-    private bool _canMove = true;
 
     // Animation
     private Animator _animator;
@@ -43,26 +43,28 @@ public class BasicPlayerController : NetworkBehaviour
     // Activation
     public bool IsActive = false;
 
-#if ENABLE_INPUT_SYSTEM
     [Header("For Input System Only")]
+    public bool canInput = true;
     public Vector2 _moveInput;
     public Vector2 _lookInput;
     public const float _inputThreshold = 0.001f;
     public InputActionAsset _inputActionAsset;
-    public InputActionMap _gameplayActionMap = new InputActionMap();
+    public InputActionMap gameplayActionMap = new InputActionMap();
     public float _playerYaw = 0f;
-    public InputActionRebindingExtensions.RebindingOperation _rebindingOperation;
-    public string targetActionName = "Sprint";
-    public string _newInputPath;
-    public int _testValue = 0;
-#endif
+
     [Header("Hybrid Variables For Both Input Systems")]
     public bool _forwardPressed;
     public bool _backPressed;
     public bool _leftPressed;
     public bool _rightPressed;
     public bool _swingPressed;
-    public bool _ballSpawnPressed;
+    public UnityEvent swingStartedEvent;
+    public UnityEvent swingCanceledEvent;
+    public bool _ballSpawnExitSwingPressed;
+    public UnityEvent ballSpawnExitSwingStartedEvent;
+    public UnityEvent ballSpawnExitSwingCanceledEvent;
+    [Header("Action Checkers")]
+    public bool isStriking;
 
     public override void OnNetworkSpawn()
     {
@@ -78,23 +80,22 @@ public class BasicPlayerController : NetworkBehaviour
         //_playerHat.RandomizeHatTexture();
         if (!IsOwner) return;
 
-#if ENABLE_INPUT_SYSTEM
         #region Input Actions Initialization
         _inputActionAsset = _inputActionAsset ?? Resources.Load<InputActionAsset>("InputActionAsset/Actions");
         _inputActionAsset.Enable();
-        _gameplayActionMap = _inputActionAsset.FindActionMap("Gameplay", throwIfNotFound: true);
-        _gameplayActionMap.Enable();
+        gameplayActionMap = _inputActionAsset.FindActionMap("Gameplay", throwIfNotFound: true);
+        gameplayActionMap.Enable();
         _inputActionAsset.FindActionMap("UI").Disable();
 
-        _gameplayActionMap["Pause"].started += HandlePauseStarted;
-        _gameplayActionMap["Sprint"].started += HandleSprintStarted;
-        _gameplayActionMap["Sprint"].canceled += HandleSprintCanceled;
-        _gameplayActionMap["Swing"].started += HandleSwingStarted;
-        _gameplayActionMap["Swing"].canceled += HandleSwingCanceled;
-        _gameplayActionMap["Ball Spawn/Exit Swing"].started += HandleBallSpawnStarted;
-        _gameplayActionMap["Ball Spawn/Exit Swing"].canceled += HandleBallSpawnCanceled;
+        gameplayActionMap["Pause"].started += HandlePauseStarted;
+        gameplayActionMap["Sprint"].started += HandleSprintStarted;
+        gameplayActionMap["Sprint"].canceled += HandleSprintCanceled;
+        gameplayActionMap["Swing"].started += HandleSwingStarted;
+        gameplayActionMap["Swing"].canceled += HandleSwingCanceled;
+        gameplayActionMap["Ball Spawn/Exit Swing"].started += HandleBallSpawnExitSwingStarted;
+        gameplayActionMap["Ball Spawn/Exit Swing"].canceled += HandleBallSpawnExitSwingCanceled;
         #endregion
-#endif
+
         // activate player controller - controller will activate the player movement, animations, shooting and ragdoll
         //_playerHat.RandomizeHatTexture();
         //_playerHatMeshId = _playerHat.GetCurrentMeshId();
@@ -134,10 +135,7 @@ public class BasicPlayerController : NetworkBehaviour
         }
 
         Animate();
-        if (_canMove)
-        {
-            Movement();
-        }
+        Movement();
     }
 
     // Activation -------------------------------------------------------------------------------------------------------------
@@ -217,32 +215,9 @@ public class BasicPlayerController : NetworkBehaviour
         if (UIManager.isPaused) { return; }
         else { if (!UIManager.instance.titleScreenMode) { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; } }
 
-#if ENABLE_INPUT_SYSTEM
         InputSystemRotation();
         InputSystemMovement();
-#else
-        float moveHorizontal = Input.GetAxis("Horizontal");
-        float moveVertical = Input.GetAxis("Vertical");
-        float rotationInput = Input.GetAxis("Mouse X");
-        _isSprinting = Input.GetKey(KeyCode.LeftShift) && moveVertical > 0; //sprinting only allowed when moving forward
-        PlayerMovement(moveHorizontal, moveVertical, rotationInput);
-#endif
         //AfterMoveStateUpdate();
-    }
-
-    private void PlayerMovement(float moveHorizontal, float moveVertical, float rotationInput)
-    {
-
-        float splayerSpeed = _isSprinting ? _moveSpeed * _sprintMultiplier : _moveSpeed;
-
-        Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
-        movement = movement.normalized * splayerSpeed * Time.deltaTime;
-
-        _rb.MovePosition(transform.position + transform.TransformDirection(movement));
-
-        float rotationAmount = rotationInput * _rotationSpeed * Time.deltaTime;
-        Quaternion deltaRotation = Quaternion.Euler(0f, rotationAmount, 0f);
-        _rb.MoveRotation(_rb.rotation * deltaRotation);
     }
 
     // Animation -------------------------------------------------------------------------------------------------------------
@@ -256,29 +231,17 @@ public class BasicPlayerController : NetworkBehaviour
         bool isStrafingRight = _animator.GetBool("isRight");
         bool isWalking = _animator.GetBool("isWalking");
         bool isReversing = _animator.GetBool("isReversing");
-        bool isStriking = _animator.GetBool("isStriking");
-#if ENABLE_INPUT_SYSTEM
-#else
-        _forwardPressed = Input.GetKey("w") || Input.GetKey("up");
-        _backPressed = Input.GetKey("s") || Input.GetKey("down");
-        _rightPressed = Input.GetKey("d") || Input.GetKey("right");
-        _leftPressed = Input.GetKey("a") || Input.GetKey("left");
-        _swingPressed = Input.GetKeyDown("e");
-#endif
+        isStriking = _animator.GetBool("isStriking");
 
 
         if (UIManager.isPaused) { return; }
 
         if (IsOwner)
         {
-#if ENABLE_INPUT_SYSTEM
-            _moveInput = _gameplayActionMap["Move"].ReadValue<Vector2>().normalized;
+            _moveInput = canInput ? gameplayActionMap["Move"].ReadValue<Vector2>().normalized : Vector2.zero;
             _animator.SetFloat("moveX", _moveInput.x);
             _animator.SetFloat("moveY", _moveInput.y);
-#else
-            _animator.SetFloat("moveX", 0f);
-            _animator.SetFloat("moveY", 0f);
-#endif
+
             if (_forwardPressed && !isWalking)
             {
                 _animator.SetBool("isWalking", true);
@@ -323,37 +286,6 @@ public class BasicPlayerController : NetworkBehaviour
             {
                 _animator.SetBool("isRight", false);
             }
-
-            if (_swingPressed && !isStriking)
-            {
-                _animator.SetBool("isStriking", true);
-                _animator.SetBool("justStriked", true);
-                DisableInput();
-            }
-
-            if (isStriking)
-            {
-                if (!_swingPressed)
-                {
-                    _animator.SetBool("justStriked", false);
-                }
-                if (_animator.GetCurrentAnimatorStateInfo(0).IsName("Strike") && !_animator.IsInTransition(0))
-                {
-                    // Check if the current animation is the "Strike" animation and not in transition
-                    if (_animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 0.7f)
-                    {
-                        // The strike animation has finished playing
-                        _animator.SetBool("isStriking", false);
-                        EnableInput();
-                    }
-                }
-                else if (_animator.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
-                {
-                    // If the current state is "Idle", reset isStriking and enable input
-                    _animator.SetBool("isStriking", false);
-                    EnableInput();
-                }
-            }
         }
     }
 
@@ -362,26 +294,24 @@ public class BasicPlayerController : NetworkBehaviour
 
     public void DisableInput()
     {
-#if ENABLE_INPUT_SYSTEM
         _inputActionAsset?.FindActionMap("Gameplay", false).Disable();
         _inputActionAsset?.FindActionMap("UI", false).Enable();
-#endif
+
         _animator.SetBool("isWalking", false);
         _animator.SetBool("isRunning", false);
         _animator.SetBool("isLeft", false);
         _animator.SetBool("isRight", false);
         _animator.SetBool("isReversing", false);
         //_animator.SetBool("isStriking", false);
-        _canMove = false;
+        canInput = false;
     }
 
     public void EnableInput()
     {
-#if ENABLE_INPUT_SYSTEM
         _inputActionAsset?.FindActionMap("Gameplay", false).Enable();
         _inputActionAsset?.FindActionMap("UI", false).Disable();
-#endif
-        _canMove = true;
+
+        canInput = true;
     }
 
     // State Management -------------------------------------------------------------------------------------------------------------
@@ -395,7 +325,7 @@ public class BasicPlayerController : NetworkBehaviour
     #region  Input Actions Functions
     public void InputSystemRotation()
     {
-        _lookInput = _gameplayActionMap["Look"].ReadValue<Vector2>();
+        _lookInput = canInput ? gameplayActionMap["Look"].ReadValue<Vector2>() : Vector2.zero;
         if (_lookInput.sqrMagnitude > _inputThreshold)
         {
             float deltaTimeMultiplier = 0f;
@@ -425,6 +355,7 @@ public class BasicPlayerController : NetworkBehaviour
     }
     public void InputSystemMovement()
     {
+
         float splayerSpeed = _isSprinting ? _moveSpeed * _sprintMultiplier : _moveSpeed;
         if (_moveInput.sqrMagnitude > _inputThreshold)
         {
@@ -484,13 +415,13 @@ public class BasicPlayerController : NetworkBehaviour
     {
         _swingPressed = false;
     }
-    public void HandleBallSpawnStarted(InputAction.CallbackContext ctx)
+    public void HandleBallSpawnExitSwingStarted(InputAction.CallbackContext ctx)
     {
-        _ballSpawnPressed = true;
+        _ballSpawnExitSwingPressed = true;
     }
-    public void HandleBallSpawnCanceled(InputAction.CallbackContext ctx)
+    public void HandleBallSpawnExitSwingCanceled(InputAction.CallbackContext ctx)
     {
-        _ballSpawnPressed = false;
+        _ballSpawnExitSwingPressed = false;
     }
     #endregion
 

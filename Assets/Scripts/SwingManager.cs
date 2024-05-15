@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Unity.Netcode;
+using UnityEngine.Events;
+using UnityEngine.InputSystem;
 
 public class SwingManager : NetworkBehaviour
 {
@@ -17,7 +19,7 @@ public class SwingManager : NetworkBehaviour
 
     private Slider powerMeter;
     private PowerMeter powerMeterRef;
-
+    private Coroutine playerMoveCoroutine;
     private float startSwingMaxDistance = 1.6f;   // The distance the player can be from their ball to start swing mode
     [SerializeField]
     private bool inSwingMode = false;
@@ -73,51 +75,29 @@ public class SwingManager : NetworkBehaviour
 
         _playerNetworkData = GetComponent<PlayerNetworkData>();
         _playerController = GetComponent<BasicPlayerController>();
+        RegisterActions();
     }
-
+    public void RegisterActions()
+    {
+        _playerController.gameplayActionMap["Swing"].started += HandleSwingStarted;
+        _playerController.gameplayActionMap["Swing"].canceled += HandleSwingCanceled;
+        _playerController.gameplayActionMap["Ball Spawn/Exit Swing"].started += HandleBallSpawnExitSwingStarted;
+        _playerController.gameplayActionMap["Ball Spawn/Exit Swing"].canceled += HandleBallSpawnExitSwingCanceled;
+    }
     // Update is called once per frame
     void Update()
     {
-        if (!_isActive) return;
-
-        if (!IsOwner || !isActiveAndEnabled)
-        {
-            return;
-        }
-
 
         // Check if player is already in swing mode and waiting to swing
         if (inSwingMode)
         {
-            if (Input.GetKeyDown(KeyCode.Space)) // Exit swing mode without performing swing
-            {
-                ExitSwingMode();
-            }
-            else if (powerMeterRef.GetShotStatus() == true && waitingForSwing) // Perform swing
+            if (powerMeterRef.PlayerShot && waitingForSwing) // Perform swing
             {
                 // Start swing animation, when the club is halfway through the swing it will call PerformSwing()
                 playerAnimator.SetTrigger("Swing");
                 playerAnimator.ResetTrigger("Stance");
             }
             return; // Don't execute further logic if waiting for swing
-        }
-
-        // Check for input to enter swing mode - prioritize swing mode on ragdolled players (short circuit evaluation)
-        if (!inSwingMode && Input.GetKeyDown(KeyCode.Space) && (isCloseToRagdolledPlayer() || IsCloseToBall()))
-        {
-            StartSwingMode();
-        }
-
-        if (Input.GetKeyDown(KeyCode.F) && (thisBall != null))
-        {
-            ReturnBallToPlayer();
-
-            if (!_playerController.IsActive) return; // do not count strokes if the player is in pre-game lobby
-
-            PlayerData _currentPlayerData = _playerNetworkData.GetPlayerData();
-            _currentPlayerData.strokes++;
-            _playerNetworkData.StorePlayerState(_currentPlayerData);
-            _uiManager.UpdateStrokesUI(_currentPlayerData.strokes);
         }
 
     }
@@ -188,12 +168,15 @@ public class SwingManager : NetworkBehaviour
         inSwingMode = true;
 
         // Lock player controls
-        _playerController.DisableInput();
+        _playerController.canInput = false;
 
         // Set camera to swing state
         cameraFollowScript.SetSwingState(true);
 
-        StartCoroutine(MovePlayerToStancePos());
+        if (playerMoveCoroutine == null)
+        {
+            playerMoveCoroutine = StartCoroutine(MovePlayerToStancePos());
+        }
     }
 
     IEnumerator MovePlayerToStancePos()
@@ -344,13 +327,16 @@ public class SwingManager : NetworkBehaviour
         // Allow ball to roll again
         //enableRotation();
 
-        _playerController.EnableInput();
+        _playerController.canInput = true;
         cameraFollowScript.SetSwingState(false);
         // Make sure its no longer waiting for swing
         waitingForSwing = false;
 
         playerAnimator.ResetTrigger("Swing");
         playerAnimator.ResetTrigger("Stance");
+        playerAnimator.CrossFade("Idle", 0.1f);
+        StopCoroutine(playerMoveCoroutine);
+        playerMoveCoroutine = null;
     }
 
 
@@ -486,6 +472,66 @@ public class SwingManager : NetworkBehaviour
         thisBall.transform.position = destination;
     }
 
+    #region  For New Input System
+    public void HandleSwingStarted(InputAction.CallbackContext ctx)
+    {
+        if (!_isActive || !IsOwner || !isActiveAndEnabled)
+            return;
+        if (inSwingMode)
+        {
+            //TODO: do swing start logic here
+            powerMeterRef.MouseDown = true;
+        }
+        else if (isCloseToRagdolledPlayer() || IsCloseToBall())
+        {
+            //TODO: do enter swing mode logic here
+            StartSwingMode();
+        }
+        else
+        {
+            //TODO: do strike start logic here
+            if (!_playerController.isStriking)
+            {
+                playerAnimator.SetBool("isStriking", true);
+                playerAnimator.SetBool("justStriked", true);
+            }
+        }
+    }
+    public void HandleSwingCanceled(InputAction.CallbackContext ctx)
+    {
+        if (!_isActive || !IsOwner || !isActiveAndEnabled)
+            return;
+        if (inSwingMode && powerMeterRef.MouseDown)
+        {
+            //TODO: do swing logic here
+            powerMeterRef.MouseDown = false;
+            powerMeterRef.PlayerShot = true;
+        }
+    }
+    public void HandleBallSpawnExitSwingStarted(InputAction.CallbackContext ctx)
+    {
+        if (!_isActive || !IsOwner || !isActiveAndEnabled)
+            return;
+        if (inSwingMode)
+        {
+            ExitSwingMode();
+        }
+        else if (thisBall != null)
+        {
+            ReturnBallToPlayer();
 
+            if (!_playerController.IsActive) return; // do not count strokes if the player is in pre-game lobby
 
+            PlayerData _currentPlayerData = _playerNetworkData.GetPlayerData();
+            _currentPlayerData.strokes++;
+            _playerNetworkData.StorePlayerState(_currentPlayerData);
+            _uiManager.UpdateStrokesUI(_currentPlayerData.strokes);
+        }
+    }
+    public void HandleBallSpawnExitSwingCanceled(InputAction.CallbackContext ctx)
+    {
+        if (!_isActive || !IsOwner || !isActiveAndEnabled)
+            return;
+    }
+    #endregion
 }
