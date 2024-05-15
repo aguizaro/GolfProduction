@@ -87,6 +87,8 @@ public class SwingManager : NetworkBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (!_isActive || !IsOwner || !isActiveAndEnabled)
+            return;
 
         // Check if player is already in swing mode
         if (inSwingMode)
