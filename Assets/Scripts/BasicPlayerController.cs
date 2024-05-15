@@ -68,6 +68,7 @@ public class BasicPlayerController : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        Debug.Log("OnNetworkSpawn: " + OwnerClientId + " isOwner: " + IsOwner + " Is local player: " + IsLocalPlayer + " Is server: " + IsServer + " Is client: " + IsClient + " localclientID: " + NetworkManager.Singleton.LocalClientId);
         _rb = gameObject.GetComponent<Rigidbody>();
         _animator = GetComponent<Animator>();
         _playerHat = GetComponent<PlayerHatController>();
@@ -197,7 +198,18 @@ public class BasicPlayerController : NetworkBehaviour
         }
         _ragdollOnOff.Deactivate();
         _swingManager.Deactivate();
+
+        if (!IsOwner) return;
+
+        _gameplayActionMap["Pause"].started -= HandlePauseStarted;
+        _gameplayActionMap["Sprint"].started -= HandleSprintStarted;
+        _gameplayActionMap["Sprint"].canceled -= HandleSprintCanceled;
+        _gameplayActionMap["Swing"].started -= HandleSwingStarted;
+        _gameplayActionMap["Swing"].canceled -= HandleSwingCanceled;
+        _gameplayActionMap["Ball Spawn/Exit Swing"].started -= HandleBallSpawnStarted;
+        _gameplayActionMap["Ball Spawn/Exit Swing"].canceled -= HandleBallSpawnCanceled;
         _inputActionAsset?.FindActionMap("Gameplay").Disable();
+        _inputActionAsset?.FindActionMap("UI").Disable();
     }
 
     public override void OnDestroy()
@@ -381,6 +393,8 @@ public class BasicPlayerController : NetworkBehaviour
     }
     public void HandlePauseStarted(InputAction.CallbackContext ctx)
     {
+        Debug.Log("Pause button pressed");
+
         //Copied from the previous version
         if (!UIManager.isPaused)
         {
@@ -388,6 +402,7 @@ public class BasicPlayerController : NetworkBehaviour
             UIManager.instance.EnablePause();
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+            Debug.Log("Pause! isPaused : " + UIManager.isPaused + " Cursor Lock State : " + Cursor.lockState + " Cursor Visible : " + Cursor.visible);
         }
         else
         {
@@ -395,6 +410,7 @@ public class BasicPlayerController : NetworkBehaviour
             UIManager.instance.DisablePause();
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
+            Debug.Log("Unpause! isPaused : " + UIManager.isPaused + " Cursor Lock State : " + Cursor.lockState + " Cursor Visible : " + Cursor.visible);
         }
     }
 
@@ -443,6 +459,5 @@ public class BasicPlayerController : NetworkBehaviour
         if (!IsOwner) return;
 
         _rb.MovePosition(new Vector3(94.2f + OwnerClientId * 2, 100.5f, -136.3f));//space players out by 2 units each
-        Debug.Log("Player " + OwnerClientId + " spawned at " + transform.position);
     }
 }

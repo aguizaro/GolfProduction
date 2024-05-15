@@ -69,6 +69,7 @@ public class LobbyManager : MonoBehaviour
     private bool subscribedToNetworkManagerEvents = false;
 
     private bool isQuitting = false;
+    private bool quitDone = false;
 
     // Authentication --------------------------------------------------------------------------------------------------------------
     public async Task Authenticate(string playerName = null)
@@ -211,7 +212,7 @@ public class LobbyManager : MonoBehaviour
 
 
     // Play Now --------------------------------------------------------------------------------------------------------------
-    public async void PlayNow()
+    public async Task PlayNow()
     {
         try
         {
@@ -363,7 +364,7 @@ public class LobbyManager : MonoBehaviour
 
 
     // Create --------------------------------------------------------------------------------------------------------------
-    public async void Create(string lobbyName, int lobbySize)
+    public async Task Create(string lobbyName, int lobbySize)
     {
         try
         {
@@ -474,6 +475,8 @@ public class LobbyManager : MonoBehaviour
     {
         if (ConnectedLobbyyEvents != null)
         {
+            Debug.Log("Unsubscribing from lobby events");
+            StopAllCoroutines();
             ConnectedLobbyyEvents.Callbacks.LobbyChanged -= OnLobbyChanged;
             ConnectedLobbyyEvents.Callbacks.PlayerJoined -= OnPlayerJoined;
             ConnectedLobbyyEvents.Callbacks.PlayerLeft -= OnPlayerLeft;
@@ -757,7 +760,14 @@ public class LobbyManager : MonoBehaviour
     private async void OnApplicationQuit()
     {
         Debug.LogWarning("Application Quit: trying to exit");
-        await TryQuitLobby();
+        // failsafe if application quits before PlayerExit() can finish
+        // dont need to bother to quit gracefully if the applicaiton is shutting down, 
+        // just make sure to delete lobby for host and leave lobby for non-hosts
+        if (ConnectedLobby != null)
+        {
+            if (ConnectedLobby.HostId == _playerId) await LobbyService.Instance.DeleteLobbyAsync(ConnectedLobby.Id);
+            else await Lobbies.Instance.RemovePlayerAsync(ConnectedLobby.Id, _playerId);
+        }
     }
 
     private async Task PlayerExit()
@@ -779,18 +789,21 @@ public class LobbyManager : MonoBehaviour
 
     public async Task TryQuitLobby()
     {
+        if (quitDone) return;
+
         if (isQuitting)
         {
-            Debug.LogWarning("Already Quitting - waiting for quit to finish");
-            await Task.Delay(2000); //wait 1 second to allow quit to finish
+            Debug.Log("Already Quitting - waiting for quit to finish");
+            await WaitForQuit();
+            Debug.Log("WaitForQuit: Finished");
             return;
         }
+
         isQuitting = true;
+        Debug.Log("TryQuit: NetworkManager.Singleton.IsConnectedClient: " + NetworkManager.Singleton.IsConnectedClient + "\nTryQuit: NetworkManager.Singleton.IsClient: " + NetworkManager.Singleton.IsClient + "\nTryQuit: NetworkManager.Singleton.IsApproved" + NetworkManager.Singleton.IsApproved + "\nTryQuit: NetworkManager.Singleton.IsListening" + NetworkManager.Singleton.IsListening);
 
         if (ConnectedLobbyyEvents != null) await UnsubscribeFromLobbyEvents();
         if (subscribedToNetworkManagerEvents) UnsubscribeFromNetworkManagerEvents();
-
-        Debug.Log("TryQuit: NetworkManager.Singleton.IsConnectedClient: " + NetworkManager.Singleton.IsConnectedClient + "\nTryQuit: NetworkManager.Singleton.IsClient: " + NetworkManager.Singleton.IsClient + "\nTryQuit: NetworkManager.Singleton.IsApproved" + NetworkManager.Singleton.IsApproved + "\nTryQuit: NetworkManager.Singleton.IsListening" + NetworkManager.Singleton.IsListening);
 
         if (ConnectedLobby != null)
         {
@@ -810,6 +823,8 @@ public class LobbyManager : MonoBehaviour
         {
             NetworkManager.Singleton.Shutdown();
         }
+        quitDone = true;
+        Debug.Log("Quit Done");
 
     }
 
@@ -819,9 +834,6 @@ public class LobbyManager : MonoBehaviour
         try
         {
             if (ConnectedLobby == null) return;
-
-            StopAllCoroutines();
-            if (ConnectedLobbyyEvents != null) await ConnectedLobbyyEvents.UnsubscribeAsync();
 
             if (ConnectedLobby.HostId == _playerId) await LobbyService.Instance.DeleteLobbyAsync(ConnectedLobby.Id);
             ConnectedLobby = null;
@@ -835,6 +847,18 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    private async Task WaitForQuit()
+    {
+        float tick = 0;
+        while (!quitDone)
+        {
+
+            tick += Time.deltaTime;
+            if (tick > 7) throw new Exception("WaitForQuit: Reached max timeout of 7 seconds");
+
+            await Task.Yield();
+        }
+    }
 
 
     // Client/Server Methods --------------------------------------------------------------------------------------------------------------
@@ -907,9 +931,9 @@ public class LobbyManager : MonoBehaviour
     private void SubscribeToNetworkManagerEvents()
     {
         NetworkManager.Singleton.OnTransportFailure += OnTransportFailure;
-        NetworkManager.Singleton.OnServerStarted += OnServerStarted;
+        //NetworkManager.Singleton.OnServerStarted += OnServerStarted;
         NetworkManager.Singleton.OnClientStarted += OnClientStarted;
-        NetworkManager.Singleton.OnServerStopped += OnServerStopped;
+        //NetworkManager.Singleton.OnServerStopped += OnServerStopped;
         NetworkManager.Singleton.OnClientStopped += OnClientStopped;
         NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
         NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnect;
@@ -919,10 +943,11 @@ public class LobbyManager : MonoBehaviour
 
     private void UnsubscribeFromNetworkManagerEvents()
     {
+        Debug.Log("Unsubscribing from NetManager Events");
         NetworkManager.Singleton.OnTransportFailure -= OnTransportFailure;
-        NetworkManager.Singleton.OnServerStarted -= OnServerStarted;
+        //NetworkManager.Singleton.OnServerStarted -= OnServerStarted;
         NetworkManager.Singleton.OnClientStarted -= OnClientStarted;
-        NetworkManager.Singleton.OnServerStopped -= OnServerStopped;
+        //NetworkManager.Singleton.OnServerStopped -= OnServerStopped;
         NetworkManager.Singleton.OnClientStopped -= OnClientStopped;
         NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
         NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnect;
@@ -938,21 +963,21 @@ public class LobbyManager : MonoBehaviour
 
     }
 
-    private void OnServerStarted()
-    {
-        Debug.Log("NetManagerEvent: Server Started");
-    }
+    // private void OnServerStarted()
+    // {
+    //     Debug.Log("NetManagerEvent: Server Started");
+    // }
 
     private void OnClientStarted()
     {
         Debug.Log("NetManagerEvent: Client Started: " + NetworkManager.Singleton.LocalClientId);
     }
 
-    private async void OnServerStopped(bool wasHost)
-    {
-        Debug.LogWarning("NetManagerEvent: Server Stopped - wasHost: " + wasHost);
-        await PlayerExit();
-    }
+    // private async void OnServerStopped(bool wasHost)
+    // {
+    //     Debug.LogWarning("NetManagerEvent: Server Stopped - wasHost: " + wasHost);
+    //     await PlayerExit();
+    // }
 
     private async void OnClientStopped(bool wasHost)
     {
