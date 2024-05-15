@@ -20,6 +20,7 @@ public class SwingManager : NetworkBehaviour
     private Slider powerMeter;
     private PowerMeter powerMeterRef;
     private Coroutine playerMoveCoroutine;
+
     private float startSwingMaxDistance = 1.6f;   // The distance the player can be from their ball to start swing mode
     [SerializeField]
     private bool inSwingMode = false;
@@ -79,6 +80,7 @@ public class SwingManager : NetworkBehaviour
         if (!IsOwner) return;
         RegisterActions();
     }
+
     public void RegisterActions()
     {
         _playerController.gameplayActionMap["Swing"].started += HandleSwingStarted;
@@ -102,7 +104,33 @@ public class SwingManager : NetworkBehaviour
         // Check if player is already in swing mode
         if (inSwingMode)
         {
-            if (powerMeterRef.PlayerShot && waitingForSwing) // Perform swing
+            // Exit swing mode without performing swing
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                ExitSwingMode();
+                return;
+            }
+
+            // Check if the ragdolled player has gotten up
+            if (ragdolled_player != null)
+            {
+                if (ragdolled_player.GetComponent<BasicPlayerController>().enabled)
+                {
+
+                    ragdolled_player = null;
+                    ExitSwingMode();
+                }
+                // otherwise if player shoots, perform swing on player
+                else if (powerMeterRef.GetShotStatus() == true && waitingForSwing)
+                {
+                    Debug.Log("PerformSwing() on ownerID " + ragdolled_player.GetComponent<NetworkObject>().OwnerClientId + " from client " + NetworkManager.Singleton.LocalClientId);
+                    playerAnimator.SetTrigger("Swing");
+                    playerAnimator.ResetTrigger("Stance");
+
+                    PerformSwingOnPlayer();
+                }
+            }
+            else if (powerMeterRef.GetShotStatus() == true && waitingForSwing)
             {
                 // Start swing animation, when the club is halfway through the swing it will call PerformSwing() - from the animation event
                 playerAnimator.SetTrigger("Swing");
@@ -110,6 +138,33 @@ public class SwingManager : NetworkBehaviour
             }
 
             return; // Don't execute further logic
+        }
+
+        // Check for input to enter swing mode - prioritize swing mode on ragdolled players (short circuit evaluation)
+        if (!inSwingMode && Input.GetKeyDown(KeyCode.Space))
+        {
+
+            if (isCloseToRagdolledPlayer())
+            {
+                Debug.Log("Update(): Close to ragdolled player - Starting swing mode on player: " + ragdolled_player != null ? ragdolled_player : "null");
+                StartSwingMode();
+            }
+            else if (IsCloseToBall())
+            {
+                StartSwingMode();
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.F) && (thisBall != null))
+        {
+            ReturnBallToPlayer();
+
+            if (!_playerController.IsActive) return; // do not count strokes if the player is in pre-game lobby
+
+            PlayerData _currentPlayerData = _playerNetworkData.GetPlayerData();
+            _currentPlayerData.strokes++;
+            _playerNetworkData.StorePlayerState(_currentPlayerData);
+            _uiManager.UpdateStrokesUI(_currentPlayerData.strokes);
         }
 
     }
@@ -340,6 +395,7 @@ public class SwingManager : NetworkBehaviour
 
         playerAnimator.ResetTrigger("Swing");
         playerAnimator.ResetTrigger("Stance");
+
         playerAnimator.CrossFade("Idle", 0.1f);
         StopCoroutine(playerMoveCoroutine);
         playerMoveCoroutine = null;
@@ -537,8 +593,7 @@ public class SwingManager : NetworkBehaviour
     }
     public void HandleSwingCanceled(InputAction.CallbackContext ctx)
     {
-        if (!_isActive || !IsOwner || !isActiveAndEnabled)
-            return;
+        if (!_isActive || !IsOwner || !isActiveAndEnabled) return;
         if (inSwingMode && powerMeterRef.MouseDown)
         {
             //TODO: do swing logic here
@@ -568,8 +623,8 @@ public class SwingManager : NetworkBehaviour
     }
     public void HandleBallSpawnExitSwingCanceled(InputAction.CallbackContext ctx)
     {
-        if (!_isActive || !IsOwner || !isActiveAndEnabled)
-            return;
+        if (!_isActive || !IsOwner || !isActiveAndEnabled) return;
     }
     #endregion
+
 }

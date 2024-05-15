@@ -48,7 +48,7 @@ public class PlayerHatController : NetworkBehaviour
         meshes = serializedMeshDictionary.ToDictionary();
         textures = serializedTextureDictionary.ToDictionary();
 
-        SetHatConfig(GetRandomHatMeshID(), GetRandomHatTextureID());
+        //SetHatConfig(GetRandomHatMeshID(), GetRandomHatTextureID());
     }
     public override void OnDestroy()
     {
