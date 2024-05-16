@@ -79,6 +79,9 @@ public class UIManager : MonoBehaviour
     [Header("Other")]
     [SerializeField] private TMP_Text _holeCountText;
 
+    [SerializeField] private TMP_Text _directionsTextP;
+    [SerializeField] private TMP_Text _directionsTextL;
+
     // UIManager instance
     public static UIManager instance { get; private set; }
 
@@ -244,6 +247,19 @@ public class UIManager : MonoBehaviour
         }
 
 
+    }
+
+    // temp ui to activate directions text
+    public void ActivateDirections(bool isHost)
+    {
+        if (isHost) _directionsTextP.gameObject.SetActive(true);
+        _directionsTextL.gameObject.SetActive(true);
+    }
+    // temp ui to deactivate directions text
+    public void DeactivateDirections()
+    {
+        _directionsTextP.gameObject.SetActive(false);
+        _directionsTextL.gameObject.SetActive(false);
     }
 
     public void LoadSettings()
