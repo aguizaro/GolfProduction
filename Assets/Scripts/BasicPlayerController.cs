@@ -160,6 +160,8 @@ public class BasicPlayerController : NetworkBehaviour
 
     public void Activate()
     {
+        if (IsOwner) UIManager.instance.DeactivateDirections(); // deactivate directions UI when game starts (only want this to happen once - so we check if player is owner)
+
         _playerNetworkData = GetComponent<PlayerNetworkData>();
         _ragdollOnOff._playerNetworkData = _playerNetworkData;
 

@@ -79,6 +79,9 @@ public class UIManager : MonoBehaviour
     [Header("Other")]
     [SerializeField] private TMP_Text _holeCountText;
 
+    [SerializeField] private TMP_Text _directionsTextP;
+    [SerializeField] private TMP_Text _directionsTextL;
+
     // UIManager instance
     public static UIManager instance { get; private set; }
 
@@ -172,7 +175,13 @@ public class UIManager : MonoBehaviour
         _lobbyJoinCodeText.gameObject.SetActive(false);
         _lobbyNameText.gameObject.SetActive(false);
     }
-    public void ActivateHUD() { _gamePlayerStrokesText.gameObject.SetActive(true); _holeCountText.gameObject.SetActive(true); _lobbyJoinCodeText.gameObject.SetActive(true); _lobbyNameText.gameObject.SetActive(true); }
+    public void ActivateHUD()
+    {
+        _gamePlayerStrokesText.gameObject.SetActive(true);
+        _holeCountText.gameObject.SetActive(true);
+        _lobbyJoinCodeText.gameObject.SetActive(true);
+        _lobbyNameText.gameObject.SetActive(true);
+    }
     public void DisplayCode(string code) => _lobbyJoinCodeText.text = code;
     public void DisplayLobbyName(string name) => _lobbyNameText.text = name;
     public async void DisplaySignedIn() => _lobbySignedInText.text = await LobbyManager.Instance.GetPlayerName();
@@ -239,8 +248,19 @@ public class UIManager : MonoBehaviour
                 _settingsLanguageDropdown.value = i;
             }
         }
+    }
 
+    // temp ui to activate directions text
+    public void ActivateDirections(bool isHost)
+    {
+        if (isHost) _directionsTextP.gameObject.SetActive(true);
+        _directionsTextL.gameObject.SetActive(true);
+    }
 
+    public void DeactivateDirections()
+    {
+        _directionsTextP.gameObject.SetActive(false);
+        _directionsTextL.gameObject.SetActive(false);
     }
 
     public void LoadSettings()
