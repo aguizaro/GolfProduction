@@ -131,10 +131,11 @@ public class UIManager : MonoBehaviour
 
         instance = this;
 
-        InitializetLanguageDropdown();
+        LoadSettings();
         await LobbyManager.Instance.Authenticate(); //does not block main thread while being atuthenticated
 
         DisablePause(); DisableSettings(); EnableUI(UIState.Title); // start with title screen
+
     }
 
 
@@ -244,10 +245,10 @@ public class UIManager : MonoBehaviour
             if (locales[i] == currentLocale)
             {
                 _settingsLanguageDropdown.value = i;
+                ApplyLanguage(i);
+                break;
             }
         }
-
-
     }
 
     // temp ui to activate directions text
@@ -288,7 +289,15 @@ public class UIManager : MonoBehaviour
         language = sData.language;
 
         _settingsSensitivitySlider.value = settingsSensitivity;
-        //_settingsLanguageDropdown.value = language;
+        _settingsLanguageDropdown.value = language;
+        if(sData.playTimes == 0)
+        {
+            InitializetLanguageDropdown();
+        }
+        else
+        {
+            ApplyLanguage(language);
+        }
     }
 
     public void ApplySettings()

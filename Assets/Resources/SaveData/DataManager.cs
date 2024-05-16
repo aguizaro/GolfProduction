@@ -19,11 +19,12 @@ public class DataManager : MonoBehaviour
         }
         instance = this;
         DontDestroyOnLoad(gameObject);
+        LoadData();
     }
 
     private void Start()
     {
-        LoadData();
+        
     }
 
     public void NewSettingsData()

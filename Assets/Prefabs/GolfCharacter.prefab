@@ -437,25 +437,24 @@ MonoBehaviour:
   _isSprinting: 0
   _ragdollOnOff: {fileID: 0}
   IsActive: 0
+  canInput: 1
   _moveInput: {x: 0, y: 0}
   _lookInput: {x: 0, y: 0}
   _inputActionAsset: {fileID: 0}
-  _gameplayActionMap:
+  gameplayActionMap:
     m_Name: Gameplay
-    m_Id: 1bf001f3-233a-4eb5-a860-7165977c1f6b
+    m_Id: 76199dff-c15d-47da-8452-b7ffae7c2beb
     m_Asset: {fileID: 0}
     m_Actions: []
     m_Bindings: []
   _playerYaw: 0
-  targetActionName: Sprint
-  _newInputPath: 
-  _testValue: 0
   _forwardPressed: 0
   _backPressed: 0
   _leftPressed: 0
   _rightPressed: 0
   _swingPressed: 0
-  _ballSpawnPressed: 0
+  _ballSpawnExitSwingPressed: 0
+  isStriking: 0
 --- !u!65 &2556599362540292874
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -645,6 +644,7 @@ MonoBehaviour:
   playerRB: {fileID: 4649621009289334031}
   playerRig: {fileID: 3923257223769280674}
   _playerNetworkData: {fileID: 0}
+  alreadyLaunched: 0
 --- !u!114 &1651457965969626016
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1552,6 +1552,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   changeSpeed: 1
+  _mouseDown: 0
+  _playerShot: 0
 --- !u!1 &3327979605996604102
 GameObject:
   m_ObjectHideFlags: 0
