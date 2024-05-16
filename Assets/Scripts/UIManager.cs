@@ -79,6 +79,10 @@ public class UIManager : MonoBehaviour
     [Header("Other")]
     [SerializeField] private TMP_Text _holeCountText;
 
+    [SerializeField] private TMP_Text _directionsTextP;
+    [SerializeField] private TMP_Text _directionsTextL;
+    [SerializeField] private TMP_Text _winnerText;
+
     // UIManager instance
     public static UIManager instance { get; private set; }
 
@@ -205,7 +209,7 @@ public class UIManager : MonoBehaviour
         EnableMenu(MenuState.Settings);
     }
 
-    // Quit lobby and return to title screen
+    // IN THE FUTURE: USE "await LobbyManager.Instance.PlayerExit()" - then ReturnToTitle() will not be necessary here
     private async void QuitLobbyReturnToTitle()
     {
         await LobbyManager.Instance.TryQuitLobby();
@@ -244,6 +248,33 @@ public class UIManager : MonoBehaviour
         }
 
 
+    }
+
+    // temp ui to activate directions text
+    public void ActivateDirections(bool isHost)
+    {
+        if (isHost) _directionsTextP.gameObject.SetActive(true);
+        _directionsTextL.gameObject.SetActive(true);
+    }
+    // temp ui to deactivate directions text
+    public void DeactivateDirections()
+    {
+        _directionsTextP.gameObject.SetActive(false);
+        _directionsTextL.gameObject.SetActive(false);
+    }
+
+    //temp ui to activate winner text
+    public void ActivateWinner(string winner)
+    {
+        Debug.Log("Activating winner text on " + NetworkManager.Singleton.LocalClientId + " with: " + winner);
+        _winnerText.text = winner;
+        _winnerText.gameObject.SetActive(true);
+    }
+    // temp ui to deactivate winner text
+    public void DeactivateWinner()
+    {
+        _winnerText.text = "";
+        _winnerText.gameObject.SetActive(false);
     }
 
     public void LoadSettings()

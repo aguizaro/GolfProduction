@@ -188,7 +188,7 @@ public class NetworkEnemyController : NetworkBehaviour
             if (target.gameObject == attackTarget)
             {
                 // if player is ragdolled, break and try to find another target
-                if (!target.GetComponent<BasicPlayerController>().enabled)
+                if (target.GetComponent<RagdollOnOff>().IsRagdoll())
                 {
                     attackTarget = null;
                     break;
@@ -201,7 +201,7 @@ public class NetworkEnemyController : NetworkBehaviour
         {
             if (target.CompareTag("Player"))
             {
-                if (!target.GetComponent<BasicPlayerController>().enabled)
+                if (target.GetComponent<RagdollOnOff>().IsRagdoll())
                 { // dont set player as target if player is ragdolled
                     return false;
                 }
@@ -343,17 +343,17 @@ public class NetworkEnemyController : NetworkBehaviour
 
         if (other.gameObject.CompareTag("Player"))
         {
-            if(attackTarget != null && attackTarget != other.gameObject && other.GetComponent<BasicPlayerController>().enabled)
+            if (attackTarget != null && attackTarget != other.gameObject && !other.GetComponent<RagdollOnOff>().IsRagdoll())
             {
                 attackTarget = other.gameObject;
             }
 
-            if (other.GetComponent<BasicPlayerController>().enabled && other.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
+            if (!other.GetComponent<RagdollOnOff>().IsRagdoll() && other.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
             {
                 if (!IsOwner) return;
                 DeadStateServerRpc();
             }
-            
+
         }
     }
 
@@ -394,7 +394,7 @@ public class NetworkEnemyController : NetworkBehaviour
         float attackRange = characterStats.attackData.attackRange + 1f;
         float attackAngle = 60f;
         int numberOfRays = 100;
-        Vector3 origin = transform.TransformPoint(new Vector3(0, 0.5f, -1f)); 
+        Vector3 origin = transform.TransformPoint(new Vector3(0, 0.5f, -1f));
         float startAngle = -attackAngle;
         float angleIncrement = attackAngle * 2 / numberOfRays;
         HashSet<GameObject> hitTargets = new HashSet<GameObject>();

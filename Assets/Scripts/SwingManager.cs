@@ -5,6 +5,8 @@ using UnityEngine.UI;
 using Unity.Netcode;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
+using System.Threading.Tasks;
+using NUnit.Framework;
 
 public class SwingManager : NetworkBehaviour
 {
@@ -105,17 +107,13 @@ public class SwingManager : NetworkBehaviour
         // Check if player is already in swing mode
         if (inSwingMode)
         {
-            // Exit swing mode without performing swing
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                ExitSwingMode();
-                return;
-            }
+            //check if input is enabled - input is enabled when player unpauses game - this prevents player from moving while in swing mode
+            if (_playerController.canInput) _playerController.DisableInput();
 
             // Check if the ragdolled player has gotten up
             if (ragdolled_player != null)
             {
-                if (ragdolled_player.GetComponent<BasicPlayerController>().enabled)
+                if (!ragdolled_player.GetComponent<RagdollOnOff>().IsRagdoll())
                 {
 
                     ragdolled_player = null;
@@ -141,33 +139,6 @@ public class SwingManager : NetworkBehaviour
             return; // Don't execute further logic
         }
 
-        // Check for input to enter swing mode - prioritize swing mode on ragdolled players (short circuit evaluation)
-        if (!inSwingMode && Input.GetKeyDown(KeyCode.Space))
-        {
-
-            if (isCloseToRagdolledPlayer())
-            {
-                Debug.Log("Update(): Close to ragdolled player - Starting swing mode on player: " + ragdolled_player != null ? ragdolled_player : "null");
-                StartSwingMode();
-            }
-            else if (IsCloseToBall())
-            {
-                StartSwingMode();
-            }
-        }
-
-        if (Input.GetKeyDown(KeyCode.F) && (thisBall != null))
-        {
-            ReturnBallToPlayer();
-
-            if (!_playerController.IsActive) return; // do not count strokes if the player is in pre-game lobby
-
-            PlayerData _currentPlayerData = _playerNetworkData.GetPlayerData();
-            _currentPlayerData.strokes++;
-            _playerNetworkData.StorePlayerState(_currentPlayerData);
-            _uiManager.UpdateStrokesUI(_currentPlayerData.strokes);
-        }
-
     }
 
     bool IsCloseToBall()
@@ -189,7 +160,6 @@ public class SwingManager : NetworkBehaviour
     // finds nearby players and checks if they are ragdolled - returns true if a ragdolled player is found and sets the ragdolled_player_id
     bool isCloseToRagdolledPlayer()
     {
-        Debug.Log("Checking is close to ragdolled player");
         //find nearby players
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
         foreach (GameObject player in players)
@@ -197,14 +167,14 @@ public class SwingManager : NetworkBehaviour
             // dont find ourselves
             if (player.GetComponent<NetworkObject>().OwnerClientId != OwnerClientId)
             {
-                float distance = Vector3.Distance(player.transform.position, transform.position); ;
-                if (!player.GetComponent<BasicPlayerController>().enabled)
+                float distance = Vector3.Distance(player.transform.position, transform.position);
+                if (player.GetComponent<RagdollOnOff>().IsRagdoll() && !player.GetComponent<RagdollOnOff>().alreadyLaunched)
                 {
                     if (distance <= 2f)
                     {
                         setRagdolledPlayerServerRpc((int)player.GetComponent<NetworkObject>().OwnerClientId);
                         ragdolledPlayer = player;
-                        Debug.Log("isCloseToRagdolledPlayer(): Ragdolled player found: " + ragdolled_player != null ? ragdolled_player : "null");
+                        //Debug.Log("isCloseToRagdolledPlayer(): Ragdolled player found: " + ragdolled_player != null ? ragdolled_player : "null");
                         return true;
                     }
                 }
@@ -213,6 +183,7 @@ public class SwingManager : NetworkBehaviour
         }
         setRagdolledPlayerServerRpc(-1);
         ragdolledPlayer = null;
+        //Debug.Log("isCloseToRagdolledPlayer(): No ragdolled player found");
         return false;
     }
 
@@ -256,13 +227,10 @@ public class SwingManager : NetworkBehaviour
         if (ragdolledPlayer != null) // move target pos to ragdolled player if nearby
         {
             targetPosition = ragdolledPlayer.transform.position + (-playerTransform.forward * 0.12f) + playerTransform.right * -.75f;
-            Debug.Log("Moving to ragdolled player");
         }
         else // move taget pos to player's ball if no ragdolled player nearby
         {
             targetPosition = thisBall.transform.position + (-playerTransform.forward * 0.12f) + playerTransform.right * -.75f;
-            Debug.Log("Moving to ball");
-
         }
 
         //targetPosition.y -= 0.12f;    // Instead of moving targ pos down, use a raycast to touch the ground
@@ -274,7 +242,7 @@ public class SwingManager : NetworkBehaviour
         }
         else
         {
-            Debug.LogWarning("Failed to find ground beneath target position!");
+            //Debug.LogWarning("Failed to find ground beneath target position!");
         }
 
         // Define the duration over which to move the player
@@ -316,8 +284,6 @@ public class SwingManager : NetworkBehaviour
             ExitSwingMode();
             return;
         }
-
-        Debug.Log("PerformSwing() on ball");
         PerformSwingOnBall();
     }
 
@@ -341,11 +307,10 @@ public class SwingManager : NetworkBehaviour
             PlayerData _currentPlayerData = _playerNetworkData.GetPlayerData();
             _currentPlayerData.strokes++;
             _playerNetworkData.StorePlayerState(_currentPlayerData);
-            _uiManager.UpdateStrokesUI(_currentPlayerData.strokes);
+            //_uiManager.UpdateStrokesUI(_currentPlayerData.strokes);
         }
 
         ExitSwingMode();
-
     }
 
     void PerformSwingOnPlayer()
@@ -377,9 +342,8 @@ public class SwingManager : NetworkBehaviour
             PlayerData _currentPlayerData = _playerNetworkData.GetPlayerData();
             _currentPlayerData.strokes++;
             _playerNetworkData.StorePlayerState(_currentPlayerData);
-            _uiManager.UpdateStrokesUI(_currentPlayerData.strokes);
+            //_uiManager.UpdateStrokesUI(_currentPlayerData.strokes);
         }
-
     }
 
     // Exit swing state without performing swing
@@ -401,8 +365,11 @@ public class SwingManager : NetworkBehaviour
         playerAnimator.ResetTrigger("Stance");
 
         playerAnimator.CrossFade("Idle", 0.1f);
-        StopCoroutine(playerMoveCoroutine);
-        playerMoveCoroutine = null;
+        if (playerMoveCoroutine != null)
+        {
+            StopCoroutine(playerMoveCoroutine);
+            playerMoveCoroutine = null;
+        }
     }
 
 
@@ -470,25 +437,27 @@ public class SwingManager : NetworkBehaviour
     }
 
     // checks playerdata for final hole, if not, moves ball to next hole startig postiiton
-    public void CheckForWin(PlayerData data)
+    // returns -1 if no win, returns playerID if win
+    public int CheckForWin(PlayerData data)
     {
         if (data.currentHole > holeStartPositions.Length)
         {
             Debug.Log("Player " + data.playerID + " has won the game!");
-            thisBall.SetActive(false);
+            thisBallRb.gameObject.SetActive(false);
+            return (int)data.playerID;
         }
-        else
-        {
-            thisBallRb.velocity = Vector3.zero;
-            thisBallRb.angularVelocity = Vector3.zero; // maybe get rid of this ? sometimes get a warning
-            Vector3 randStartPos;
-            // if on first hole, space balls out by 2 units to match player start positions, otherwise spawn them only 1 unit apart
-            if (data.currentHole == 1) randStartPos = holeStartPositions[0] + new Vector3(OwnerClientId * 2, 0, -1);
-            else randStartPos = holeStartPositions[data.currentHole - 1] + new Vector3(OwnerClientId, 0, 0);
 
-            MoveProjectileToPosition(randStartPos);
-            Debug.Log("Ball for player " + data.playerID + " moved to " + randStartPos + " currentHole: " + data.currentHole);
-        }
+        thisBallRb.velocity = Vector3.zero;
+        thisBallRb.angularVelocity = Vector3.zero; // maybe get rid of this ? sometimes get a warning
+        Vector3 randStartPos;
+        // if on first hole, space balls out by 2 units to match player start positions, otherwise spawn them only 1 unit apart
+        if (data.currentHole == 1) randStartPos = holeStartPositions[0] + new Vector3(OwnerClientId * 2, 0, -1);
+        else randStartPos = holeStartPositions[data.currentHole - 1] + new Vector3(OwnerClientId, 0, 0);
+
+        MoveProjectileToPosition(randStartPos);
+        Debug.Log("Ball for player " + data.playerID + " moved to " + randStartPos + " currentHole: " + data.currentHole);
+        return -1;
+
     }
 
     [ServerRpc]
@@ -538,6 +507,18 @@ public class SwingManager : NetworkBehaviour
         }
     }
 
+    [ServerRpc]
+    private void ActivateWinnerTextServerRpc(ulong winnerID)
+    {
+        ActivateWinnerTextClientRpc(winnerID);
+    }
+
+    [ClientRpc]
+    private void ActivateWinnerTextClientRpc(ulong winnerID)
+    {
+        if (!IsOwner) return;
+        UIManager.instance.ActivateWinner($"Winner: Player {winnerID}");
+    }
 
 
     public bool isInSwingState()
@@ -559,7 +540,7 @@ public class SwingManager : NetworkBehaviour
         thisBall.transform.position = transform.position + transform.up / 2 + transform.forward * 1f;
     }
 
-    private void RemoveForces()
+    public void RemoveForces()
     {
         if (thisBall != null && thisBallRb != null)
         {
@@ -615,6 +596,7 @@ public class SwingManager : NetworkBehaviour
         else if (isCloseToRagdolledPlayer() || IsCloseToBall())
         {
             //TODO: do enter swing mode logic here
+            Debug.Log("Swing started from new input system");
             StartSwingMode();
         }
         else
@@ -654,7 +636,7 @@ public class SwingManager : NetworkBehaviour
             PlayerData _currentPlayerData = _playerNetworkData.GetPlayerData();
             _currentPlayerData.strokes++;
             _playerNetworkData.StorePlayerState(_currentPlayerData);
-            _uiManager.UpdateStrokesUI(_currentPlayerData.strokes);
+            //_uiManager.UpdateStrokesUI(_currentPlayerData.strokes);
         }
     }
     public void HandleBallSpawnExitSwingCanceled(InputAction.CallbackContext ctx)

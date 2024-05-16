@@ -670,6 +670,9 @@ public class LobbyManager : MonoBehaviour
 
         UIManager.instance.DeactivateUI();
         UIManager.instance.ActivateHUD();
+
+        UIManager.instance.ActivateDirections(NetworkManager.Singleton.IsHost); //activate temp UI directions (only for prelobby)
+
         UIManager.instance.DisplaySignedIn();
         UIManager.instance.DisplayCode(ConnectedLobby.LobbyCode);
         UIManager.instance.DisplayLobbyName(ConnectedLobby.Name);
@@ -723,7 +726,7 @@ public class LobbyManager : MonoBehaviour
         }
         catch (LobbyServiceException e)
         {
-            Debug.LogError($"Failed to leave lobby: {e.Message}");
+            Debug.LogWarning($"Failed to leave lobby: {e.Message}");
         }
     }
 
@@ -770,7 +773,7 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    private async Task PlayerExit()
+    public async Task PlayerExit()
     {
         try
         {
