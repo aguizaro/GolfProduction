@@ -70,10 +70,6 @@ public class RagdollOnOff : NetworkBehaviour
             Debug.Log("Finished first hack fix");
         }
 
-        // dev cheat keys
-        if (Input.GetKeyDown("q")) PerformRagdoll();
-        if (Input.GetKeyDown("r")) ResetRagdoll();
-
         if (isRagdoll) //auto reset ragdoll after delay
         {
             if (_basicPlayerController.canInput) _basicPlayerController.DisableInput(); //disable input while in ragdoll mode
