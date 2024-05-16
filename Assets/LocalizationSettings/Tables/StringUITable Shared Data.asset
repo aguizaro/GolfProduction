@@ -95,6 +95,26 @@ MonoBehaviour:
     m_Key: controlsKey
     m_Metadata:
       m_Items: []
+  - m_Id: 22504884913352704
+    m_Key: moveControlKey
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22504885815128064
+    m_Key: swingControlKey
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22504985362739200
+    m_Key: ' ballSpawnControlKey'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22505782435688448
+    m_Key: sprintControlKey
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22508027613065216
+    m_Key: resetKey
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:
