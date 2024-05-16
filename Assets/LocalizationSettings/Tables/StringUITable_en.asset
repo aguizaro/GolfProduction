@@ -118,6 +118,26 @@ MonoBehaviour:
     m_Localized: reset
     m_Metadata:
       m_Items: []
+  - m_Id: 22516097198108672
+    m_Localized: Cancel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22516281512603648
+    m_Localized: up
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22516325850591232
+    m_Localized: down
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22516326211301376
+    m_Localized: left
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22516401775882240
+    m_Localized: right
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

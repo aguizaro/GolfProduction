@@ -115,6 +115,26 @@ MonoBehaviour:
     m_Key: resetKey
     m_Metadata:
       m_Items: []
+  - m_Id: 22516097198108672
+    m_Key: CancelKey
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22516281512603648
+    m_Key: upKey
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22516325850591232
+    m_Key: downKey
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22516326211301376
+    m_Key: leftKey
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22516401775882240
+    m_Key: rightKey
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:
