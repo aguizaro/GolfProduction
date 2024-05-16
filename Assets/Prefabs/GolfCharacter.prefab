@@ -973,7 +973,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mainPlayerSprite: {fileID: 21300000, guid: 7014e9ed1892c7f4eb20416ae97262b1, type: 3}
-  otherPlayerSprite: {fileID: 21300000, guid: 7014e9ed1892c7f4eb20416ae97262b1, type: 3}
+  otherPlayerSprite: {fileID: 21300000, guid: 33cd579deb6056d4e9db65c977243617, type: 3}
 --- !u!1 &1745822496000605606
 GameObject:
   m_ObjectHideFlags: 0
@@ -1225,6 +1225,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   miniMapCamera: {fileID: 7340971922928916831}
+  miniMapImage: {fileID: 0}
 --- !u!1 &2646969538390424908
 GameObject:
   m_ObjectHideFlags: 0
