@@ -58,11 +58,7 @@ public class BasicPlayerController : NetworkBehaviour
     public bool _leftPressed;
     public bool _rightPressed;
     public bool _swingPressed;
-    public UnityEvent swingStartedEvent;
-    public UnityEvent swingCanceledEvent;
     public bool _ballSpawnExitSwingPressed;
-    public UnityEvent ballSpawnExitSwingStartedEvent;
-    public UnityEvent ballSpawnExitSwingCanceledEvent;
     [Header("Action Checkers")]
     public bool isStriking;
 
@@ -82,10 +78,13 @@ public class BasicPlayerController : NetworkBehaviour
         if (!IsOwner) return;
 
         #region Input Actions Initialization
+        UIManager.instance.onEnablePause.AddListener(DisableInput);
+        UIManager.instance.onDisablePause.AddListener(EnableInput);
         _inputActionAsset = _inputActionAsset ?? Resources.Load<InputActionAsset>("InputActionAsset/Actions");
         _inputActionAsset.Enable();
         gameplayActionMap = _inputActionAsset.FindActionMap("Gameplay", throwIfNotFound: true);
         gameplayActionMap.Enable();
+        _inputActionAsset.FindActionMap("UI")["Pause"].started += HandlePauseStarted;
         _inputActionAsset.FindActionMap("UI").Disable();
 
         gameplayActionMap["Pause"].started += HandlePauseStarted;
@@ -217,7 +216,8 @@ public class BasicPlayerController : NetworkBehaviour
         _swingManager.Deactivate();
 
         if (!IsOwner) return;
-
+        UIManager.instance.onEnablePause.RemoveListener(DisableInput);
+        UIManager.instance.onDisablePause.RemoveListener(EnableInput);
         gameplayActionMap["Pause"].started -= HandlePauseStarted;
         gameplayActionMap["Sprint"].started -= HandleSprintStarted;
         gameplayActionMap["Sprint"].canceled -= HandleSprintCanceled;
@@ -225,6 +225,7 @@ public class BasicPlayerController : NetworkBehaviour
         gameplayActionMap["Swing"].canceled -= HandleSwingCanceled;
         gameplayActionMap["Ball Spawn/Exit Swing"].started -= HandleBallSpawnExitSwingStarted;
         gameplayActionMap["Ball Spawn/Exit Swing"].canceled -= HandleBallSpawnExitSwingCanceled;
+        _inputActionAsset.FindActionMap("UI")["Pause"].started -= HandlePauseStarted;
         _inputActionAsset?.FindActionMap("Gameplay").Disable();
         _inputActionAsset?.FindActionMap("UI").Disable();
     }
