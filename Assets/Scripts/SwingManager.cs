@@ -13,6 +13,7 @@ public class SwingManager : NetworkBehaviour
     public Transform playerTransform;
     public Animator playerAnimator;
     public GameObject ballPrefab;
+    public GameObject VFXPrefab;
     public StartCameraFollow cameraFollowScript;
     public Canvas meterCanvas;
     public GameObject meterCanvasObject;
@@ -296,6 +297,9 @@ public class SwingManager : NetworkBehaviour
         var dir = transform.forward + new Vector3(0, verticalAngle, 0);
         thisBallRb.AddForce(dir * swingForce * meterCanvas.GetComponent<PowerMeter>().GetPowerValue(), ForceMode.Impulse);
         thisBallMoving = true;
+        PoolManager.Release(VFXPrefab, thisBall.transform.position, Quaternion.LookRotation(dir.normalized * -1f));
+        // SetThatBallServerRpc(OwnerClientId);
+        VFXServerRpc(thisBall.transform.position, Quaternion.LookRotation(dir.normalized * -1f));
 
         // only count strokes if the game is active / not in pre-game lobby
         if (_playerController.IsActive)
@@ -398,6 +402,38 @@ public class SwingManager : NetworkBehaviour
     {
         thisBall = NetworkManager.Singleton.SpawnManager.SpawnedObjects[ballId].gameObject;
         thisBallRb = thisBall.GetComponent<Rigidbody>();
+    }
+
+    [ServerRpc]
+    void VFXServerRpc(Vector3 pos, Quaternion quaternion)
+    {
+        VFXClientRpc(pos, quaternion);
+    }
+    [ClientRpc]
+    void VFXClientRpc(Vector3 pos, Quaternion quaternion)
+    {
+        PoolManager.Release(VFXPrefab, pos, quaternion);
+    }
+
+    [ServerRpc]
+    void SetThatBallServerRpc(ulong ownerId)
+    {
+        SetThatBallClientRpc(ownerId);
+    }
+
+    [ClientRpc]
+    void SetThatBallClientRpc(ulong ownerId)
+    {
+        GameObject[] balls = GameObject.FindGameObjectsWithTag("Ball");
+        foreach (GameObject ball in balls)
+        {
+            if (ball.GetComponent<NetworkObject>().OwnerClientId == ownerId)
+            {
+                thisBall = ball;
+                // thisBallRb = thisBall.GetComponent<Rigidbody>();
+                break;
+            }
+        }
     }
 
     // checks playerdata for final hole, if not, moves ball to next hole startig postiiton
