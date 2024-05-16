@@ -10,7 +10,7 @@ using UnityEngine;
 /// </summary>
 public class PlayerColor : NetworkBehaviour
 {
-    public readonly NetworkVariable<Color> _netColor = new();
+    public readonly NetworkVariable<Color> _netColor = new(readPerm: NetworkVariableReadPermission.Everyone);
     private readonly Color[] _colors = { Color.red, Color.blue, Color.green, Color.yellow, Color.cyan, Color.magenta, Color.gray };
     private int _index;
     public MeshRenderer _renderer;

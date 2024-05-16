@@ -60,13 +60,7 @@ public class HoleFlagPoleManager : NetworkBehaviour
         Debug.Log("OnTriggerEnter: Player " + playerID + " made hole " + currentPlayerData.currentHole + " in " + currentPlayerData.strokes + " strokes");
 
         currentPlayerData.currentHole++;
-        if (currentPlayerData.currentHole > 9)
-        {
-            currentPlayerData.currentHole = 9;
-        }
-
         playerNetworkData.StorePlayerState(currentPlayerData);
-        uiManager.UpdateHoleCountText(currentPlayerData.currentHole);
 
         //maybe we can check for win here since we have a reference to the player network data - currently being done in PlayerNetworkData
 

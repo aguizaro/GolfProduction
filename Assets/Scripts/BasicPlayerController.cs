@@ -138,7 +138,7 @@ public class BasicPlayerController : NetworkBehaviour
                 // activate all players
                 foreach (NetworkClient player in NetworkManager.Singleton.ConnectedClientsList)
                 {
-                    Debug.Log("Activating player " + player.PlayerObject.GetComponent<BasicPlayerController>().OwnerClientId + "from server: " + IsServer);
+                    Debug.Log("Activating player " + player.PlayerObject.GetComponent<BasicPlayerController>().OwnerClientId + " from server: " + IsServer);
                     player.PlayerObject.GetComponent<BasicPlayerController>().ActivateClientRpc();
                 }
 
@@ -159,14 +159,20 @@ public class BasicPlayerController : NetworkBehaviour
 
     public void Activate()
     {
+        if (IsOwner)
+        {
+            UIManager.instance.DeactivateDirections(); // deactivate directions UI when game starts (only want this to happen once - so we check if player is owner))
+            if (_ragdollOnOff.IsRagdoll()) _ragdollOnOff.ResetRagdoll(); // reset ragdoll if player is in ragdoll mode
+        }
+
         _playerNetworkData = GetComponent<PlayerNetworkData>();
         _ragdollOnOff._playerNetworkData = _playerNetworkData;
 
         Debug.Log("inside Activate() owned by player " + OwnerClientId + " isOwner: " + IsOwner + "Is local player: " + IsLocalPlayer + "Is server: " + IsServer + "Is client: " + IsClient);
 
         // spawn players at firt hole
-        transform.position = new Vector3(390 + OwnerClientId * 2, 69.5f, 321); //space players out by 2 units each
-        transform.rotation = Quaternion.Euler(0, -179f, 0); //face flag pole
+        _rb.MovePosition(new Vector3(390 + OwnerClientId * 2, 69.5f, 321)); //space players out by 2 units each
+        _rb.MoveRotation(Quaternion.Euler(0, -179f, 0)); //face flag pole
         Debug.Log("Player " + OwnerClientId + " spawned at " + transform.position);
 
         IsActive = true;
@@ -323,6 +329,7 @@ public class BasicPlayerController : NetworkBehaviour
 
     // Input Management -------------------------------------------------------------------------------------------------------------
 
+    // IN THE FUTURE - lets add a parameter to include rotation (sometimes we wan to disable movement but still allow rotation) - ex: when in ragdoll mode
     public void DisableInput()
     {
         _inputActionAsset?.FindActionMap("Gameplay", false).Disable();
@@ -469,6 +476,8 @@ public class BasicPlayerController : NetworkBehaviour
 
         if (_swingManager == null) _swingManager = GetComponent<SwingManager>();
         if (_swingManager.isInSwingState()) _swingManager.ExitSwingMode();
+
+        _swingManager.RemoveForces(); // in case ball is moving
 
         DisableInput();
 
