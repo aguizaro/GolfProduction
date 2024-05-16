@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="AudioFile" id="{52f1fc8e-5a50-4ca6-9178-581fa402826d}">
+		<property name="assetPath">
+			<value>golf_hole_enter_sfx.wav</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>44.0999985</value>
+		</property>
+		<property name="channelCount">
+			<value>1</value>
+		</property>
+		<property name="length">
+			<value>1.5908843537414965</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{9c3b92b7-e52f-4804-9cc3-0c5f3df62a14}</destination>
+		</relationship>
+	</object>
+</objects>
