@@ -185,6 +185,78 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6684136195925516328, guid: dcd60d739ed54cf4893a0aa3459b368a, type: 3}
   m_PrefabInstance: {fileID: 137143437}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &154831532
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 154831533}
+  - component: {fileID: 154831534}
+  m_Layer: 0
+  m_Name: FMODEvents
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &154831533
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 154831532}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1892531929}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &154831534
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 154831532}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5af595ec8b368714e99b414fe9183feb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <playerGolfSwing>k__BackingField:
+    Guid:
+      Data1: -322936877
+      Data2: 1158729915
+      Data3: 185113227
+      Data4: 1611160647
+    Path: event:/GolfSwing
+  <golfHoleEnter>k__BackingField:
+    Guid:
+      Data1: 2110502546
+      Data2: 1257180355
+      Data3: -1911032187
+      Data4: 1264350463
+    Path: event:/GolfHoleEnter
+  <golfClap>k__BackingField:
+    Guid:
+      Data1: 522214712
+      Data2: 1316240899
+      Data3: -1081775457
+      Data4: 18981420
+    Path: event:/GolfClap
+  <playerFootsteps>k__BackingField:
+    Guid:
+      Data1: 1457570406
+      Data2: 1297843287
+      Data3: 1114508215
+      Data4: -1274897622
+    Path: event:/PlayerFootstep
 --- !u!1 &179642294
 GameObject:
   m_ObjectHideFlags: 0
@@ -1672,6 +1744,51 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6684136195925516328, guid: dcd60d739ed54cf4893a0aa3459b368a, type: 3}
   m_PrefabInstance: {fileID: 1890705342}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1892531927
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1892531929}
+  - component: {fileID: 1892531928}
+  m_Layer: 0
+  m_Name: AudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1892531928
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1892531927}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b65071d1b1d2edd4ea5d3a17f558c651, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1892531929
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1892531927}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 150.68141, y: 190.36543, z: 303.75488}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 154831533}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1963442864
 GameObject:
   m_ObjectHideFlags: 0
@@ -1682,8 +1799,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1963442867}
   - component: {fileID: 1963442866}
-  - component: {fileID: 1963442865}
   - component: {fileID: 1963442868}
+  - component: {fileID: 1963442869}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1691,14 +1808,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!81 &1963442865
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1963442864}
-  m_Enabled: 1
 --- !u!20 &1963442866
 Camera:
   m_ObjectHideFlags: 0
@@ -1809,6 +1918,19 @@ MonoBehaviour:
     mipBias: 0
     varianceClampScale: 0.9
     contrastAdaptiveSharpening: 0
+--- !u!114 &1963442869
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1963442864}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86c6556701af9e04380698b89f691b6e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attenuationObject: {fileID: 0}
 --- !u!4 &2031937010 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6684136195925516328, guid: dcd60d739ed54cf4893a0aa3459b368a, type: 3}
@@ -2590,6 +2712,7 @@ SceneRoots:
   - {fileID: 1963442867}
   - {fileID: 1330616890}
   - {fileID: 874515893}
+  - {fileID: 1892531929}
   - {fileID: 179642296}
   - {fileID: 1606576229}
   - {fileID: 1771980029}
