@@ -329,6 +329,9 @@ public class SwingManager : NetworkBehaviour
         thisBallRb.AddForce(dir * swingForce * meterCanvas.GetComponent<PowerMeter>().GetPowerValue(), ForceMode.Impulse);
         thisBallMoving = true;
 
+        // Play sound effect for swinging the ball
+        AudioManager.instance.PlayOneShot(FMODEvents.instance.playerGolfSwing, _playerController.transform.position);
+
         // only count strokes if the game is active / not in pre-game lobby
         if (_playerController.IsActive)
         {
@@ -353,6 +356,9 @@ public class SwingManager : NetworkBehaviour
         var dir = transform.forward + new Vector3(0, verticalAngle, 0);
         // add forces
         Vector3 swingForceVector = dir * swingForce * meterCanvas.GetComponent<PowerMeter>().GetPowerValue();
+
+        // Play sound effect for swinging the ball
+        AudioManager.instance.PlayOneShot(FMODEvents.instance.playerGolfSwing, _playerController.transform.position);
 
         Debug.Log("force dir: " + dir);
         Debug.Log("force vector: " + swingForceVector);

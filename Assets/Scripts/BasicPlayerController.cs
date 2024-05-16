@@ -6,6 +6,8 @@ using UnityEngine.InputSystem;
 using Unity.VisualScripting;
 using UnityEngine.Video;
 using UnityEngine.Events;
+using FMODUnity;
+using FMOD.Studio;
 
 // Needs: simple way to deactivate everything on game over / game exit, so players can play again without having to re-launch the game
 public class BasicPlayerController : NetworkBehaviour
@@ -38,6 +40,9 @@ public class BasicPlayerController : NetworkBehaviour
     private bool _isSpawnedAtPos = false; // used to check if player has been spawned in correct position
     // Cosmetics
     private PlayerHatController _playerHat;
+
+    // Sound
+    private EventInstance playerFootsteps;
 
 
     // Activation
@@ -96,6 +101,9 @@ public class BasicPlayerController : NetworkBehaviour
         gameplayActionMap["Ball Spawn/Exit Swing"].started += HandleBallSpawnExitSwingStarted;
         gameplayActionMap["Ball Spawn/Exit Swing"].canceled += HandleBallSpawnExitSwingCanceled;
         #endregion
+
+        GameObject.Find("Main Camera").GetComponent<StudioListener>().SetAttenuationObject(gameObject);
+        playerFootsteps = AudioManager.instance.CreateInstance(FMODEvents.instance.playerFootsteps, gameObject);
 
         // activate player controller - controller will activate the player movement, animations, shooting and ragdoll
         //_playerHat.RandomizeHatTexture();
