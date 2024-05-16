@@ -14,6 +14,7 @@ public class SettingsData
     // Game
     public float cameraSensitivity;
     public float volume;
+    public int playTimes;
 
     public SettingsData() 
     {
@@ -23,6 +24,7 @@ public class SettingsData
 
         this.cameraSensitivity = 5;
         this.volume = 0;
+        this.playTimes = 0;
     }
 
     public SettingsData Copy()
@@ -33,6 +35,7 @@ public class SettingsData
             oneHandMode = this.oneHandMode,
             cameraSensitivity = this.cameraSensitivity,
             volume = this.volume,
+            playTimes = this.playTimes
         };
     }
 }

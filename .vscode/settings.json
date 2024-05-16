@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "GolfProduction.sln"
+    "dotnet.defaultSolution": "GolfProduction-Zexuan.sln"
 }
