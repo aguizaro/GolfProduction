@@ -408,7 +408,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 171685441
+  GlobalObjectIdHash: 3746147730
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 1
@@ -435,25 +435,24 @@ MonoBehaviour:
   _isSprinting: 0
   _ragdollOnOff: {fileID: 0}
   IsActive: 0
+  canInput: 1
   _moveInput: {x: 0, y: 0}
   _lookInput: {x: 0, y: 0}
   _inputActionAsset: {fileID: 0}
-  _gameplayActionMap:
+  gameplayActionMap:
     m_Name: Gameplay
-    m_Id: 1bf001f3-233a-4eb5-a860-7165977c1f6b
+    m_Id: 14e6a9b7-8c07-4140-9929-88797e2681f0
     m_Asset: {fileID: 0}
     m_Actions: []
     m_Bindings: []
   _playerYaw: 0
-  targetActionName: Sprint
-  _newInputPath: 
-  _testValue: 0
   _forwardPressed: 0
   _backPressed: 0
   _leftPressed: 0
   _rightPressed: 0
   _swingPressed: 0
-  _ballSpawnPressed: 0
+  _ballSpawnExitSwingPressed: 0
+  isStriking: 0
 --- !u!65 &2556599362540292874
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -658,6 +657,7 @@ MonoBehaviour:
   playerTransform: {fileID: 6247323603675803764}
   playerAnimator: {fileID: 7225643878605417583}
   ballPrefab: {fileID: 3665726570761771704, guid: 3d0ef90e59c624be5bf18a934047635a, type: 3}
+  VFXPrefab: {fileID: 3956086017517648266, guid: e68873219e72e614c930532369fd93d8, type: 3}
   cameraFollowScript: {fileID: 4118846366210689039}
   meterCanvas: {fileID: 7656790667480007816}
   meterCanvasObject: {fileID: 3066179444019347802}
@@ -1297,6 +1297,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   changeSpeed: 1
+  _mouseDown: 0
+  _playerShot: 0
 --- !u!1 &3327979605996604102
 GameObject:
   m_ObjectHideFlags: 0
