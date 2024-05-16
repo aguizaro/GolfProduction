@@ -2761,6 +2761,14 @@ PrefabInstance:
       propertyPath: m_fontColor.r
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 2561749104711311838, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: m_RebindText
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 2561749104711311838, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: m_RebindOverlay
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 2738457922718610581, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -2776,6 +2784,14 @@ PrefabInstance:
     - target: {fileID: 2738457922718610581, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2760485368445204926, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: m_RebindText
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 2760485368445204926, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: m_RebindOverlay
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 2983563462817592687, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_SizeDelta.x
@@ -2824,6 +2840,14 @@ PrefabInstance:
     - target: {fileID: 3523944004153178886, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_enableAutoSizing
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3745687113410220653, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: m_RebindText
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 3745687113410220653, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: m_RebindOverlay
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 3933522870122252541, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_IsActive
@@ -3205,6 +3229,14 @@ PrefabInstance:
       propertyPath: m_margin.x
       value: -0.04044342
       objectReference: {fileID: 0}
+    - target: {fileID: 7454781254908683580, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: m_RebindText
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 7454781254908683580, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: m_RebindOverlay
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 7476857956895891491, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -3526,7 +3558,10 @@ PrefabInstance:
       value: -235
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 5358871521013598310, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+    - {fileID: 6723859839462563262, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+    - {fileID: 7899795290716289745, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 7726233538996562752, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       insertIndex: -1
