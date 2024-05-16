@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Localization.Settings;
 using Unity.Netcode;
-
+using UnityEngine.Events;
 
 public enum UIState
 {
@@ -92,6 +92,9 @@ public class UIManager : MonoBehaviour
     private bool localeActive = false;
     private Transform _cameraStartTransform;
     private MenuState menuState = MenuState.None;
+
+    public UnityEvent onEnablePause;
+    public UnityEvent onDisablePause;
 
     private async void Start()
     {
@@ -187,8 +190,8 @@ public class UIManager : MonoBehaviour
     }
 
     // Pause UI Methods
-    public void EnablePause() { isPaused = true; _pauseScreenUI.SetActive(true); }
-    public void DisablePause() { isPaused = false; _pauseScreenUI.SetActive(false); _settingsScreenUI.SetActive(false); }
+    public void EnablePause() { isPaused = true; _pauseScreenUI.SetActive(true); onEnablePause?.Invoke(); }
+    public void DisablePause() { isPaused = false; _pauseScreenUI.SetActive(false); _settingsScreenUI.SetActive(false); onDisablePause?.Invoke(); }
     public void EnableSettings() { EnableMenu(MenuState.Settings); }
     public void DisableSettings() { _settingsScreenUI.SetActive(false); if (!titleScreenMode) { EnablePause(); } }
     public void PauseStartSettings() { _pauseScreenUI.SetActive(false); EnableSettings(); }

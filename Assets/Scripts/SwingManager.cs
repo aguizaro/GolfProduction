@@ -64,9 +64,10 @@ public class SwingManager : NetworkBehaviour
     public void Deactivate()
     {
         _isActive = false;
+        if (IsOwner) UnregisterActions();
     }
 
-    void Start()
+    public override void OnNetworkSpawn()
     {
         powerMeter = GetComponentInChildren<Slider>();
         powerMeterRef = meterCanvas.GetComponent<PowerMeter>();
@@ -76,8 +77,8 @@ public class SwingManager : NetworkBehaviour
 
         _playerNetworkData = GetComponent<PlayerNetworkData>();
         _playerController = GetComponent<BasicPlayerController>();
-
-        if (IsOwner) RegisterActions();
+        if (!IsOwner) return;
+        RegisterActions();
     }
 
     public void RegisterActions()
@@ -87,17 +88,18 @@ public class SwingManager : NetworkBehaviour
         _playerController.gameplayActionMap["Ball Spawn/Exit Swing"].started += HandleBallSpawnExitSwingStarted;
         _playerController.gameplayActionMap["Ball Spawn/Exit Swing"].canceled += HandleBallSpawnExitSwingCanceled;
     }
-
+    public void UnregisterActions()
+    {
+        _playerController.gameplayActionMap["Swing"].started -= HandleSwingStarted;
+        _playerController.gameplayActionMap["Swing"].canceled -= HandleSwingCanceled;
+        _playerController.gameplayActionMap["Ball Spawn/Exit Swing"].started -= HandleBallSpawnExitSwingStarted;
+        _playerController.gameplayActionMap["Ball Spawn/Exit Swing"].canceled -= HandleBallSpawnExitSwingCanceled;
+    }
     // Update is called once per frame
     void Update()
     {
-        if (!_isActive) return;
-
-        if (!IsOwner || !isActiveAndEnabled)
-        {
+        if (!_isActive || !IsOwner || !isActiveAndEnabled)
             return;
-        }
-
 
         // Check if player is already in swing mode
         if (inSwingMode)
