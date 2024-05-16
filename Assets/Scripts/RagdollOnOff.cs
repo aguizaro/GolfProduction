@@ -21,6 +21,7 @@ public class RagdollOnOff : NetworkBehaviour
     private bool isActive = false; //is player instance active
 
     private bool firstDone = false;
+    public bool alreadyLaunched = false;
 
     // Activation -------------------------------------------------------------------------------------------------------------
     public void Activate()
@@ -44,7 +45,7 @@ public class RagdollOnOff : NetworkBehaviour
         }
 
         _playerAnimator.enabled = true;
-        _basicPlayerController.enabled = true;
+        //_basicPlayerController.enabled = true;
         mainCollider.enabled = true;
         playerRB.isKinematic = false;
         isRagdoll = false;
@@ -80,6 +81,7 @@ public class RagdollOnOff : NetworkBehaviour
             {
                 delay = getUpDelay;
                 ResetRagdoll();
+
                 Debug.Log("Update: after reset ragdoll: pos: " + transform.position);
 
             }
@@ -111,7 +113,6 @@ public class RagdollOnOff : NetworkBehaviour
     {
         if (IsServer) RagdollModeOffClientRpc();
         else RagdollModeOffServerRpc();
-
     }
 
     Collider[] ragdollColliders;
@@ -129,7 +130,8 @@ public class RagdollOnOff : NetworkBehaviour
             _swingManager.ExitSwingMode();
         }
         _playerAnimator.enabled = false;
-        _basicPlayerController.enabled = false;
+        //_basicPlayerController.enabled = false;
+        _basicPlayerController.DisableInput(); // it would be nice to disable input but still allow the player to move the camera (only allow input rotation)
 
         foreach (Collider col in ragdollColliders)
         {
@@ -173,10 +175,13 @@ public class RagdollOnOff : NetworkBehaviour
         }
 
         _playerAnimator.enabled = true;
-        _basicPlayerController.enabled = true;
+        //_basicPlayerController.enabled = true;
+        _basicPlayerController.EnableInput();
         mainCollider.enabled = true;
         playerRB.isKinematic = false;
         isRagdoll = false;
+        alreadyLaunched = false;
+        Debug.Log($"Already launched: {alreadyLaunched} for owner: {OwnerClientId} isOwner: {IsOwner}");
         StartCoroutine(DelayedGravityActivation());
     }
 
@@ -257,7 +262,6 @@ public class RagdollOnOff : NetworkBehaviour
         {
             delay = getUpDelay; //reset delay to avoid instant reset after force is applied
             AddForceToSelfServerRpc(force * 2.5f);
-
             playerRB.useGravity = false;
             playerRB.isKinematic = false;
         }
@@ -277,6 +281,8 @@ public class RagdollOnOff : NetworkBehaviour
         {
             if (limb != playerRB) limb.AddForce(force, ForceMode.Impulse);
         }
+        alreadyLaunched = true;
+        Debug.Log($"Already launched: {alreadyLaunched} for owner: {OwnerClientId} isOwner: {IsOwner}");
     }
 
 }

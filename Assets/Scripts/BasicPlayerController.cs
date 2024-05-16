@@ -159,7 +159,11 @@ public class BasicPlayerController : NetworkBehaviour
 
     public void Activate()
     {
-        if (IsOwner) UIManager.instance.DeactivateDirections(); // deactivate directions UI when game starts (only want this to happen once - so we check if player is owner)
+        if (IsOwner)
+        {
+            UIManager.instance.DeactivateDirections(); // deactivate directions UI when game starts (only want this to happen once - so we check if player is owner))
+            if (_ragdollOnOff.IsRagdoll()) _ragdollOnOff.ResetRagdoll(); // reset ragdoll if player is in ragdoll mode
+        }
 
         _playerNetworkData = GetComponent<PlayerNetworkData>();
         _ragdollOnOff._playerNetworkData = _playerNetworkData;
@@ -325,6 +329,7 @@ public class BasicPlayerController : NetworkBehaviour
 
     // Input Management -------------------------------------------------------------------------------------------------------------
 
+    // IN THE FUTURE - lets add a parameter to include rotation (sometimes we wan to disable movement but still allow rotation) - ex: when in ragdoll mode
     public void DisableInput()
     {
         _inputActionAsset?.FindActionMap("Gameplay", false).Disable();
@@ -471,6 +476,8 @@ public class BasicPlayerController : NetworkBehaviour
 
         if (_swingManager == null) _swingManager = GetComponent<SwingManager>();
         if (_swingManager.isInSwingState()) _swingManager.ExitSwingMode();
+
+        _swingManager.RemoveForces(); // in case ball is moving
 
         DisableInput();
 
