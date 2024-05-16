@@ -76,6 +76,8 @@ public class RagdollOnOff : NetworkBehaviour
 
         if (isRagdoll) //auto reset ragdoll after delay
         {
+            if (_basicPlayerController.canInput) _basicPlayerController.DisableInput(); //disable input while in ragdoll mode
+
             delay -= Time.deltaTime;
             if (delay <= 0)
             {

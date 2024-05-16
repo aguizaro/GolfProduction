@@ -107,7 +107,7 @@ public class SwingManager : NetworkBehaviour
         if (inSwingMode)
         {
             //check if input is enabled - input is enabled when player unpauses game - this prevents player from moving while in swing mode
-            if (_playerController.canInput) _playerController.canInput = false;
+            if (_playerController.canInput) _playerController.DisableInput();
 
             // Check if the ragdolled player has gotten up
             if (ragdolled_player != null)
