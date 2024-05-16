@@ -11,7 +11,6 @@ using UnityEngine;
 public class HoleFlagPoleManager : NetworkBehaviour
 {
     //these are set by the player controller on activation
-    public BasicPlayerController playerController;
     public PlayerNetworkData playerNetworkData;
     public UIManager uiManager;
 
@@ -23,7 +22,7 @@ public class HoleFlagPoleManager : NetworkBehaviour
     public void Activate()
     {
         isActive = true;
-        Debug.Log("HoleFlagPoleManager activated for " + OwnerClientId + " isOwner: " + IsOwner + "\n" + "PlayerController: " + playerController.OwnerClientId + "\n" + "PlayerNetworkData: " + playerNetworkData.OwnerClientId + "\n" + "UIManager: " + uiManager);
+        //Debug.Log("HoleFlagPoleManager activated for " + OwnerClientId + " isOwner: " + IsOwner + "\n" + "PlayerController: " + playerNetworkData.OwnerClientId + "\n" + "PlayerNetworkData: " + playerNetworkData.OwnerClientId + "\n" + "UIManager: " + uiManager);
     }
     public void Deactivate()
     {
@@ -38,7 +37,6 @@ public class HoleFlagPoleManager : NetworkBehaviour
         if (other.CompareTag("Ball"))
         {
             ulong playerID = other.gameObject.GetComponent<NetworkObject>().OwnerClientId;
-            Debug.Log("OnTriggerEnter: Ball for player " + playerID + " collided with hole " + playerController._currentPlayerState.currentHole);
 
             if (!_playerIDs.Contains(playerID))
             {
@@ -58,18 +56,11 @@ public class HoleFlagPoleManager : NetworkBehaviour
     {
         if (NetworkManager.Singleton.LocalClientId != playerID) return; //only the player that scored should handle this
 
-        Debug.Log("HandlePlayerScoreClientRpc called for " + NetworkManager.Singleton.LocalClientId);
-        Debug.Log("OnTriggerEnter: Player " + playerID + " made hole " + playerController._currentPlayerState.currentHole);
-        Debug.Log("OnTriggerEnter: Player " + playerID + " should match playerController " + playerController.OwnerClientId + " and playerNetworkData " + playerNetworkData.OwnerClientId);
+        PlayerData currentPlayerData = playerNetworkData.GetPlayerData();
+        Debug.Log("OnTriggerEnter: Player " + playerID + " made hole " + currentPlayerData.currentHole + " in " + currentPlayerData.strokes + " strokes");
 
-        playerController._currentPlayerState.currentHole++;
-        if (playerController._currentPlayerState.currentHole > 9)
-        {
-            playerController._currentPlayerState.currentHole = 9;
-        }
-
-        playerController.UpdatePlayerState(playerController._currentPlayerState);
-        uiManager.UpdateHoleCountText(playerController._currentPlayerState.currentHole);
+        currentPlayerData.currentHole++;
+        playerNetworkData.StorePlayerState(currentPlayerData);
 
         //maybe we can check for win here since we have a reference to the player network data - currently being done in PlayerNetworkData
 

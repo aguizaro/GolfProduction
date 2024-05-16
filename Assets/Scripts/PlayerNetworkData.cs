@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
 using Unity.Netcode.Components;
+using System.Threading.Tasks;
 
 
 // Storing player data over the network ------------------------------------------------------------------------------------------------------------
 public struct PlayerData : INetworkSerializable
 {
     public ulong playerID;
-    public Vector3 playerPos;
-    public Quaternion playerRot;
     public int currentHole;
     public int strokes;
     public ulong enemiesDefeated;
@@ -19,8 +18,6 @@ public struct PlayerData : INetworkSerializable
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
         serializer.SerializeValue(ref playerID);
-        serializer.SerializeValue(ref playerPos);
-        serializer.SerializeValue(ref playerRot);
         serializer.SerializeValue(ref currentHole);
         serializer.SerializeValue(ref strokes);
         serializer.SerializeValue(ref enemiesDefeated);
@@ -34,8 +31,24 @@ public struct PlayerData : INetworkSerializable
 public class PlayerNetworkData : NetworkBehaviour
 {
     private PlayerData _currentPlayerData;
+    private int winner = -1;
 
     private NetworkVariable<PlayerData> _networkPlayerData = new NetworkVariable<PlayerData>(new PlayerData(), NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    // color names for displaying winner
+    private readonly Dictionary<Color, string> colorNames = new Dictionary<Color, string>()
+    {
+        { Color.black, "Black" },
+        { Color.blue, "Blue" },
+        { Color.clear, "Clear" },
+        { Color.cyan, "Cyan" },
+        { Color.gray, "Gray" },
+        { Color.green, "Green" },
+        { Color.magenta, "Magenta" },
+        { Color.red, "Red" },
+        { Color.white, "White" },
+        { Color.yellow, "Yellow" }
+    };
 
 
     // Update local variable when network variable updates  ------------------------------------------------------------------------------------------------------------
@@ -47,23 +60,34 @@ public class PlayerNetworkData : NetworkBehaviour
     public override void OnDestroy()
     {
         _networkPlayerData.OnValueChanged -= OnPlayerDataChanged;
+        base.OnDestroy();
     }
 
     private void OnPlayerDataChanged(PlayerData prevData, PlayerData newData)
     {
-        //Debug.Log("OnPlayerDataChanged: called by owner: " + OwnerClientId + " isOwner: " + IsOwner + "\n\nfor player: " + newData.playerID + " - strokes: " + _currentPlayerData.strokes + " hole: " + _currentPlayerData.currentHole + _currentPlayerData.enemiesDefeated + " score: " + _currentPlayerData.score);
-
         _currentPlayerData = newData;
 
-        if (IsOwner)
-        {
-            if (prevData.currentHole != newData.currentHole) // check for current hole change
-            {
-                // check player data for win - or moves ball to next hole
-                GetComponent<SwingManager>().CheckForWin(newData);
-            }
-        }
+        if (newData.currentHole < 1) return; // no need to check win during pre game
 
+        if (IsOwner) // the following logic will be ran on all clients that are the owner of the player object SIMULTANEOUSLY
+        {
+            if (prevData.currentHole != newData.currentHole) // if current hole change, check player data for win or moves ball to next hole
+            {
+                winner = GetComponent<SwingManager>().CheckForWin(newData);
+                if (winner >= 0)
+                {
+                    string winnerName = GetPlayerColor(newData.playerID);
+                    Debug.Log("Winner: " + winner + " " + winnerName);
+                    DisplayWinnerServerRpc(winnerName);
+                }
+
+
+                //  MAYBE WE SHOULD MOVE THE BALL TO THE NEXT HOLE HERE
+            }
+
+            UIManager.instance.UpdateStrokesUI(newData.strokes);
+            UIManager.instance.UpdateHoleCountText(newData.currentHole);
+        }
     }
 
     // public functions ------------------------------------------------------------------------------------------------------------
@@ -76,8 +100,6 @@ public class PlayerNetworkData : NetworkBehaviour
             PlayerData newData = new PlayerData()
             {
                 playerID = data.playerID,
-                playerPos = data.playerPos,
-                playerRot = data.playerRot,
                 currentHole = data.currentHole,
                 strokes = data.strokes,
                 enemiesDefeated = data.enemiesDefeated,
@@ -93,6 +115,11 @@ public class PlayerNetworkData : NetworkBehaviour
         }
     }
 
+    public PlayerData GetPlayerData()
+    {
+        return _currentPlayerData;
+    }
+
 
     // server rpcs ------------------------------------------------------------------------------------------------------------
 
@@ -101,4 +128,51 @@ public class PlayerNetworkData : NetworkBehaviour
     {
         _networkPlayerData.Value = data;
     }
+
+    public string GetPlayerColor(ulong playerID)
+    {
+        if (OwnerClientId == playerID)
+        {
+            Color selfColor = GetComponent<PlayerColor>().CurrentColor;
+            Debug.Log("Self color: " + selfColor);
+            return colorNames[selfColor];
+        }
+        else
+        {
+            GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+            foreach (GameObject player in players)
+            {
+                if (player.GetComponent<NetworkObject>().OwnerClientId == playerID)
+                {
+                    Color playerColor = player.GetComponent<PlayerColor>()._netColor.Value;
+                    Debug.Log("Player found with ID: " + playerID + " color: " + playerColor);
+                    return colorNames[playerColor];
+                }
+            }
+            Debug.LogError("Player not found with ID: " + playerID);
+            return "Unknown";
+        }
+    }
+
+    [ServerRpc]
+    private void DisplayWinnerServerRpc(string winnerName)
+    {
+        DisplaywinnerClientRpc(winnerName);
+    }
+
+    [ClientRpc]
+    private void DisplaywinnerClientRpc(string winnerName)
+    {
+        DisplayWinnerAndExit(winnerName);
+    }
+
+    private async void DisplayWinnerAndExit(string winnerName)
+    {
+
+        UIManager.instance.ActivateWinner($"Winner: {winnerName} !");
+        await Task.Delay(8000); // wait 8 seconds before exiting lobby
+        UIManager.instance.DeactivateWinner();
+        await LobbyManager.Instance.PlayerExit();
+    }
+
 }

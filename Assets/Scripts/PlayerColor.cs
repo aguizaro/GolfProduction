@@ -10,10 +10,11 @@ using UnityEngine;
 /// </summary>
 public class PlayerColor : NetworkBehaviour
 {
-    public readonly NetworkVariable<Color> _netColor = new();
+    public readonly NetworkVariable<Color> _netColor = new(readPerm: NetworkVariableReadPermission.Everyone);
     private readonly Color[] _colors = { Color.red, Color.blue, Color.green, Color.yellow, Color.cyan, Color.magenta, Color.gray };
     private int _index;
     public MeshRenderer _renderer;
+    public Color CurrentColor;
 
     private void Awake()
     {
@@ -25,11 +26,23 @@ public class PlayerColor : NetworkBehaviour
     public override void OnDestroy()
     {
         _netColor.OnValueChanged -= OnValueChanged;
+        base.OnDestroy();
     }
 
     private void OnValueChanged(Color prev, Color next)
     {
         _renderer.material.color = next;
+        CurrentColor = next;
+        //Debug.Log($"Player {OwnerClientId} color is now {CurrentColor}");
+
+        //find all objects owned by this player
+        GameObject[] BallObjects = GameObject.FindGameObjectsWithTag("Ball");
+
+        //Debug.Log($"player {NetworkManager.Singleton.LocalClientId} found " + BallObjects.Length + " ball objects");
+        foreach (GameObject playerObject in BallObjects)
+        {
+            playerObject.GetComponent<BallColor>().Activate();
+        }
     }
 
     public override void OnNetworkSpawn()

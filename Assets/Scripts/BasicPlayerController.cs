@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.InputSystem;
+using Unity.VisualScripting;
+using UnityEngine.Video;
+using UnityEngine.Events;
 
 // Needs: simple way to deactivate everything on game over / game exit, so players can play again without having to re-launch the game
 public class BasicPlayerController : NetworkBehaviour
@@ -15,7 +18,7 @@ public class BasicPlayerController : NetworkBehaviour
     public float _moveSpeed = 2f;
     private float _sprintMultiplier = 2.5f;
     public float _rotationSpeed = 100f;
-    private bool _isSprinting = false;
+    [SerializeField] private bool _isSprinting = false;
 
     // Physics
     private Rigidbody _rb;
@@ -23,85 +26,156 @@ public class BasicPlayerController : NetworkBehaviour
     private SwingManager _swingManager;
 
     // State Management
-    public PlayerData _currentPlayerState;
+    private PlayerData _currentPlayerState;
     private PlayerNetworkData _playerNetworkData;
     public RagdollOnOff _ragdollOnOff;
-    private bool _canMove = true;
 
     // Animation
     private Animator _animator;
     private GameObject[] _flagPoles;
 
-    // Activation
-    [SerializeField] private bool _isActive = false;
+    // Spawning
+    private bool _isSpawnedAtPos = false; // used to check if player has been spawned in correct position
+    // Cosmetics
+    private PlayerHatController _playerHat;
 
-    //#if ENABLE_INPUT_SYSTEM
+
+    // Activation
+    public bool IsActive = false;
+
     [Header("For Input System Only")]
+    public bool canInput = true;
     public Vector2 _moveInput;
     public Vector2 _lookInput;
     public const float _inputThreshold = 0.001f;
-    public Actions _actions;
+    public InputActionAsset _inputActionAsset;
+    public InputActionMap gameplayActionMap = new InputActionMap();
     public float _playerYaw = 0f;
-    //#endif
+
     [Header("Hybrid Variables For Both Input Systems")]
     public bool _forwardPressed;
     public bool _backPressed;
     public bool _leftPressed;
     public bool _rightPressed;
-    public bool _strikePressed;
+    public bool _swingPressed;
+    public bool _ballSpawnExitSwingPressed;
+    [Header("Action Checkers")]
+    public bool isStriking;
 
     public override void OnNetworkSpawn()
     {
+        Debug.Log("OnNetworkSpawn: " + OwnerClientId + " isOwner: " + IsOwner + " Is local player: " + IsLocalPlayer + " Is server: " + IsServer + " Is client: " + IsClient + " localclientID: " + NetworkManager.Singleton.LocalClientId);
         _rb = gameObject.GetComponent<Rigidbody>();
         _animator = GetComponent<Animator>();
+        _playerHat = GetComponent<PlayerHatController>();
         _swingManager = GetComponent<SwingManager>();
         _ragdollOnOff = GetComponent<RagdollOnOff>();
         _flagPoles = GameObject.FindGameObjectsWithTag("HoleFlagPole");
 
+        _swingManager.Activate(); // activate swing mode
         _ragdollOnOff.Activate(); // activate ragdoll
+        //_playerHat.RandomizeHatTexture();
         if (!IsOwner) return;
-#if ENABLE_INPUT_SYSTEM
-        #region Input Actions Initialization
-        _actions = new Actions();
-        _actions.Enable();
-        _actions.Gameplay.Pause.started += HandlePauseStarted;
-        _actions.Gameplay.Sprint.started += HandleSprintStarted;
-        _actions.Gameplay.Sprint.canceled += HandleSprintCanceled;
-        _actions.Gameplay.Strike.started += HandleStrikeStarted;
-        _actions.Gameplay.Strike.canceled += HandleStrikeCanceled;
-        #endregion
-#endif
-        transform.position = new Vector3(Random.Range(390, 400), 69.1f, Random.Range(318, 320));
-        // activate player controller - controller will activate the player movement, animations, shooting and ragdoll
-        Activate();
-    }
 
+        #region Input Actions Initialization
+        UIManager.instance.onEnablePause.AddListener(DisableInput);
+        UIManager.instance.onDisablePause.AddListener(EnableInput);
+        _inputActionAsset = _inputActionAsset ?? Resources.Load<InputActionAsset>("InputActionAsset/Actions");
+        _inputActionAsset.Enable();
+        gameplayActionMap = _inputActionAsset.FindActionMap("Gameplay", throwIfNotFound: true);
+        gameplayActionMap.Enable();
+        _inputActionAsset.FindActionMap("UI")["Pause"].started += HandlePauseStarted;
+        _inputActionAsset.FindActionMap("UI").Disable();
+
+        gameplayActionMap["Pause"].started += HandlePauseStarted;
+        gameplayActionMap["Sprint"].started += HandleSprintStarted;
+        gameplayActionMap["Sprint"].canceled += HandleSprintCanceled;
+        gameplayActionMap["Swing"].started += HandleSwingStarted;
+        gameplayActionMap["Swing"].canceled += HandleSwingCanceled;
+        gameplayActionMap["Ball Spawn/Exit Swing"].started += HandleBallSpawnExitSwingStarted;
+        gameplayActionMap["Ball Spawn/Exit Swing"].canceled += HandleBallSpawnExitSwingCanceled;
+        #endregion
+
+        // activate player controller - controller will activate the player movement, animations, shooting and ragdoll
+        //_playerHat.RandomizeHatTexture();
+        //_playerHatMeshId = _playerHat.GetCurrentMeshId();
+        //_playerHatTextureId = _playerHat.GetCurrentTextureId();
+        //Activate();
+    }
 
     // Update Loop -------------------------------------------------------------------------------------------------------------
     void Update()
     {
-        if (!_isActive) return; //prevent updates until player is fully activated
+
+        if (!IsOwner) return;
+
+        //handle player falling through the map
+        if (transform.position.y < 40)
+        {
+            Debug.Log("Player " + OwnerClientId + " fell through the map");
+            _rb.useGravity = false;
+            _rb.velocity = Vector3.zero;
+
+            if (!IsActive) SpawnInPreLobby();
+            else transform.position = new Vector3(390 + OwnerClientId * 2, 69.5f, 321); //spawn in first hole
+
+            Debug.Log("Player " + OwnerClientId + " respawn at " + transform.position);
+
+            _rb.useGravity = true;
+        }
+
+        //prevent updates until player is fully activated
+        if (!IsActive)
+        {
+
+
+            // activate game for all players if host presses space in pre-game lobby
+            if (IsServer && Input.GetKeyDown(KeyCode.P))
+            {
+                //close lobby for new players
+                _ = LobbyManager.Instance.LockLobby(); // no await here - does not block main thread but thats okay, as long as lobby starts lock process
+
+                // activate all players
+                foreach (NetworkClient player in NetworkManager.Singleton.ConnectedClientsList)
+                {
+                    Debug.Log("Activating player " + player.PlayerObject.GetComponent<BasicPlayerController>().OwnerClientId + " from server: " + IsServer);
+                    player.PlayerObject.GetComponent<BasicPlayerController>().ActivateClientRpc();
+                }
+
+            }
+
+            // Randomize player's hat config
+            if (IsOwner && Input.GetKeyDown(KeyCode.L))
+            {
+                _playerHat.RandomizeHatConfig();
+            }
+        }
 
         Animate();
-        if (_canMove)
-        {
-            Movement();
-        }
+        Movement();
     }
 
     // Activation -------------------------------------------------------------------------------------------------------------
 
     public void Activate()
     {
-        // Debug.Log("Activating player controller for " + OwnerClientId + " isOwner: " + IsOwner);
+        if (IsOwner)
+        {
+            UIManager.instance.DeactivateDirections(); // deactivate directions UI when game starts (only want this to happen once - so we check if player is owner))
+            if (_ragdollOnOff.IsRagdoll()) _ragdollOnOff.ResetRagdoll(); // reset ragdoll if player is in ragdoll mode
+        }
+
         _playerNetworkData = GetComponent<PlayerNetworkData>();
         _ragdollOnOff._playerNetworkData = _playerNetworkData;
 
-        if (!IsOwner) return;
+        Debug.Log("inside Activate() owned by player " + OwnerClientId + " isOwner: " + IsOwner + "Is local player: " + IsLocalPlayer + "Is server: " + IsServer + "Is client: " + IsClient);
 
-        // activate player movement, animations, shooting and ragdoll\
-        _isActive = true;
-        _swingManager.Activate();
+        // spawn players at firt hole
+        _rb.MovePosition(new Vector3(390 + OwnerClientId * 2, 69.5f, 321)); //space players out by 2 units each
+        _rb.MoveRotation(Quaternion.Euler(0, -179f, 0)); //face flag pole
+        Debug.Log("Player " + OwnerClientId + " spawned at " + transform.position);
+
+        IsActive = true;
 
         if (IsServer)
         {
@@ -110,20 +184,15 @@ public class BasicPlayerController : NetworkBehaviour
             gameManager.GetComponent<NetworkObject>().Spawn();
 
             //activate spider
-            if (IsServer)
-            {
-                GameObject spider = Instantiate(spiderPrefab, new Vector3(391, 72.1f, 289), Quaternion.identity);
-                spider.GetComponent<NetworkObject>().Spawn();
-            }
+            GameObject spider = Instantiate(spiderPrefab, new Vector3(391, 72.1f, 289), Quaternion.identity);
+            spider.GetComponent<NetworkObject>().Spawn();
         }
 
-
-
-        // activate flag poles
+        // activate flag poles - in scene placed network objects (server auth) -update this later to be dynamically spawned by server
         foreach (GameObject flagPole in _flagPoles)
         {
             flagPole.GetComponent<HoleFlagPoleManager>().playerNetworkData = _playerNetworkData;
-            flagPole.GetComponent<HoleFlagPoleManager>().playerController = this;
+            //flagPole.GetComponent<HoleFlagPoleManager>().playerController = this;
             flagPole.GetComponent<HoleFlagPoleManager>().uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
             flagPole.GetComponent<HoleFlagPoleManager>().Activate();
         }
@@ -132,8 +201,6 @@ public class BasicPlayerController : NetworkBehaviour
         _currentPlayerState = new PlayerData
         {
             playerID = OwnerClientId,
-            playerPos = transform.position,
-            playerRot = transform.rotation,
             currentHole = 1,
             strokes = 0,
             enemiesDefeated = 0,
@@ -145,15 +212,28 @@ public class BasicPlayerController : NetworkBehaviour
 
     public void Deactivate()
     {
-        _isActive = false;
+        IsActive = false;
+
         foreach (GameObject flagPole in _flagPoles)
         {
             flagPole.GetComponent<HoleFlagPoleManager>().Deactivate();
         }
         _ragdollOnOff.Deactivate();
         _swingManager.Deactivate();
-        //_playerShoot.Deactivate();
-        _actions.Disable();
+
+        if (!IsOwner) return;
+        UIManager.instance.onEnablePause.RemoveListener(DisableInput);
+        UIManager.instance.onDisablePause.RemoveListener(EnableInput);
+        gameplayActionMap["Pause"].started -= HandlePauseStarted;
+        gameplayActionMap["Sprint"].started -= HandleSprintStarted;
+        gameplayActionMap["Sprint"].canceled -= HandleSprintCanceled;
+        gameplayActionMap["Swing"].started -= HandleSwingStarted;
+        gameplayActionMap["Swing"].canceled -= HandleSwingCanceled;
+        gameplayActionMap["Ball Spawn/Exit Swing"].started -= HandleBallSpawnExitSwingStarted;
+        gameplayActionMap["Ball Spawn/Exit Swing"].canceled -= HandleBallSpawnExitSwingCanceled;
+        _inputActionAsset.FindActionMap("UI")["Pause"].started -= HandlePauseStarted;
+        _inputActionAsset?.FindActionMap("Gameplay").Disable();
+        _inputActionAsset?.FindActionMap("UI").Disable();
     }
 
     public override void OnDestroy()
@@ -167,61 +247,14 @@ public class BasicPlayerController : NetworkBehaviour
 
     private void Movement()
     {
-        if (!IsOwner)
-        {
-            if (!_isActive) return; //prevent updates until state manager is fully activated
-
-            // update local player state with network data ?
-        }
+        if (!IsOwner) return;
 
         if (UIManager.isPaused) { return; }
         else { if (!UIManager.instance.titleScreenMode) { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; } }
 
-#if ENABLE_INPUT_SYSTEM
         InputSystemRotation();
         InputSystemMovement();
-#else
-        float moveHorizontal = Input.GetAxis("Horizontal");
-        float moveVertical = Input.GetAxis("Vertical");
-        float rotationInput = Input.GetAxis("Mouse X");
-        _isSprinting = Input.GetKey(KeyCode.LeftShift) && moveVertical > 0; //sprinting only allowed when moving forward
-        PlayerMovement(moveHorizontal, moveVertical, rotationInput);
-#endif
-        AfterMoveStateUpdate();
-    }
-
-    private void PlayerMovement(float moveHorizontal, float moveVertical, float rotationInput)
-    {
-
-        float splayerSpeed = _isSprinting ? _moveSpeed * _sprintMultiplier : _moveSpeed;
-
-        Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
-        movement = movement.normalized * splayerSpeed * Time.deltaTime;
-
-        _rb.MovePosition(transform.position + transform.TransformDirection(movement));
-
-        float rotationAmount = rotationInput * _rotationSpeed * Time.deltaTime;
-        Quaternion deltaRotation = Quaternion.Euler(0f, rotationAmount, 0f);
-        _rb.MoveRotation(_rb.rotation * deltaRotation);
-    }
-
-    public void AfterMoveStateUpdate()
-    {
-        if (!_isActive) return; //prevent updates to state manager until player is fully activated
-
-        _currentPlayerState = new PlayerData
-        {
-            playerID = OwnerClientId,
-            playerPos = transform.position,
-            playerRot = transform.rotation,
-            currentHole = _currentPlayerState.currentHole,
-            strokes = _currentPlayerState.strokes,
-            enemiesDefeated = _currentPlayerState.enemiesDefeated,
-            score = _currentPlayerState.score
-        };
-
-        //Debug.Log("BasicPlayerController: sending to PlayerNetworkData.cs\nOwner: " + OwnerClientId + "\nstrokes: " + _currentPlayerState.strokes + "\nhole: " + _currentPlayerState.currentHole + "\npos: " + _currentPlayerState.playerPos);
-        UpdatePlayerState(_currentPlayerState);
+        //AfterMoveStateUpdate();
     }
 
     // Animation -------------------------------------------------------------------------------------------------------------
@@ -235,29 +268,17 @@ public class BasicPlayerController : NetworkBehaviour
         bool isStrafingRight = _animator.GetBool("isRight");
         bool isWalking = _animator.GetBool("isWalking");
         bool isReversing = _animator.GetBool("isReversing");
-        bool isStriking = _animator.GetBool("isStriking");
-#if ENABLE_INPUT_SYSTEM
-#else
-        _forwardPressed = Input.GetKey("w") || Input.GetKey("up");
-        _backPressed = Input.GetKey("s") || Input.GetKey("down");
-        _rightPressed = Input.GetKey("d") || Input.GetKey("right");
-        _leftPressed = Input.GetKey("a") || Input.GetKey("left");
-        _strikePressed = Input.GetKeyDown("e");
-#endif
+        isStriking = _animator.GetBool("isStriking");
 
 
         if (UIManager.isPaused) { return; }
 
         if (IsOwner)
         {
-#if ENABLE_INPUT_SYSTEM
-            _moveInput = _actions.Gameplay.Move.ReadValue<Vector2>().normalized;
+            _moveInput = canInput ? gameplayActionMap["Move"].ReadValue<Vector2>().normalized : Vector2.zero;
             _animator.SetFloat("moveX", _moveInput.x);
             _animator.SetFloat("moveY", _moveInput.y);
-#else
-            _animator.SetFloat("moveX", 0f);
-            _animator.SetFloat("moveY", 0f);
-#endif
+
             if (_forwardPressed && !isWalking)
             {
                 _animator.SetBool("isWalking", true);
@@ -302,65 +323,33 @@ public class BasicPlayerController : NetworkBehaviour
             {
                 _animator.SetBool("isRight", false);
             }
-
-            if (_strikePressed && !isStriking)
-            {
-                _animator.SetBool("isStriking", true);
-                _animator.SetBool("justStriked", true);
-                DisableInput();
-            }
-
-            if (isStriking)
-            {
-                if (!_strikePressed)
-                {
-                    _animator.SetBool("justStriked", false);
-                }
-                if (_animator.GetCurrentAnimatorStateInfo(0).IsName("Strike") && !_animator.IsInTransition(0))
-                {
-                    // Check if the current animation is the "Strike" animation and not in transition
-                    if (_animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 0.7f)
-                    {
-                        // The strike animation has finished playing
-                        _animator.SetBool("isStriking", false);
-                        EnableInput();
-                    }
-                }
-                else if (_animator.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
-                {
-                    // If the current state is "Idle", reset isStriking and enable input
-                    _animator.SetBool("isStriking", false);
-                    EnableInput();
-                }
-            }
         }
     }
 
 
     // Input Management -------------------------------------------------------------------------------------------------------------
 
+    // IN THE FUTURE - lets add a parameter to include rotation (sometimes we wan to disable movement but still allow rotation) - ex: when in ragdoll mode
     public void DisableInput()
     {
-#if ENABLE_INPUT_SYSTEM
-        _actions.asset.FindActionMap("Gameplay", false).Disable();
-        _actions.asset.FindActionMap("UI", false).Enable();
-#endif
+        _inputActionAsset?.FindActionMap("Gameplay", false).Disable();
+        _inputActionAsset?.FindActionMap("UI", false).Enable();
+
         _animator.SetBool("isWalking", false);
         _animator.SetBool("isRunning", false);
         _animator.SetBool("isLeft", false);
         _animator.SetBool("isRight", false);
         _animator.SetBool("isReversing", false);
         //_animator.SetBool("isStriking", false);
-        _canMove = false;
+        canInput = false;
     }
 
     public void EnableInput()
     {
-#if ENABLE_INPUT_SYSTEM
-        _actions.asset.FindActionMap("Gameplay", false).Enable();
-        _actions.asset.FindActionMap("UI", false).Disable();
-#endif
-        _canMove = true;
+        _inputActionAsset?.FindActionMap("Gameplay", false).Enable();
+        _inputActionAsset?.FindActionMap("UI", false).Disable();
+
+        canInput = true;
     }
 
     // State Management -------------------------------------------------------------------------------------------------------------
@@ -370,10 +359,11 @@ public class BasicPlayerController : NetworkBehaviour
 
         _playerNetworkData.StorePlayerState(playerState);
     }
+
     #region  Input Actions Functions
     public void InputSystemRotation()
     {
-        _lookInput = _actions.Gameplay.Look.ReadValue<Vector2>();
+        _lookInput = canInput ? gameplayActionMap["Look"].ReadValue<Vector2>() : Vector2.zero;
         if (_lookInput.sqrMagnitude > _inputThreshold)
         {
             float deltaTimeMultiplier = 0f;
@@ -403,6 +393,7 @@ public class BasicPlayerController : NetworkBehaviour
     }
     public void InputSystemMovement()
     {
+
         float splayerSpeed = _isSprinting ? _moveSpeed * _sprintMultiplier : _moveSpeed;
         if (_moveInput.sqrMagnitude > _inputThreshold)
         {
@@ -410,6 +401,10 @@ public class BasicPlayerController : NetworkBehaviour
             _backPressed = _moveInput.y < -0.2f;
             _leftPressed = _moveInput.x < -0.25f;
             _rightPressed = _moveInput.x > 0.25f;
+
+            Vector3 movement = new Vector3(_moveInput.x, 0f, _moveInput.y);
+            movement = movement.normalized * splayerSpeed * Time.deltaTime;
+            _rb.MovePosition(transform.position + transform.TransformDirection(movement));
         }
         else
         {
@@ -417,14 +412,14 @@ public class BasicPlayerController : NetworkBehaviour
             _backPressed = false;
             _leftPressed = false;
             _rightPressed = false;
-            splayerSpeed = 0;
+            //splayerSpeed = 0;
         }
-        Vector3 movement = new Vector3(_moveInput.x, 0f, _moveInput.y);
-        movement = movement.normalized * splayerSpeed * Time.deltaTime;
-        _rb.MovePosition(transform.position + transform.TransformDirection(movement));
+
     }
     public void HandlePauseStarted(InputAction.CallbackContext ctx)
     {
+        Debug.Log("Pause button pressed");
+
         //Copied from the previous version
         if (!UIManager.isPaused)
         {
@@ -432,6 +427,7 @@ public class BasicPlayerController : NetworkBehaviour
             UIManager.instance.EnablePause();
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+            Debug.Log("Pause! isPaused : " + UIManager.isPaused + " Cursor Lock State : " + Cursor.lockState + " Cursor Visible : " + Cursor.visible);
         }
         else
         {
@@ -439,6 +435,7 @@ public class BasicPlayerController : NetworkBehaviour
             UIManager.instance.DisablePause();
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
+            Debug.Log("Unpause! isPaused : " + UIManager.isPaused + " Cursor Lock State : " + Cursor.lockState + " Cursor Visible : " + Cursor.visible);
         }
     }
 
@@ -451,21 +448,48 @@ public class BasicPlayerController : NetworkBehaviour
     {
         _isSprinting = false;
     }
-    public void HandleStrikeStarted(InputAction.CallbackContext ctx)
+    public void HandleSwingStarted(InputAction.CallbackContext ctx)
     {
-        _strikePressed = true;
+        _swingPressed = true;
     }
-    public void HandleStrikeCanceled(InputAction.CallbackContext ctx)
+    public void HandleSwingCanceled(InputAction.CallbackContext ctx)
     {
-        _strikePressed = false;
+        _swingPressed = false;
+    }
+    public void HandleBallSpawnExitSwingStarted(InputAction.CallbackContext ctx)
+    {
+        _ballSpawnExitSwingPressed = true;
+    }
+    public void HandleBallSpawnExitSwingCanceled(InputAction.CallbackContext ctx)
+    {
+        _ballSpawnExitSwingPressed = false;
     }
     #endregion
+
+
+    // Network Functions -------------------------------------------------------------------------------------------------------------
+
+    [ClientRpc]
+    public void ActivateClientRpc()
+    {
+        if (!IsOwner) return;
+
+        if (_swingManager == null) _swingManager = GetComponent<SwingManager>();
+        if (_swingManager.isInSwingState()) _swingManager.ExitSwingMode();
+
+        _swingManager.RemoveForces(); // in case ball is moving
+
+        DisableInput();
+
+        Activate();
+        EnableInput();
+    }
+
+    // spawn functions -------------------------------------------------------------------------------------------------------------
+    public void SpawnInPreLobby()
+    {
+        if (!IsOwner) return;
+
+        _rb.MovePosition(new Vector3(94.2f + OwnerClientId * 2, 100.5f, -136.3f));//space players out by 2 units each
+    }
 }
-
-
-
-
-
-
-
-

@@ -14,13 +14,14 @@ public class RagdollOnOff : NetworkBehaviour
     private BoxCollider _golfClubCollider;
     private SwingManager _swingManager;
 
-    public float ragdollDelay = 0.5f; //Slight delay defore ragdoll mode is activated
-    public float getUpDelay = 10f;
+    private float ragdollDelay = 0.5f; //Slight delay defore ragdoll mode is activated
+    private float getUpDelay = 12f;
     private float delay;
     private bool isRagdoll = false; //is player in ragdoll mode
     private bool isActive = false; //is player instance active
 
-
+    private bool firstDone = false;
+    public bool alreadyLaunched = false;
 
     // Activation -------------------------------------------------------------------------------------------------------------
     public void Activate()
@@ -34,8 +35,22 @@ public class RagdollOnOff : NetworkBehaviour
         _swingManager = GetComponentInChildren<SwingManager>();
         delay = getUpDelay;
 
-        if (IsOwner) ResetRagdoll(); // owners deactivate ragdoll using RPCs
-        else RagdollModeOff(); // non owners deactivate ragdoll locally
+        foreach (Collider col in ragdollColliders)
+        {
+            col.enabled = false;
+        }
+        foreach (Rigidbody rb in limbsRigidBodies)
+        {
+            if (rb != playerRB) rb.isKinematic = true;
+        }
+
+        _playerAnimator.enabled = true;
+        //_basicPlayerController.enabled = true;
+        mainCollider.enabled = true;
+        playerRB.isKinematic = false;
+        isRagdoll = false;
+        playerRB.useGravity = true;
+
     }
 
     public void Deactivate() => isActive = false;
@@ -44,20 +59,20 @@ public class RagdollOnOff : NetworkBehaviour
     // Update Loop -------------------------------------------------------------------------------------------------------------
     void Update()
     {
-
         if (!isActive) return; //prevent updates until player is fully activated
-
-        if (!_golfClubCollider.enabled) //not sure why box collider spawns in as not active but i force it here
-        {
-            _golfClubCollider.enabled = true;
-            _golfClubCollider.isTrigger = true;
-        }
-
         if (!IsOwner) return;
 
+        if (!firstDone)
+        {
+            firstDone = true;
+            PerformRagdoll();
+            ResetRagdoll();
+            Debug.Log("Finished first hack fix");
+        }
+
         // dev cheat keys
-        if (Input.GetKey("q")) PerformRagdoll();
-        if (Input.GetKey("r")) ResetRagdoll();
+        if (Input.GetKeyDown("q")) PerformRagdoll();
+        if (Input.GetKeyDown("r")) ResetRagdoll();
 
         if (isRagdoll) //auto reset ragdoll after delay
         {
@@ -66,9 +81,20 @@ public class RagdollOnOff : NetworkBehaviour
             {
                 delay = getUpDelay;
                 ResetRagdoll();
+
+                Debug.Log("Update: after reset ragdoll: pos: " + transform.position);
+
             }
         }
 
+    }
+
+    // this coroutine is required to set the gravity after a delay - if the gravity is immediately set true, the player will not have its position updated correctly - this is a hack fix
+
+    private IEnumerator DelayedGravityActivation()
+    {
+        yield return new WaitForSeconds(ragdollDelay);
+        playerRB.useGravity = true;
     }
 
 
@@ -77,20 +103,16 @@ public class RagdollOnOff : NetworkBehaviour
     // Dev Note: Use this public function to activate the ragdoll mode
     public void PerformRagdoll()
     {
-        Debug.Log("PerformRagdoll called for " + OwnerClientId);
-
         if (IsServer) RagdollModeOnClientRpc();
         else RagdollModeOnServerRpc();
 
-        RagdollModeOn();
+
     }
     // Dev Note: Use this public function to deactivate the ragdoll mode
     public void ResetRagdoll()
     {
         if (IsServer) RagdollModeOffClientRpc();
         else RagdollModeOffServerRpc();
-
-        RagdollModeOff();
     }
 
     Collider[] ragdollColliders;
@@ -99,12 +121,17 @@ public class RagdollOnOff : NetworkBehaviour
     // Dev Note: Don't call this function directly. Use the RPCs instead. - this will only exectute locally
     void RagdollModeOn()
     {
+
+        if (isRagdoll) return; //don't activate if already in ragdoll mode
+
+        delay = getUpDelay; // reset delay every time ragdoll mode is activated - avoids instant reset
         if (_swingManager.isInSwingState())
         {
             _swingManager.ExitSwingMode();
         }
         _playerAnimator.enabled = false;
-        _basicPlayerController.enabled = false;
+        //_basicPlayerController.enabled = false;
+        _basicPlayerController.DisableInput(); // it would be nice to disable input but still allow the player to move the camera (only allow input rotation)
 
         foreach (Collider col in ragdollColliders)
         {
@@ -112,41 +139,62 @@ public class RagdollOnOff : NetworkBehaviour
         }
         foreach (Rigidbody rb in limbsRigidBodies)
         {
-            rb.isKinematic = false;
+            if (rb != playerRB) rb.isKinematic = false;
         }
 
         mainCollider.enabled = false;
         playerRB.isKinematic = true;
         isRagdoll = true;
 
+        Debug.Log("RagdollModeOn done for owner: " + OwnerClientId + " isOwner: " + IsOwner);
 
     }
     // Dev Note: Don't call this function directly. Use the RPCs instead. - this will only exectute locally
     void RagdollModeOff()
     {
+
+        if (!isRagdoll) return; //don't deactivate if not in ragdoll mode
+
         foreach (Collider col in ragdollColliders)
         {
             col.enabled = false;
         }
         foreach (Rigidbody rb in limbsRigidBodies)
         {
-            rb.isKinematic = true;
+            if (rb != playerRB) rb.isKinematic = true;
+        }
+
+        foreach (Transform child in transform)
+        {
+            if (child.CompareTag("Hips"))
+            {
+                transform.position = child.GetComponent<HipsLocation>().endPosition;
+                Debug.Log("RagdollOnOff: Moved player to hips end position: " + transform.position);
+                break;
+            }
         }
 
         _playerAnimator.enabled = true;
-        _basicPlayerController.enabled = true;
+        //_basicPlayerController.enabled = true;
+        _basicPlayerController.EnableInput();
         mainCollider.enabled = true;
         playerRB.isKinematic = false;
         isRagdoll = false;
+        alreadyLaunched = false;
+        Debug.Log($"Already launched: {alreadyLaunched} for owner: {OwnerClientId} isOwner: {IsOwner}");
+        StartCoroutine(DelayedGravityActivation());
     }
 
     // Collision Detection ------------------------------------------------------------------------------------------------------------
+
+    // we might only need ontriggerstay - but it needs testing
     private void OnTriggerStay(Collider other)
     {
         RagdollTrigger(other);
     }
     private void OnTriggerEnter(Collider other)
     {
+        Debug.Log("OnTriggerEnter: " + other.gameObject.name);
         RagdollTrigger(other);
     }
     private void OnTriggerExit(Collider other)
@@ -162,12 +210,13 @@ public class RagdollOnOff : NetworkBehaviour
         {
             if (!isRagdoll && other.gameObject.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
             {
+                Debug.Log("RagdollTrigger: got hit by player strike");
                 if (!IsOwner) return;
+                Debug.Log("RagdollTrigger: Owner - perform ragdoll");
                 PerformRagdoll();
             }
         }
     }
-
 
 
     // Remote Procedure Calls ------------------------------------------------------------------------------------------------------------
@@ -175,22 +224,20 @@ public class RagdollOnOff : NetworkBehaviour
     [ServerRpc]
     public void RagdollModeOnServerRpc()
     {
-        Debug.Log("RagdollModeOnServerRpc called for " + OwnerClientId);
+
         RagdollModeOnClientRpc();
-        RagdollModeOn();
     }
 
     [ServerRpc]
     public void RagdollModeOffServerRpc()
     {
         RagdollModeOffClientRpc();
-        RagdollModeOff();
     }
 
     [ClientRpc]
     public void RagdollModeOnClientRpc()
     {
-        Debug.Log("RagdollModeOnClientRpc called for " + OwnerClientId);
+
         RagdollModeOn();
     }
 
@@ -207,6 +254,35 @@ public class RagdollOnOff : NetworkBehaviour
     public bool IsRagdoll()
     {
         return isRagdoll;
+    }
+
+    public void AddForceToSelf(Vector3 force)
+    {
+        if (IsOwner)
+        {
+            delay = getUpDelay; //reset delay to avoid instant reset after force is applied
+            AddForceToSelfServerRpc(force * 2.5f);
+            playerRB.useGravity = false;
+            playerRB.isKinematic = false;
+        }
+    }
+
+
+    [ServerRpc]
+    private void AddForceToSelfServerRpc(Vector3 force)
+    {
+        AddForceToSelfClientRpc(force);
+    }
+
+    [ClientRpc]
+    private void AddForceToSelfClientRpc(Vector3 force)
+    {
+        foreach (Rigidbody limb in limbsRigidBodies)
+        {
+            if (limb != playerRB) limb.AddForce(force, ForceMode.Impulse);
+        }
+        alreadyLaunched = true;
+        Debug.Log($"Already launched: {alreadyLaunched} for owner: {OwnerClientId} isOwner: {IsOwner}");
     }
 
 }
