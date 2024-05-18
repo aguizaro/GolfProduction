@@ -58,11 +58,7 @@ public class BasicPlayerController : NetworkBehaviour
     public bool _leftPressed;
     public bool _rightPressed;
     public bool _swingPressed;
-    public UnityEvent swingStartedEvent;
-    public UnityEvent swingCanceledEvent;
     public bool _ballSpawnExitSwingPressed;
-    public UnityEvent ballSpawnExitSwingStartedEvent;
-    public UnityEvent ballSpawnExitSwingCanceledEvent;
     [Header("Action Checkers")]
     public bool isStriking;
 
@@ -82,10 +78,13 @@ public class BasicPlayerController : NetworkBehaviour
         if (!IsOwner) return;
 
         #region Input Actions Initialization
+        UIManager.instance.onEnablePause.AddListener(DisableInput);
+        UIManager.instance.onDisablePause.AddListener(EnableInput);
         _inputActionAsset = _inputActionAsset ?? Resources.Load<InputActionAsset>("InputActionAsset/Actions");
         _inputActionAsset.Enable();
         gameplayActionMap = _inputActionAsset.FindActionMap("Gameplay", throwIfNotFound: true);
         gameplayActionMap.Enable();
+        _inputActionAsset.FindActionMap("UI")["Pause"].started += HandlePauseStarted;
         _inputActionAsset.FindActionMap("UI").Disable();
 
         gameplayActionMap["Pause"].started += HandlePauseStarted;
@@ -139,7 +138,7 @@ public class BasicPlayerController : NetworkBehaviour
                 // activate all players
                 foreach (NetworkClient player in NetworkManager.Singleton.ConnectedClientsList)
                 {
-                    Debug.Log("Activating player " + player.PlayerObject.GetComponent<BasicPlayerController>().OwnerClientId + "from server: " + IsServer);
+                    Debug.Log("Activating player " + player.PlayerObject.GetComponent<BasicPlayerController>().OwnerClientId + " from server: " + IsServer);
                     player.PlayerObject.GetComponent<BasicPlayerController>().ActivateClientRpc();
                 }
 
@@ -160,14 +159,20 @@ public class BasicPlayerController : NetworkBehaviour
 
     public void Activate()
     {
+        if (IsOwner)
+        {
+            UIManager.instance.DeactivateDirections(); // deactivate directions UI when game starts (only want this to happen once - so we check if player is owner))
+            if (_ragdollOnOff.IsRagdoll()) _ragdollOnOff.ResetRagdoll(); // reset ragdoll if player is in ragdoll mode
+        }
+
         _playerNetworkData = GetComponent<PlayerNetworkData>();
         _ragdollOnOff._playerNetworkData = _playerNetworkData;
 
         Debug.Log("inside Activate() owned by player " + OwnerClientId + " isOwner: " + IsOwner + "Is local player: " + IsLocalPlayer + "Is server: " + IsServer + "Is client: " + IsClient);
 
         // spawn players at firt hole
-        transform.position = new Vector3(390 + OwnerClientId * 2, 69.5f, 321); //space players out by 2 units each
-        transform.rotation = Quaternion.Euler(0, -179f, 0); //face flag pole
+        _rb.MovePosition(new Vector3(390 + OwnerClientId * 2, 69.5f, 321)); //space players out by 2 units each
+        _rb.MoveRotation(Quaternion.Euler(0, -179f, 0)); //face flag pole
         Debug.Log("Player " + OwnerClientId + " spawned at " + transform.position);
 
         IsActive = true;
@@ -217,7 +222,8 @@ public class BasicPlayerController : NetworkBehaviour
         _swingManager.Deactivate();
 
         if (!IsOwner) return;
-
+        UIManager.instance.onEnablePause.RemoveListener(DisableInput);
+        UIManager.instance.onDisablePause.RemoveListener(EnableInput);
         gameplayActionMap["Pause"].started -= HandlePauseStarted;
         gameplayActionMap["Sprint"].started -= HandleSprintStarted;
         gameplayActionMap["Sprint"].canceled -= HandleSprintCanceled;
@@ -225,6 +231,7 @@ public class BasicPlayerController : NetworkBehaviour
         gameplayActionMap["Swing"].canceled -= HandleSwingCanceled;
         gameplayActionMap["Ball Spawn/Exit Swing"].started -= HandleBallSpawnExitSwingStarted;
         gameplayActionMap["Ball Spawn/Exit Swing"].canceled -= HandleBallSpawnExitSwingCanceled;
+        _inputActionAsset.FindActionMap("UI")["Pause"].started -= HandlePauseStarted;
         _inputActionAsset?.FindActionMap("Gameplay").Disable();
         _inputActionAsset?.FindActionMap("UI").Disable();
     }
@@ -322,6 +329,7 @@ public class BasicPlayerController : NetworkBehaviour
 
     // Input Management -------------------------------------------------------------------------------------------------------------
 
+    // IN THE FUTURE - lets add a parameter to include rotation (sometimes we wan to disable movement but still allow rotation) - ex: when in ragdoll mode
     public void DisableInput()
     {
         _inputActionAsset?.FindActionMap("Gameplay", false).Disable();
@@ -468,6 +476,8 @@ public class BasicPlayerController : NetworkBehaviour
 
         if (_swingManager == null) _swingManager = GetComponent<SwingManager>();
         if (_swingManager.isInSwingState()) _swingManager.ExitSwingMode();
+
+        _swingManager.RemoveForces(); // in case ball is moving
 
         DisableInput();
 

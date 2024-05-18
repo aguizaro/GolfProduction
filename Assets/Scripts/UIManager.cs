@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Localization.Settings;
 using Unity.Netcode;
-
+using UnityEngine.Events;
 
 public enum UIState
 {
@@ -79,6 +79,10 @@ public class UIManager : MonoBehaviour
     [Header("Other")]
     [SerializeField] private TMP_Text _holeCountText;
 
+    [SerializeField] private TMP_Text _directionsTextP;
+    [SerializeField] private TMP_Text _directionsTextL;
+    [SerializeField] private TMP_Text _winnerText;
+
     // UIManager instance
     public static UIManager instance { get; private set; }
 
@@ -92,6 +96,9 @@ public class UIManager : MonoBehaviour
     private bool localeActive = false;
     private Transform _cameraStartTransform;
     private MenuState menuState = MenuState.None;
+
+    public UnityEvent onEnablePause;
+    public UnityEvent onDisablePause;
 
     private async void Start()
     {
@@ -124,10 +131,11 @@ public class UIManager : MonoBehaviour
 
         instance = this;
 
-        InitializetLanguageDropdown();
+        LoadSettings();
         await LobbyManager.Instance.Authenticate(); //does not block main thread while being atuthenticated
 
         DisablePause(); DisableSettings(); EnableUI(UIState.Title); // start with title screen
+
     }
 
 
@@ -187,8 +195,8 @@ public class UIManager : MonoBehaviour
     }
 
     // Pause UI Methods
-    public void EnablePause() { isPaused = true; _pauseScreenUI.SetActive(true); }
-    public void DisablePause() { isPaused = false; _pauseScreenUI.SetActive(false); _settingsScreenUI.SetActive(false); }
+    public void EnablePause() { isPaused = true; _pauseScreenUI.SetActive(true); onEnablePause?.Invoke(); }
+    public void DisablePause() { isPaused = false; _pauseScreenUI.SetActive(false); _settingsScreenUI.SetActive(false); onDisablePause?.Invoke(); }
     public void EnableSettings() { EnableMenu(MenuState.Settings); }
     public void DisableSettings() { _settingsScreenUI.SetActive(false); if (!titleScreenMode) { EnablePause(); } }
     public void PauseStartSettings() { _pauseScreenUI.SetActive(false); EnableSettings(); }
@@ -202,7 +210,7 @@ public class UIManager : MonoBehaviour
         EnableMenu(MenuState.Settings);
     }
 
-    // Quit lobby and return to title screen
+    // IN THE FUTURE: USE "await LobbyManager.Instance.PlayerExit()" - then ReturnToTitle() will not be necessary here
     private async void QuitLobbyReturnToTitle()
     {
         await LobbyManager.Instance.TryQuitLobby();
@@ -237,10 +245,37 @@ public class UIManager : MonoBehaviour
             if (locales[i] == currentLocale)
             {
                 _settingsLanguageDropdown.value = i;
+                ApplyLanguage(i);
+                break;
             }
         }
+    }
 
+    // temp ui to activate directions text
+    public void ActivateDirections(bool isHost)
+    {
+        if (isHost) _directionsTextP.gameObject.SetActive(true);
+        _directionsTextL.gameObject.SetActive(true);
+    }
+    // temp ui to deactivate directions text
+    public void DeactivateDirections()
+    {
+        _directionsTextP.gameObject.SetActive(false);
+        _directionsTextL.gameObject.SetActive(false);
+    }
 
+    //temp ui to activate winner text
+    public void ActivateWinner(string winner)
+    {
+        Debug.Log("Activating winner text on " + NetworkManager.Singleton.LocalClientId + " with: " + winner);
+        _winnerText.text = winner;
+        _winnerText.gameObject.SetActive(true);
+    }
+    // temp ui to deactivate winner text
+    public void DeactivateWinner()
+    {
+        _winnerText.text = "";
+        _winnerText.gameObject.SetActive(false);
     }
 
     public void LoadSettings()
@@ -254,7 +289,15 @@ public class UIManager : MonoBehaviour
         language = sData.language;
 
         _settingsSensitivitySlider.value = settingsSensitivity;
-        //_settingsLanguageDropdown.value = language;
+        _settingsLanguageDropdown.value = language;
+        if(sData.playTimes == 0)
+        {
+            InitializetLanguageDropdown();
+        }
+        else
+        {
+            ApplyLanguage(language);
+        }
     }
 
     public void ApplySettings()
