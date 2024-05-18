@@ -670,9 +670,6 @@ public class LobbyManager : MonoBehaviour
 
         UIManager.instance.DeactivateUI();
         UIManager.instance.ActivateHUD();
-
-        UIManager.instance.ActivateDirections(NetworkManager.Singleton.IsHost); //activate temp UI directions (only for prelobby)
-
         UIManager.instance.DisplaySignedIn();
         UIManager.instance.DisplayCode(ConnectedLobby.LobbyCode);
         UIManager.instance.DisplayLobbyName(ConnectedLobby.Name);
@@ -704,6 +701,7 @@ public class LobbyManager : MonoBehaviour
         //ConnectionNotificationManager.Singleton.OnClientConnectionNotification -= HandleClientConnectionNotification;
 
         UIManager.instance.DisableUIText();
+        UIManager.instance.DeactivateHUD();
         UIManager.instance.ReturnToTitle();
     }
 
