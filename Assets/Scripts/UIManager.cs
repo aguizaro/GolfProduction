@@ -52,6 +52,7 @@ public class UIManager : MonoBehaviour
     // Game UI Elements
     [Header("Game UI Elements")]
     [SerializeField] private TMP_Text _gamePlayerStrokesText;
+    [SerializeField] private GameObject _minimap;
 
     // Pause UI Elements
     [Header("Pause UI Elements")]
@@ -131,11 +132,12 @@ public class UIManager : MonoBehaviour
 
         instance = this;
 
-        LoadSettings();
+        InitializetLanguageDropdown();
         await LobbyManager.Instance.Authenticate(); //does not block main thread while being atuthenticated
 
         DisablePause(); DisableSettings(); EnableUI(UIState.Title); // start with title screen
 
+        DeactivateMinimap();
     }
 
 
@@ -179,8 +181,20 @@ public class UIManager : MonoBehaviour
         _holeCountText.gameObject.SetActive(false);
         _lobbyJoinCodeText.gameObject.SetActive(false);
         _lobbyNameText.gameObject.SetActive(false);
+        _minimap.SetActive(false);
+        Debug.Log("Deactivating HUD");
+        DeactivateDirections(); // not needed since basicplayer controller deactivates on game start (directions are for pre-lobby only)
     }
-    public void ActivateHUD() { _gamePlayerStrokesText.gameObject.SetActive(true); _holeCountText.gameObject.SetActive(true); _lobbyJoinCodeText.gameObject.SetActive(true); _lobbyNameText.gameObject.SetActive(true); }
+    public void ActivateHUD()
+    {
+        _gamePlayerStrokesText.gameObject.SetActive(true);
+        _holeCountText.gameObject.SetActive(true);
+        _lobbyJoinCodeText.gameObject.SetActive(true);
+        _lobbyNameText.gameObject.SetActive(true);
+        _minimap.SetActive(true);
+        Debug.Log("Activating HUD");
+        ActivateDirections(NetworkManager.Singleton.IsHost);
+    }
     public void DisplayCode(string code) => _lobbyJoinCodeText.text = code;
     public void DisplayLobbyName(string name) => _lobbyNameText.text = name;
     public async void DisplaySignedIn() => _lobbySignedInText.text = await LobbyManager.Instance.GetPlayerName();
@@ -195,8 +209,21 @@ public class UIManager : MonoBehaviour
     }
 
     // Pause UI Methods
-    public void EnablePause() { isPaused = true; _pauseScreenUI.SetActive(true); onEnablePause?.Invoke(); }
-    public void DisablePause() { isPaused = false; _pauseScreenUI.SetActive(false); _settingsScreenUI.SetActive(false); onDisablePause?.Invoke(); }
+    public void EnablePause()
+    {
+        isPaused = true;
+        _pauseScreenUI.SetActive(true);
+        onEnablePause?.Invoke();
+        DeactivateMinimap();
+    }
+    public void DisablePause()
+    {
+        isPaused = false;
+        _pauseScreenUI.SetActive(false);
+        _settingsScreenUI.SetActive(false);
+        onDisablePause?.Invoke();
+        ActivateMinimap();
+    }
     public void EnableSettings() { EnableMenu(MenuState.Settings); }
     public void DisableSettings() { _settingsScreenUI.SetActive(false); if (!titleScreenMode) { EnablePause(); } }
     public void PauseStartSettings() { _pauseScreenUI.SetActive(false); EnableSettings(); }
@@ -220,7 +247,6 @@ public class UIManager : MonoBehaviour
     // returns to title screen
     public void ReturnToTitle()
     {
-        DeactivateHUD();
         _mainCamera.transform.position = _cameraStartTransform.position;
         _mainCamera.transform.rotation = _cameraStartTransform.rotation;
         titleScreenMode = true;
@@ -228,6 +254,7 @@ public class UIManager : MonoBehaviour
         Cursor.visible = true;
         DisablePause();
         EnableUI(UIState.Title);
+        DeactivateHUD();
     }
 
     // Settings UI Methods
@@ -245,10 +272,20 @@ public class UIManager : MonoBehaviour
             if (locales[i] == currentLocale)
             {
                 _settingsLanguageDropdown.value = i;
-                ApplyLanguage(i);
-                break;
             }
         }
+
+
+    }
+
+    public void ActivateMinimap()
+    {
+        _minimap.SetActive(true);
+    }
+
+    public void DeactivateMinimap()
+    {
+        _minimap.SetActive(false);
     }
 
     // temp ui to activate directions text
@@ -289,15 +326,7 @@ public class UIManager : MonoBehaviour
         language = sData.language;
 
         _settingsSensitivitySlider.value = settingsSensitivity;
-        _settingsLanguageDropdown.value = language;
-        if(sData.playTimes == 0)
-        {
-            InitializetLanguageDropdown();
-        }
-        else
-        {
-            ApplyLanguage(language);
-        }
+        //_settingsLanguageDropdown.value = language;
     }
 
     public void ApplySettings()
