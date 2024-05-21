@@ -106,14 +106,6 @@ public class RagdollOnOff : NetworkBehaviour
         }
     }
 
-    // this coroutine is required to set the gravity after a delay - if the gravity is immediately set true, the player will not have its position updated correctly - this is a hack fix
-
-    private IEnumerator DelayedGravityActivation()
-    {
-        yield return new WaitForSeconds(ragdollDelay);
-        playerRB.useGravity = true;
-    }
-
 
     // Ragdoll Logic ------------------------------------------------------------------------------------------------------------
 
@@ -181,31 +173,14 @@ public class RagdollOnOff : NetworkBehaviour
             if (rb != playerRB) rb.isKinematic = true;
         }
 
+        _playerAnimator.enabled = true;
+
         // Update the main colliders position to the hips using helper function
         AlignMainColliderToHips();
 
-        // Update the main colliders position to the hips (OLD)
-        /*
-        foreach (Transform child in transform)
-        {
-            if (child.CompareTag("Hips"))
-            {
-                transform.position = child.GetComponent<HipsLocation>().endPosition;
-                Debug.Log("RagdollOnOff: Moved player to hips end position: " + transform.position);
-                break;
-            }
-        }
-        */
-
-        _playerAnimator.enabled = true;
-        //_basicPlayerController.enabled = true;
-        _basicPlayerController.EnableInput();
-        mainCollider.enabled = true;
-        playerRB.isKinematic = false;
-        isRagdoll = false;
-        alreadyLaunched = false;
-        Debug.Log($"Already launched: {alreadyLaunched} for owner: {OwnerClientId} isOwner: {IsOwner}");
-        StartCoroutine(DelayedGravityActivation());
+        _playerAnimator.Play("StandUp");
+        // Execute rest of the logic after the standup animation
+        StartCoroutine(WaitForAnimationAndExecuteLogic("StandUp"));
     }
 
     // Collision Detection ------------------------------------------------------------------------------------------------------------
@@ -286,6 +261,40 @@ public class RagdollOnOff : NetworkBehaviour
         _hipsBone.position = originalHipsPosition;
     }
 
+    
+    //
+    private IEnumerator WaitForAnimationAndExecuteLogic(string animationName)
+    {
+        AnimatorStateInfo animationState = _playerAnimator.GetCurrentAnimatorStateInfo(0);
+
+        while (!animationState.IsName(animationName))
+        {
+            yield return null;
+            animationState = _playerAnimator.GetCurrentAnimatorStateInfo(0);
+        }
+
+        while (animationState.normalizedTime < 0.62f)
+        {
+            yield return null;
+            animationState = _playerAnimator.GetCurrentAnimatorStateInfo(0);
+        }
+        // Animation finished, execute further logic
+        _basicPlayerController.EnableInput();
+        mainCollider.enabled = true;
+        playerRB.isKinematic = false;
+        isRagdoll = false;
+        alreadyLaunched = false;
+        Debug.Log($"Already launched: {alreadyLaunched} for owner: {OwnerClientId} isOwner: {IsOwner}");
+        StartCoroutine(DelayedGravityActivation());
+    }
+
+    // this coroutine is required to set the gravity after a delay - if the gravity is immediately set true, the player will not have its position updated correctly - this is a hack fix
+    private IEnumerator DelayedGravityActivation()
+    {
+        yield return new WaitForSeconds(ragdollDelay);
+        playerRB.useGravity = true;
+    }
+
     // public functions ------------------------------------------------------------------------------------------------------------
 
     public bool IsRagdoll()
@@ -303,6 +312,7 @@ public class RagdollOnOff : NetworkBehaviour
             playerRB.isKinematic = false;
         }
     }
+
 
 
     [ServerRpc]
