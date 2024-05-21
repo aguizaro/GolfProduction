@@ -143,7 +143,7 @@ public class SwingManager : NetworkBehaviour
                 playerAnimator.ResetTrigger("Stance");
             }
 
-            return; // Don't execute further logic
+            return;
         }
 
     }
