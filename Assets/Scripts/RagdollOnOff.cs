@@ -19,6 +19,7 @@ public class RagdollOnOff : NetworkBehaviour
     private float delay;
     private bool isRagdoll = false; //is player in ragdoll mode
     private bool isActive = false; //is player instance active
+    private Transform _hipsBone;
 
     private bool firstDone = false;
     public bool alreadyLaunched = false;
@@ -34,6 +35,16 @@ public class RagdollOnOff : NetworkBehaviour
         _golfClubCollider = GetComponentInChildren<BoxCollider>();
         _swingManager = GetComponentInChildren<SwingManager>();
         delay = getUpDelay;
+
+        // Find and reference the players hips bone
+        foreach (Transform child in transform)
+        {
+            if (child.CompareTag("Hips"))
+            {
+                _hipsBone = child;
+                break;
+            }
+        }
 
         foreach (Collider col in ragdollColliders)
         {
@@ -84,7 +95,15 @@ public class RagdollOnOff : NetworkBehaviour
 
             }
         }
-
+        
+        if(Input.GetKeyDown(KeyCode.T))
+        {
+            RagdollModeOn();
+        }
+        if(Input.GetKeyDown(KeyCode.Y))
+        {
+            RagdollModeOff();
+        }
     }
 
     // this coroutine is required to set the gravity after a delay - if the gravity is immediately set true, the player will not have its position updated correctly - this is a hack fix
@@ -162,6 +181,11 @@ public class RagdollOnOff : NetworkBehaviour
             if (rb != playerRB) rb.isKinematic = true;
         }
 
+        // Update the main colliders position to the hips using helper function
+        AlignMainColliderToHips();
+
+        // Update the main colliders position to the hips (OLD)
+        /*
         foreach (Transform child in transform)
         {
             if (child.CompareTag("Hips"))
@@ -171,6 +195,7 @@ public class RagdollOnOff : NetworkBehaviour
                 break;
             }
         }
+        */
 
         _playerAnimator.enabled = true;
         //_basicPlayerController.enabled = true;
@@ -189,11 +214,13 @@ public class RagdollOnOff : NetworkBehaviour
     private void OnTriggerStay(Collider other)
     {
         RagdollTrigger(other);
+        Debug.Log("trigger1detected");
     }
     private void OnTriggerEnter(Collider other)
     {
         Debug.Log("OnTriggerEnter: " + other.gameObject.name);
         RagdollTrigger(other);
+        Debug.Log("trigger1detected");
     }
     private void OnTriggerExit(Collider other)
     {
@@ -245,10 +272,22 @@ public class RagdollOnOff : NetworkBehaviour
         RagdollModeOff();
     }
 
+    // helper functions -----------------------------------------
+    private void AlignMainColliderToHips()
+    {
+        Vector3 originalHipsPosition = _hipsBone.position;
+        transform.position = _hipsBone.position;
+
+        if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hitInfo))
+        {
+            transform.position = new Vector3(transform.position.x, hitInfo.point.y, transform.position.z);
+        }
+
+        _hipsBone.position = originalHipsPosition;
+    }
 
     // public functions ------------------------------------------------------------------------------------------------------------
 
-    // public function to check if ragdoll mode is active
     public bool IsRagdoll()
     {
         return isRagdoll;
