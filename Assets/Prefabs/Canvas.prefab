@@ -8093,7 +8093,6 @@ MonoBehaviour:
   _playButton: {fileID: 2557332171678219687}
   _refreshButton: {fileID: 5746294642800213011}
   _gamePlayerStrokesText: {fileID: 8068449098095075141}
-  _minimap: {fileID: 7003935972777526741}
   _minimapImage: {fileID: 7606937791022672999}
   _pauseScreenUI: {fileID: 3976630811343960228}
   _pauseResumeButton: {fileID: 6541786038349359031}
@@ -19519,7 +19518,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7815764975136543796, guid: 4f87f35617047e54f8bc4760610432fe, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

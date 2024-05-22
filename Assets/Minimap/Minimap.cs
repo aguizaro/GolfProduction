@@ -9,7 +9,18 @@ public class Minimap : NetworkBehaviour
     public Camera miniMapCamera;
     public RawImage miniMapImage;
     // Start is called before the first frame update
-    void Start()
+    public override void OnNetworkSpawn()
+    {
+        Invoke(nameof(UpdateMinimap), 0.1f);
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        
+    }
+
+    private void UpdateMinimap()
     {
         RenderTexture renderTexture = new RenderTexture(256, 256, 16);
         miniMapCamera.targetTexture = renderTexture;
@@ -19,11 +30,5 @@ public class Minimap : NetworkBehaviour
             RawImage miniMapImage = GameObject.Find("Minimap Image").GetComponent<RawImage>();
             miniMapImage.texture = renderTexture;
         }
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }

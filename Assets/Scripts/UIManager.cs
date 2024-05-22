@@ -52,7 +52,6 @@ public class UIManager : MonoBehaviour
     // Game UI Elements
     [Header("Game UI Elements")]
     [SerializeField] private TMP_Text _gamePlayerStrokesText;
-    [SerializeField] private GameObject _minimap;
     [SerializeField] private GameObject _minimapImage;
 
     // Pause UI Elements
@@ -148,6 +147,7 @@ public class UIManager : MonoBehaviour
         LobbyManager.Instance.ResetQuit();
         RefreshDisplayList();
         EnableUI(UIState.Lobby);
+        _minimapImage.GetComponent<RawImage>().enabled = false;
     }
     private void TitleSettings() => EnableSettings();
     private void TitleQuit() => Application.Quit();
@@ -279,14 +279,12 @@ public class UIManager : MonoBehaviour
 
     public void ActivateMinimap()
     {
-        _minimap.SetActive(true);
         _minimapImage.GetComponent<RawImage>().enabled = true;
     }
 
     public void DeactivateMinimap()
     {
         _minimapImage.GetComponent<RawImage>().enabled = false;
-        _minimap.SetActive(false);
     }
 
     // temp ui to activate directions text
