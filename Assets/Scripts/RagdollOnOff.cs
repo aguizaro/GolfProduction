@@ -24,6 +24,21 @@ public class RagdollOnOff : NetworkBehaviour
     public bool alreadyLaunched = false;
     public bool beingLaunched = false; //this will be true if another player has entered swing state on this player
 
+    private BoneTransform[] _standUpBoneTransforms;
+    private BoneTransform[] _ragdollBoneTransforms;
+    private Transform[] _bones;
+
+    private float _timeToResetBones = 0.5f;
+    private float _elapsedResetBonesTime;
+
+
+    private class BoneTransform
+    {
+        public Vector3 Position { get; set; }
+
+        public Quaternion Rotation { get; set; }
+    }
+
     // Activation -------------------------------------------------------------------------------------------------------------
     public void Activate()
     {
@@ -34,6 +49,18 @@ public class RagdollOnOff : NetworkBehaviour
         _playerAnimator = GetComponent<Animator>();
         _swingManager = GetComponentInChildren<SwingManager>();
         delay = getUpDelay;
+
+        _bones = _hipsBone.GetComponentsInChildren<Transform>();
+        _standUpBoneTransforms = new BoneTransform[_bones.Length];
+        _ragdollBoneTransforms = new BoneTransform[_bones.Length];
+
+        for (int boneIndex = 0; boneIndex < _bones.Length; boneIndex++)
+        {
+            _standUpBoneTransforms[boneIndex] = new BoneTransform();
+            _ragdollBoneTransforms[boneIndex] = new BoneTransform();
+        }
+
+        PopulateAnimationStartBoneTransforms("StandUp", _standUpBoneTransforms);
 
         // Find and reference the players hips bone
         foreach (Transform child in transform)
@@ -172,10 +199,10 @@ public class RagdollOnOff : NetworkBehaviour
 
         // Update the main colliders position to the hips using helper function
         AlignMainColliderToHips();
+        PopulateBoneTransforms(_ragdollBoneTransforms);
 
-        _playerAnimator.Play("StandUp");
-        // Execute rest of the logic after the standup animation
-        StartCoroutine(WaitForAnimationAndExecuteLogic("StandUp"));
+        _elapsedResetBonesTime = 0;
+        ResetBones();
     }
 
     // Collision Detection ------------------------------------------------------------------------------------------------------------
@@ -184,12 +211,10 @@ public class RagdollOnOff : NetworkBehaviour
     private void OnTriggerStay(Collider other)
     {
         RagdollTrigger(other);
-        Debug.Log("trigger1detected");
     }
     private void OnTriggerEnter(Collider other)
     {
         RagdollTrigger(other);
-        Debug.Log("trigger1detected");
     }
     private void OnTriggerExit(Collider other)
     {
@@ -240,7 +265,50 @@ public class RagdollOnOff : NetworkBehaviour
         RagdollModeOff();
     }
 
+    [ServerRpc]
+    private void AddForceToSelfServerRpc(Vector3 force)
+    {
+        AddForceToSelfClientRpc(force);
+    }
+
+    [ClientRpc]
+    private void AddForceToSelfClientRpc(Vector3 force)
+    {
+        foreach (Rigidbody limb in limbsRigidBodies)
+        {
+            if (limb != playerRB) limb.AddForce(force, ForceMode.Impulse);
+        }
+        alreadyLaunched = true;
+        Debug.Log($"Already launched: {alreadyLaunched} for owner: {OwnerClientId} isOwner: {IsOwner}");
+    }
+
     // helper functions -----------------------------------------
+    private void ResetBones()
+    {
+        _elapsedResetBonesTime += Time.deltaTime;
+        float elapsedPercentage = _elapsedResetBonesTime / _timeToResetBones;
+
+        for (int boneIndex = 0; boneIndex < _bones.Length; boneIndex++)
+        {
+            _bones[boneIndex].localPosition = Vector3.Lerp(
+                _ragdollBoneTransforms[boneIndex].Position,
+                _standUpBoneTransforms[boneIndex].Position,
+                elapsedPercentage);
+            
+            _bones[boneIndex].localRotation = Quaternion.Lerp(
+                _ragdollBoneTransforms[boneIndex].Rotation,
+                _standUpBoneTransforms[boneIndex].Rotation,
+                elapsedPercentage);
+        }
+
+        if (elapsedPercentage >= 1)
+        {
+            _playerAnimator.Play("StandUp");
+            // Execute rest of the logic after the standup animation
+            StartCoroutine(WaitForAnimationAndExecuteLogic("StandUp"));
+        }
+    }
+
     private void AlignMainColliderToHips()
     {
         Vector3 originalHipsPosition = _hipsBone.position;
@@ -252,6 +320,34 @@ public class RagdollOnOff : NetworkBehaviour
         }
 
         _hipsBone.position = originalHipsPosition;
+    }
+
+    private void PopulateBoneTransforms(BoneTransform[] boneTransforms)
+    {
+        for (int boneIndex = 0; boneIndex < _bones.Length; boneIndex++)
+        {
+            boneTransforms[boneIndex].Position = _bones[boneIndex].localPosition;
+            boneTransforms[boneIndex].Rotation = _bones[boneIndex].localRotation;
+        }
+    }
+
+    private void PopulateAnimationStartBoneTransforms(string clipName, BoneTransform[] boneTransforms)
+    {
+        Vector3 positionBeforeSampling = transform.position;
+        Quaternion rotationBeforeSampling = transform.rotation;
+
+        foreach (AnimationClip clip in _playerAnimator.runtimeAnimatorController.animationClips)
+        {
+            if (clip.name == clipName)
+            {
+                clip.SampleAnimation(gameObject, 0);
+                PopulateBoneTransforms(_standUpBoneTransforms);
+                break;
+            }
+        }
+
+        transform.position = positionBeforeSampling;
+        transform.rotation = rotationBeforeSampling;
     }
 
     
