@@ -332,7 +332,7 @@ public class SwingManager : NetworkBehaviour
         thisBallMoving = true;
 
         // Play sound effect for swinging the ball
-        AudioManager.instance.PlayOneShot(FMODEvents.instance.playerGolfSwing, _playerController.transform.position);
+        AudioManager.instance.PlayOneShotForAllClients(FMODEvents.instance.playerGolfSwing, _playerController.transform.position, IsOwner);
 
         // only count strokes if the game is active / not in pre-game lobby
         if (_playerController.IsActive)
@@ -360,9 +360,7 @@ public class SwingManager : NetworkBehaviour
         Vector3 swingForceVector = dir * swingForce * meterCanvas.GetComponent<PowerMeter>().GetPowerValue();
 
         // Play sound effect for swinging the ball
-        //AudioManager.instance.PlayOneShotForAllClients(FMODEvents.instance.playerGolfSwing, _playerController.transform.position);
-        AudioManager.instance.PlayOneShotForAllClients("golf_swing", _playerController.transform.position);
-        //AudioManager.instance.PlayOneShot(FMODEvents.instance.playerGolfSwing, _playerController.transform.position);
+        AudioManager.instance.PlayOneShotForAllClients(FMODEvents.instance.playerGolfSwing, _playerController.transform.position, IsOwner);
 
         Debug.Log("force dir: " + dir);
         Debug.Log("force vector: " + swingForceVector);

@@ -100,7 +100,6 @@ webGL_Build/
 fmod.log
 fmod_editor.log
 
-<<<<<<< Updated upstream
 # Ignore bank files in the StreamingAssets folder.
 /[Aa]ssets/StreamingAssets/**/*.bank
 /[Aa]ssets/StreamingAssets/**/*.bank.meta
@@ -110,8 +109,3 @@ fmod_editor.log
 fmod_editor.log
 fmod_editor.log
 fmod_editor.log
-=======
-# FMOD 1.10.x (Legacy)
-/Assets/FMODAssets/*
-/Assets/FMODStudioCache.meta
->>>>>>> Stashed changes

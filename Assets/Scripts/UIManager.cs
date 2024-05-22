@@ -140,8 +140,9 @@ public class UIManager : MonoBehaviour
         LobbyManager.Instance.ResetQuit();
         RefreshDisplayList();
         EnableUI(UIState.Lobby);
+        PlayUISelectSFX();
     }
-    private void TitleSettings() => EnableSettings();
+    private void TitleSettings() { EnableSettings(); PlayUISelectSFX(); }
     private void TitleQuit() => Application.Quit();
 
     // Lobby UI Methods
@@ -205,7 +206,7 @@ public class UIManager : MonoBehaviour
         EnableMenu(MenuState.Settings);
     }
 
-    public void PlayUISelectSFX() => AudioManager.instance.PlayOneShot(FMODEvents.instance.playerGolfSwing, transform.position);
+    public void PlayUISelectSFX() => AudioManager.instance.PlayOneShotForOwner(FMODEvents.instance.uiSelect, transform.position);
 
     // Quit lobby and return to title screen
     private async void QuitLobbyReturnToTitle()

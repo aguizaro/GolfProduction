@@ -40,8 +40,8 @@ public class HoleFlagPoleManager : NetworkBehaviour
 
             if (!_playerIDs.Contains(playerID))
             {
-                AudioManager.instance.PlayOneShot(FMODEvents.instance.golfHoleEnter, this.transform.position);
-                AudioManager.instance.PlayOneShot(FMODEvents.instance.golfClap, this.transform.position);
+                AudioManager.instance.PlayOneShotForAllClients(FMODEvents.instance.golfHoleEnter, this.transform.position, true);
+                AudioManager.instance.PlayOneShotForOwner(FMODEvents.instance.golfClap, this.transform.position);
 
                 _playerIDs.Add(playerID);
                 HandlePlayerScoreClientRpc(playerID);

@@ -35,21 +35,25 @@ public class AudioManager : NetworkBehaviour
         return eventInstance;
     }
 
-    public void PlayOneShotForAllClients(string sound, Vector3 worldPos) 
+    public void PlayOneShotForOwner(EventReference soundRef, Vector3 worldPos)
     {
-        if (!IsOwner) return;
-
-        PlayOneShotForAllClientsServerRPC(FMODEvents.instance.GetEventIDFromString(sound), worldPos);
+        RuntimeManager.PlayOneShot(soundRef, worldPos);
     }
 
-    [ServerRpc]
-    private void PlayOneShotForAllClientsServerRPC(ulong soundID, Vector3 worldPos)
+    public void PlayOneShotForAllClients(EventReference soundRef, Vector3 worldPos, bool isOwner)
     {
-        PlayOneShotForAllClientsClientRPC(soundID, worldPos);
+        if (!isOwner) return;
+        PlayOneShotForAllClientsServerRpc(FMODEvents.instance.GetEventIDFromEventReference(soundRef), worldPos); // Gets ulong id for event reference
+    }
+
+    [ServerRpc (RequireOwnership=false)]
+    void PlayOneShotForAllClientsServerRpc(ulong soundID, Vector3 worldPos)
+    {
+        PlayOneShotForAllClientsClientRpc(soundID, worldPos);
     }
 
     [ClientRpc]
-    private void PlayOneShotForAllClientsClientRPC(ulong soundID, Vector3 worldPos)
+    void PlayOneShotForAllClientsClientRpc(ulong soundID, Vector3 worldPos)
     {
         RuntimeManager.PlayOneShot(FMODEvents.instance.GetEventRefenceFromEventID(soundID), worldPos);
     }
