@@ -516,7 +516,10 @@ namespace UnityEngine.InputSystem.Samples.RebindUI
             m_ActionLabel = m_ActionLabel ?? GetComponentInChildren<TextMeshProUGUI>();
             m_BindingText = m_BindingText ?? transform.Find("TriggerRebindButton").GetComponentInChildren<TextMeshProUGUI>();
             m_RebindCancelButton = m_RebindCancelButton ?? m_RebindOverlay?.transform.Find("BG/CancelButton").GetComponentInChildren<Button>();
+            UpdateActionLabel();
+            UpdateBindingDisplay();
         }
+
         public void CancelRebind()
         {
             m_RebindOperation?.Cancel();

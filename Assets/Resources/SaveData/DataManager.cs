@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class DataManager : MonoBehaviour
 {
     public static DataManager instance { get; private set; }
+    public InputActionAsset actions;
     private SettingsData settingsData;
 
     private void Awake()
@@ -30,6 +32,7 @@ public class DataManager : MonoBehaviour
     public void NewSettingsData()
     {
         settingsData = new SettingsData();
+        settingsData.rebinds = actions.SaveBindingOverridesAsJson();
     }
 
     public void LoadData()
@@ -89,6 +92,14 @@ public class DataManager : MonoBehaviour
     private void OnApplicationQuit()
     {
         settingsData.playTimes += 1;
+        settingsData.rebinds = actions.SaveBindingOverridesAsJson();
         SaveData();
+    }
+
+    private void OnEnable()
+    {
+        var rebinds = settingsData.rebinds;
+        if (!string.IsNullOrEmpty(rebinds))
+            actions.LoadBindingOverridesFromJson(rebinds);
     }
 }

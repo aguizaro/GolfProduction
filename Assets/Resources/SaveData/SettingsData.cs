@@ -15,6 +15,7 @@ public class SettingsData
     public float cameraSensitivity;
     public float volume;
     public int playTimes;
+    public string rebinds;
 
     public SettingsData() 
     {
@@ -25,6 +26,7 @@ public class SettingsData
         this.cameraSensitivity = 5;
         this.volume = 0;
         this.playTimes = 0;
+        this.rebinds = "";
     }
 
     public SettingsData Copy()
@@ -35,7 +37,8 @@ public class SettingsData
             oneHandMode = this.oneHandMode,
             cameraSensitivity = this.cameraSensitivity,
             volume = this.volume,
-            playTimes = this.playTimes
+            playTimes = this.playTimes,
+            rebinds = this.rebinds
         };
     }
 }
