@@ -49,7 +49,6 @@ public class PlayerColor : NetworkBehaviour
         _renderer.material.color = next;
         CurrentColor = next;
         GetComponent<BasicPlayerController>().playerColor = colorNames[next];
-        Debug.Log($"Player {OwnerClientId} color is now {CurrentColor} - IsOwner: {IsOwner}");
 
         if (IsOwner)
         {
@@ -69,7 +68,6 @@ public class PlayerColor : NetworkBehaviour
         //find all objects owned by this player
         GameObject[] BallObjects = GameObject.FindGameObjectsWithTag("Ball");
 
-        //Debug.Log($"player {NetworkManager.Singleton.LocalClientId} found " + BallObjects.Length + " ball objects");
         foreach (GameObject playerObject in BallObjects)
         {
             playerObject.GetComponent<BallColor>().Activate();

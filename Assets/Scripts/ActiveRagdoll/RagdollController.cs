@@ -28,7 +28,6 @@ public class RagdollController : NetworkBehaviour
 
         hips = GetComponent<Rigidbody>();
         parentTransform.position = new Vector3(401.251312f, 71.1949997f, 319.907257f);//new Vector3(Random.Range(400, 480), 51.163002f, Random.Range(51, 55));
-        Debug.Log("Client: " + OwnerClientId + " starting position" + transform.position);
 
         Cursor.lockState = CursorLockMode.Locked;
     }

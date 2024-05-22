@@ -415,7 +415,6 @@ public class UIManager : MonoBehaviour
             int i = 0;
             foreach (LobbyEntry entry in foundLobbies)
             {
-                Debug.Log($"Found {entry.Name} with code: {entry.LobbyType} with {entry.SpotsAvailable} spots left");
                 if (i < maxDisplayLen)
                 {
                     if (entry != null)

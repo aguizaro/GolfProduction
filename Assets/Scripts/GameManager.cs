@@ -99,16 +99,14 @@ public class GameManager : NetworkBehaviour
 
     public void UpdatePlayerData(PlayerData data)
     {
-        if (!IsServer) return;
+        if (!IsServer) { Debug.LogWarning("Game Manager is not the server. Use a ServerRpc to call this function"); return; }
 
         UpdateData(data);
     }
 
     public void RemovePlayerData(ulong playerID)
-    {
-        if (!IsServer) return;
-
-        RemoveData(playerID); // remove data on all clients (including host)
+    { // this public function can be called by owners to remove player data from the game manager (no server rpc needed)
+        RemoveData(playerID);
     }
 
     private void UpdateData(PlayerData playerData)
@@ -124,7 +122,6 @@ public class GameManager : NetworkBehaviour
         if (playersData.ContainsKey(playerID))
         {
             playersData.Remove(playerID);
-            Debug.Log($"Game Manager removed data for player: {playerID}");
         }
 
         UpdateScoreboard();
@@ -132,11 +129,16 @@ public class GameManager : NetworkBehaviour
 
     private void UpdateScoreboard()
     {
-        Debug.Log($"Game Manager sending data: Contains {playersData.Count} players on scoreboard");
         foreach (var player in NetworkManager.Singleton.ConnectedClientsList)
         {
             player.PlayerObject.gameObject.GetComponent<PlayerScoreboard>().UpdateScoreboardData(playersData);
         }
+    }
+
+    [ServerRpc]
+    private void RemovePlayerDataServerRpc(ulong playerID)
+    {
+        RemoveData(playerID);
     }
 
 

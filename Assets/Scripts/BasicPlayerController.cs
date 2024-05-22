@@ -185,7 +185,6 @@ public class BasicPlayerController : NetworkBehaviour
         _currentPlayerState.currentHole = 1;
         _currentPlayerState.playerColor = playerColor;
         _currentPlayerState.playerID = OwnerClientId;
-        Debug.Log($"In activate: player {OwnerClientId} - {playerColor} - IsOwner {IsOwner} ");
         UpdatePlayerState(_currentPlayerState);
     }
 

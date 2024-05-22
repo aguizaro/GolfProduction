@@ -75,7 +75,7 @@ public class PlayerNetworkData : NetworkBehaviour
 
     private void OnPlayerDataChanged(PlayerData prevData, PlayerData newData)
     {
-        Debug.Log("Player data changed - isOwner:  " + IsOwner + " - playerColor: " + newData.playerColor + " - playerID: " + newData.playerID + " - currentHole: " + newData.currentHole + " - strokes: " + newData.strokes + " - enemiesDefeated: " + newData.enemiesDefeated + " - score: " + newData.score);
+        //Debug.Log("Player data changed - isOwner:  " + IsOwner + " - playerColor: " + newData.playerColor + " - playerID: " + newData.playerID + " - currentHole: " + newData.currentHole + " - strokes: " + newData.strokes + " - enemiesDefeated: " + newData.enemiesDefeated + " - score: " + newData.score);
         _currentPlayerData = newData;
 
         if (IsOwner)
@@ -115,6 +115,18 @@ public class PlayerNetworkData : NetworkBehaviour
         return _currentPlayerData;
     }
 
+    public void RemovePlayerDataFromGameManager()
+    {
+        if (!IsOwner) return;
+        RemovePlayerDataFromGameManagerServerRpc(OwnerClientId);
+    }
+
+    [ServerRpc]
+    private void RemovePlayerDataFromGameManagerServerRpc(ulong playerID)
+    {
+        GameManager.instance.RemovePlayerData(playerID);
+    }
+
 
     [ServerRpc]
     private void StorePlayerStateServerRpc(PlayerData data)
@@ -151,12 +163,6 @@ public class PlayerNetworkData : NetworkBehaviour
     private void UpdateGameManagerServerRpc(PlayerData data)
     {
         GameManager.instance.UpdatePlayerData(data);
-    }
-
-    [ServerRpc]
-    private void RemoveFromGameManagerServerRpc()
-    {
-        GameManager.instance.RemovePlayerData(_currentPlayerData.playerID);
     }
 
 

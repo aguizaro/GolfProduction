@@ -429,8 +429,7 @@ public class SwingManager : NetworkBehaviour
     // returns -1 if no win, returns playerID if win
     public int CheckForWin(PlayerData data)
     {
-        //if (data.currentHole > holeStartPositions.Length)
-        if (data.currentHole > 1)
+        if (data.currentHole > holeStartPositions.Length)
         {
             thisBallRb.gameObject.SetActive(false);
             return (int)data.playerID;

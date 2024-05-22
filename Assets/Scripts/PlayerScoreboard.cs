@@ -6,14 +6,8 @@ using Unity.VisualScripting;
 
 public class PlayerScoreboard : NetworkBehaviour
 {
-    // this dictionary is updated by the game manager (meaning you need a serverRPC to access the data, kinda sucks for now but i will try to find a better way to do this)
+    // this dictionary is reserved for Game Manager use only - will be empty for clients
     private Dictionary<ulong, PlayerData> _scoreboardData = new Dictionary<ulong, PlayerData>();
-
-    // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-    //this is the dictionary that players(owners) can access to get the current scoreboard data
-    private Dictionary<ulong, PlayerData> ScoreboardData = new Dictionary<ulong, PlayerData>();
-
 
     // This public function is reserved for Game Manager (incoming data) -----------------------------------------------------------------------------------------------------------------
     public void UpdateScoreboardData(Dictionary<ulong, PlayerData> dataDict)
@@ -21,13 +15,10 @@ public class PlayerScoreboard : NetworkBehaviour
         ClearScoreboardClientRpc();
         _scoreboardData = dataDict;
 
-        Debug.Log($"Scoreboard data updated with {dataDict.Count} players");
-
         foreach (var data in _scoreboardData.Values)
         {
             UpdatePlayerDictionaryClientRpc(data);
         }
-
     }
 
     // RPCs to update the client side scoreboard data ----------------------------------------------------------------------------------------------------------------------------
@@ -36,7 +27,6 @@ public class PlayerScoreboard : NetworkBehaviour
     private void ClearScoreboardClientRpc()
     {
         if (!IsOwner) return;
-
         ScoreboardData.Clear();
     }
 
@@ -45,40 +35,34 @@ public class PlayerScoreboard : NetworkBehaviour
     { // this function is used to update all player owners with updated player data dictionary
         if (!IsOwner) return;
 
-        if (ScoreboardData.ContainsKey(data.playerID))
-        {
-            ScoreboardData[data.playerID] = data;
-            //Debug.Log($"client: {NetworkManager.Singleton.LocalClientId} - Scoreboard data updated for player: {data.playerID} - {data.playerColor} - {data.currentHole} - {data.strokes} - {data.score} - {data.enemiesDefeated}");
-        }
-        else
-        {
-            ScoreboardData.Add(data.playerID, data);
-            //Debug.Log($"client: {NetworkManager.Singleton.LocalClientId} - Scoreboard data created for player: {data.playerID} - {data.playerColor} - {data.currentHole} - {data.strokes} - {data.score} - {data.enemiesDefeated}");
-        }
+        if (ScoreboardData.ContainsKey(data.playerID)) ScoreboardData[data.playerID] = data;
+        else ScoreboardData.Add(data.playerID, data);
 
-        // call event to update scoreboard UI
         UpdateScoreboardUI();
     }
 
+    // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    //this is the dictionary is reserved for players(owners) - will be empty for non owners
+    private Dictionary<ulong, PlayerData> ScoreboardData = new Dictionary<ulong, PlayerData>();
+
     private void UpdateScoreboardUI()
     {
-        // call event to update scoreboard UI here
-        //UIManager.instance.UpdateScoreboardUI(ScoreboardData);
+        // UI Manager can update scoreboard UI here (This will be called every time the scoreboard data is updated)
+        //  - you can either pass the whole ScoreboardData dictionary to the UI Manager or use a foreach loop on the dictionary to pass individual player data
 
-        Debug.Log($"client: {NetworkManager.Singleton.LocalClientId} - has {ScoreboardData.Count} players on scoreboard");
-
-        foreach (var player in ScoreboardData.Values)
-        {
-            Debug.Log($"client: {NetworkManager.Singleton.LocalClientId} - contains scoreboard data for player: {player.playerID} - {player.playerColor} - {player.currentHole} - {player.strokes} - {player.score} - {player.enemiesDefeated}");
-        }
-
+        // Debug.Log("Scoreboard data updated: player data entries: " + ScoreboardData.Count);
+        // foreach (var data in ScoreboardData.Values)
+        // {
+        //     Debug.Log($"Player ID: {data.playerID} - Player Color: {data.playerColor} - Current Hole: {data.currentHole} - Strokes: {data.strokes} - Enemies Defeated: {data.enemiesDefeated} - Score: {data.score}");
+        // }
 
     }
 
     // Public functions that player (owners) can access -------------------------------------------------------------------------------------------------------------------
     public Dictionary<ulong, PlayerData> GetScoreboardData()
     {
-        if (!IsOwner) { Debug.Log("You are not the owner of this player, you cannot access this data"); return null; }
+        if (!IsOwner) { Debug.LogWarning("You are not the owner of this player, you cannot access the data"); return null; }
         return ScoreboardData;
     }
 
