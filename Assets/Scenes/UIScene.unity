@@ -219,6 +219,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26f715a2bc66cbf42b5cdd69e14dc77a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  actions: {fileID: -944628639613478452, guid: 348f818bb0642074cad3730e725f48c3, type: 3}
 --- !u!4 &179642296
 Transform:
   m_ObjectHideFlags: 0
@@ -3136,6 +3137,10 @@ PrefabInstance:
     - target: {fileID: 6723859839462563262, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6724685147946878429, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: m_text
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 6724685147946878429, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_fontSize
