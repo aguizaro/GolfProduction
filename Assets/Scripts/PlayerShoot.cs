@@ -122,7 +122,6 @@ public class PlayerShoot : NetworkBehaviour
             PlayerData _currentPlayerData = _playerNetworkData.GetPlayerData();
             _currentPlayerData.strokes++;
             _playerNetworkData.StorePlayerState(_currentPlayerData);
-            _uiManager.UpdateStrokesUI(_currentPlayerData.strokes);
         }
 
         // play audio here

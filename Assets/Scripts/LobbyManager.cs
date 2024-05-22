@@ -47,7 +47,7 @@ public class LobbyManager : MonoBehaviour
     [SerializeField] private Transform mainCameraTransform;
 
     [SerializeField] EncryptionType encryption = EncryptionType.DTLS;
-    [SerializeField] int maxLobbySize = 5;
+    private const int maxPeerConnections = 5; // Server + 5 peers = 6 total players
 
     private const string RelayJoinCodeKey = "RelayJoinCode";
     private const string LobbyTypeKey = "LobbyType";
@@ -74,6 +74,8 @@ public class LobbyManager : MonoBehaviour
     // Authentication --------------------------------------------------------------------------------------------------------------
     public async Task Authenticate(string playerName = null)
     {
+        if (UnityServices.State == ServicesInitializationState.Initializing || UnityServices.State == ServicesInitializationState.Initialized) return;
+
         var options = new InitializationOptions();
 
 #if UNITY_EDITOR
@@ -212,21 +214,21 @@ public class LobbyManager : MonoBehaviour
 
 
     // Play Now --------------------------------------------------------------------------------------------------------------
-    public async Task PlayNow()
+    public async Task PlayNow(string lobbyName = null, int maxPeers = maxPeerConnections)
     {
         try
         {
             await Authenticate();
 
-            string defaultName = "QuickLobby " + (DateTime.Now).ToString("MMdd_HHmmss");
-            ConnectedLobby = await TryQuick() ?? await CreateLobby(defaultName, maxLobbySize); //redundant assignment of ConnectedLobby - this assignment is only to allow null coalescing operator
+            string defaultName = "QuickLobby " + DateTime.Now.ToString("HHmm");
+            lobbyName = (lobbyName != null && lobbyName.Length > 0) ? lobbyName : defaultName;
+
+            ConnectedLobby = await TryQuick() ?? await Create(lobbyName, maxPeers); //redundant assignment of ConnectedLobby - this assignment is only to allow null coalescing operator
 
             if (ConnectedLobby == null) throw new LobbyServiceException(new LobbyExceptionReason(), "Lobby Error: No Lobby connected");
 
+            Debug.Log("Connected lobby code: " + ConnectedLobby.LobbyCode);
             UIManager.instance.DeactivateUI();
-
-
-            //Debug.Log("Connected lobby code: " + ConnectedLobby.LobbyCode);
 
         }
         catch (Exception e)
@@ -364,13 +366,15 @@ public class LobbyManager : MonoBehaviour
 
 
     // Create --------------------------------------------------------------------------------------------------------------
-    public async Task Create(string lobbyName, int lobbySize)
+
+    // creates a lobby with a given name and maxPeers (total players = maxPeers + 1 host)
+    public async Task<Lobby> Create(string lobbyName, int maxPeers = maxPeerConnections)
     {
         try
         {
             await Authenticate();
 
-            await CreateLobby(lobbyName, Math.Clamp(lobbySize, 2, maxLobbySize)); //clamp lobby size to 2-5
+            await CreateLobby(lobbyName, Math.Clamp(maxPeers, 1, maxPeerConnections)); //clamp lobby size to 2-6 players total (1 host + 1-5 peers)
 
             if (ConnectedLobby == null) throw new LobbyServiceException(new LobbyExceptionReason(), "Lobby Error: No Lobby connected");
 
@@ -380,24 +384,26 @@ public class LobbyManager : MonoBehaviour
             Debug.Log("Host Started");
             UIManager.instance.DeactivateUI();
 
+            return ConnectedLobby;
+
 
         }
         catch (Exception e)
         {
             Debug.LogError(e);
-            return;
+            return null;
         }
     }
 
 
     //Creates a public lobby and sets it to instanse variable ConnectedLobby
-    async Task<Lobby> CreateLobby(string lobbyName, int maxPlayers)
+    async Task<Lobby> CreateLobby(string lobbyName = null, int maxPeers = maxPeerConnections)
     {
         try
         {
 
             // Create a relay allocation and generate a join code to share with the lobby
-            Allocation allocation = await AllocateRelay(Math.Min(maxLobbySize, maxPlayers));
+            Allocation allocation = await AllocateRelay(maxPeers);
 
             // configure unity tranport to use websockets for webGL support
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(allocation, _encrptionType));
@@ -417,19 +423,15 @@ public class LobbyManager : MonoBehaviour
                 Player = await CreatePlayer()
             };
 
-            string defaultName = "MyLobby " + DateTime.Now.ToString("MMdd_HHmmss");
+            string defaultName = "MyLobby " + DateTime.Now.ToString("HHmm");
             string name = (lobbyName != null && lobbyName.Length > 0) ? lobbyName : defaultName;
 
-            ConnectedLobby = await LobbyService.Instance.CreateLobbyAsync(name, maxPlayers, options);
+            ConnectedLobby = await LobbyService.Instance.CreateLobbyAsync(name, maxPeers + 1, options); //lobbySize = maxPeers + 1 host
             await SubscribeToLobbyEvents();
             if (ConnectedLobby == null) throw new LobbyServiceException(new LobbyExceptionReason(), "Lobby Error: No Lobby connected");
 
             // pings to keep the room alive
             StartCoroutine(HeartbeatLobbyCoroutine(ConnectedLobby.Id, 10));
-
-            // // Start the room. I'm doing this immediately, but maybe you want to wait for the lobby to fill up
-            // NetworkManager.Singleton.StartHost();
-            // await WaitForNetworkConnection();
 
             return ConnectedLobby;
         }
@@ -491,8 +493,6 @@ public class LobbyManager : MonoBehaviour
 
     private async void OnLobbyChanged(ILobbyChanges changes)
     {
-        Debug.LogWarning("Lobby changed");
-
         if (changes.LobbyDeleted)
         {
             Debug.LogWarning("lobbyChanged: Lobby Deleted");
@@ -583,11 +583,11 @@ public class LobbyManager : MonoBehaviour
 
     // Allocation --------------------------------------------------------------------------------------------------------------
 
-    async Task<Allocation> AllocateRelay(int maxPlayers)
+    async Task<Allocation> AllocateRelay(int maxPeers)
     {
         try
         {
-            return await RelayService.Instance.CreateAllocationAsync(maxPlayers);
+            return await RelayService.Instance.CreateAllocationAsync(maxPeers); // lobbySize = maxPeers + 1 host
         }
         catch (RelayServiceException e)
         {
@@ -996,7 +996,7 @@ public class LobbyManager : MonoBehaviour
     // this callback is only ran on the server and on the local client that disconnects.
     private void OnClientConnected(ulong clientId)
     {
-        if (clientId == NetworkManager.Singleton.LocalClientId) Debug.Log("Local Client Connected");
+        if (clientId == NetworkManager.Singleton.LocalClientId) Debug.Log("NetManagerEvent: Local Client Connected");
         else Debug.Log("NetManagerEvent: Remote Client Connected: " + clientId);
     }
 

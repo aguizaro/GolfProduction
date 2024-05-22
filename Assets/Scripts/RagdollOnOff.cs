@@ -11,7 +11,6 @@ public class RagdollOnOff : NetworkBehaviour
     private Animator _playerAnimator;
     private BasicPlayerController _basicPlayerController;
     public PlayerNetworkData _playerNetworkData;
-    private BoxCollider _golfClubCollider;
     private SwingManager _swingManager;
 
     private float ragdollDelay = 0.5f; //Slight delay defore ragdoll mode is activated
@@ -22,6 +21,7 @@ public class RagdollOnOff : NetworkBehaviour
 
     private bool firstDone = false;
     public bool alreadyLaunched = false;
+    public bool beingLaunched = false; //this will be true if another player has entered swing state on this player
 
     // Activation -------------------------------------------------------------------------------------------------------------
     public void Activate()
@@ -31,7 +31,6 @@ public class RagdollOnOff : NetworkBehaviour
         limbsRigidBodies = playerRig.GetComponentsInChildren<Rigidbody>();
         _basicPlayerController = GetComponent<BasicPlayerController>();
         _playerAnimator = GetComponent<Animator>();
-        _golfClubCollider = GetComponentInChildren<BoxCollider>();
         _swingManager = GetComponentInChildren<SwingManager>();
         delay = getUpDelay;
 
@@ -45,7 +44,6 @@ public class RagdollOnOff : NetworkBehaviour
         }
 
         _playerAnimator.enabled = true;
-        //_basicPlayerController.enabled = true;
         mainCollider.enabled = true;
         playerRB.isKinematic = false;
         isRagdoll = false;
@@ -62,13 +60,13 @@ public class RagdollOnOff : NetworkBehaviour
         if (!isActive) return; //prevent updates until player is fully activated
         if (!IsOwner) return;
 
-        if (!firstDone)
-        {
-            firstDone = true;
-            PerformRagdoll();
-            ResetRagdoll();
-            Debug.Log("Finished first hack fix");
-        }
+        // if (!firstDone)
+        // {
+        //     firstDone = true;
+        //     PerformRagdoll();
+        //     ResetRagdoll();
+        //     Debug.Log("Finished first hack fix");
+        // }
 
         if (isRagdoll) //auto reset ragdoll after delay
         {
@@ -79,9 +77,6 @@ public class RagdollOnOff : NetworkBehaviour
             {
                 delay = getUpDelay;
                 ResetRagdoll();
-
-                Debug.Log("Update: after reset ragdoll: pos: " + transform.position);
-
             }
         }
 
@@ -167,19 +162,17 @@ public class RagdollOnOff : NetworkBehaviour
             if (child.CompareTag("Hips"))
             {
                 transform.position = child.GetComponent<HipsLocation>().endPosition;
-                Debug.Log("RagdollOnOff: Moved player to hips end position: " + transform.position);
                 break;
             }
         }
 
         _playerAnimator.enabled = true;
-        //_basicPlayerController.enabled = true;
         _basicPlayerController.EnableInput();
         mainCollider.enabled = true;
         playerRB.isKinematic = false;
         isRagdoll = false;
         alreadyLaunched = false;
-        Debug.Log($"Already launched: {alreadyLaunched} for owner: {OwnerClientId} isOwner: {IsOwner}");
+        beingLaunched = false;
         StartCoroutine(DelayedGravityActivation());
     }
 
@@ -192,7 +185,6 @@ public class RagdollOnOff : NetworkBehaviour
     }
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log("OnTriggerEnter: " + other.gameObject.name);
         RagdollTrigger(other);
     }
     private void OnTriggerExit(Collider other)
@@ -208,9 +200,8 @@ public class RagdollOnOff : NetworkBehaviour
         {
             if (!isRagdoll && other.gameObject.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
             {
-                Debug.Log("RagdollTrigger: got hit by player strike");
+                //Debug.Log("RagdollTrigger: got hit by player strike");
                 if (!IsOwner) return;
-                Debug.Log("RagdollTrigger: Owner - perform ragdoll");
                 PerformRagdoll();
             }
         }
@@ -280,7 +271,6 @@ public class RagdollOnOff : NetworkBehaviour
             if (limb != playerRB) limb.AddForce(force, ForceMode.Impulse);
         }
         alreadyLaunched = true;
-        Debug.Log($"Already launched: {alreadyLaunched} for owner: {OwnerClientId} isOwner: {IsOwner}");
     }
 
 }

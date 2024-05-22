@@ -155,13 +155,13 @@ public class UIManager : MonoBehaviour
     private async void PlayNow()
     {
         DisableAllLobbyButtons();
-        await LobbyManager.Instance.PlayNow();
+        await LobbyManager.Instance.PlayNow(_inputField.text);
         EnableAllLobbyButtons();
     }
     private async void CreateLobby()
     {
         DisableAllLobbyButtons();
-        await LobbyManager.Instance.Create(_inputField.text, 5);
+        await LobbyManager.Instance.Create(_inputField.text);
         EnableAllLobbyButtons();
     }
     private async void JoinLobby()
@@ -182,7 +182,6 @@ public class UIManager : MonoBehaviour
         _lobbyJoinCodeText.gameObject.SetActive(false);
         _lobbyNameText.gameObject.SetActive(false);
         _minimap.SetActive(false);
-        Debug.Log("Deactivating HUD");
         DeactivateDirections(); // not needed since basicplayer controller deactivates on game start (directions are for pre-lobby only)
     }
     public void ActivateHUD()
@@ -192,7 +191,6 @@ public class UIManager : MonoBehaviour
         _lobbyJoinCodeText.gameObject.SetActive(true);
         _lobbyNameText.gameObject.SetActive(true);
         _minimap.SetActive(true);
-        Debug.Log("Activating HUD");
         ActivateDirections(NetworkManager.Singleton.IsHost);
     }
     public void DisplayCode(string code) => _lobbyJoinCodeText.text = code;
@@ -233,7 +231,6 @@ public class UIManager : MonoBehaviour
     }
     public void DisableControls()
     {
-        Debug.Log("Disable Control");
         EnableMenu(MenuState.Settings);
     }
 
@@ -304,7 +301,6 @@ public class UIManager : MonoBehaviour
     //temp ui to activate winner text
     public void ActivateWinner(string winner)
     {
-        Debug.Log("Activating winner text on " + NetworkManager.Singleton.LocalClientId + " with: " + winner);
         _winnerText.text = winner;
         _winnerText.gameObject.SetActive(true);
     }
@@ -331,7 +327,6 @@ public class UIManager : MonoBehaviour
 
     public void ApplySettings()
     {
-        Debug.Log("Applying settings");
         SettingsData sData = DataManager.instance.GetSettingsData();
         // apply all settings
         sData.cameraSensitivity = settingsSensitivity;
@@ -394,7 +389,6 @@ public class UIManager : MonoBehaviour
 
     IEnumerator SetLocale(int _localeID)
     {
-        Debug.Log("Locale entered: " + _localeID);
         localeActive = true;
         yield return LocalizationSettings.InitializationOperation;
         LocalizationSettings.SelectedLocale = LocalizationSettings.AvailableLocales.Locales[_localeID];
@@ -453,20 +447,14 @@ public class UIManager : MonoBehaviour
         }
     }
 
-
-    ulong timesPressed = 0;
     bool isJoining = false;
 
     private async void HandleJoinLobbyButton(LobbyEntry entry)
     {
-        Debug.Log($"pressed join button - count : {++timesPressed} - lobbyID: {entry.Id} lobbyName: {entry.Name}");
-
         if (isJoining) return;
         isJoining = true;
         DisableAllLobbyButtons();
 
-
-        Debug.Log($"calling lobbymanager join() with id: {entry.Id} and name: {entry.Name}");
         bool success = await LobbyManager.Instance.Join(lobbyID: entry.Id);
 
         if (!success) Debug.LogWarning("Failed to join lobby");

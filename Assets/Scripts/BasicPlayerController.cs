@@ -29,6 +29,7 @@ public class BasicPlayerController : NetworkBehaviour
     private PlayerData _currentPlayerState;
     private PlayerNetworkData _playerNetworkData;
     public RagdollOnOff _ragdollOnOff;
+    public string playerColor;
 
     // Animation
     private Animator _animator;
@@ -64,12 +65,12 @@ public class BasicPlayerController : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        Debug.Log("OnNetworkSpawn: " + OwnerClientId + " isOwner: " + IsOwner + " Is local player: " + IsLocalPlayer + " Is server: " + IsServer + " Is client: " + IsClient + " localclientID: " + NetworkManager.Singleton.LocalClientId);
         _rb = gameObject.GetComponent<Rigidbody>();
         _animator = GetComponent<Animator>();
         _playerHat = GetComponent<PlayerHatController>();
         _swingManager = GetComponent<SwingManager>();
         _ragdollOnOff = GetComponent<RagdollOnOff>();
+        _playerNetworkData = GetComponent<PlayerNetworkData>();
         _flagPoles = GameObject.FindGameObjectsWithTag("HoleFlagPole");
 
         _swingManager.Activate(); // activate swing mode
@@ -96,11 +97,17 @@ public class BasicPlayerController : NetworkBehaviour
         gameplayActionMap["Ball Spawn/Exit Swing"].canceled += HandleBallSpawnExitSwingCanceled;
         #endregion
 
-        // activate player controller - controller will activate the player movement, animations, shooting and ragdoll
-        //_playerHat.RandomizeHatTexture();
-        //_playerHatMeshId = _playerHat.GetCurrentMeshId();
-        //_playerHatTextureId = _playerHat.GetCurrentTextureId();
-        //Activate();
+
+        // game manager initialization
+        if (IsServer)
+        {
+            //activate game manager on spawn
+            GameObject gameManager = Instantiate(gameManagerPrefab, new Vector3(0, 0, 0), Quaternion.identity);
+            gameManager.GetComponent<NetworkObject>().Spawn();
+        }
+        else
+        {
+        }
     }
 
     // Update Loop -------------------------------------------------------------------------------------------------------------
@@ -112,14 +119,11 @@ public class BasicPlayerController : NetworkBehaviour
         //handle player falling through the map
         if (transform.position.y < 40)
         {
-            Debug.Log("Player " + OwnerClientId + " fell through the map");
             _rb.useGravity = false;
             _rb.velocity = Vector3.zero;
 
             if (!IsActive) SpawnInPreLobby();
             else transform.position = new Vector3(390 + OwnerClientId * 2, 69.5f, 321); //spawn in first hole
-
-            Debug.Log("Player " + OwnerClientId + " respawn at " + transform.position);
 
             _rb.useGravity = true;
         }
@@ -127,8 +131,6 @@ public class BasicPlayerController : NetworkBehaviour
         //prevent updates until player is fully activated
         if (!IsActive)
         {
-
-
             // activate game for all players if host presses space in pre-game lobby
             if (IsServer && Input.GetKeyDown(KeyCode.P))
             {
@@ -138,7 +140,6 @@ public class BasicPlayerController : NetworkBehaviour
                 // activate all players
                 foreach (NetworkClient player in NetworkManager.Singleton.ConnectedClientsList)
                 {
-                    Debug.Log("Activating player " + player.PlayerObject.GetComponent<BasicPlayerController>().OwnerClientId + " from server: " + IsServer);
                     player.PlayerObject.GetComponent<BasicPlayerController>().ActivateClientRpc();
                 }
 
@@ -159,30 +160,14 @@ public class BasicPlayerController : NetworkBehaviour
 
     public void Activate()
     {
-        if (IsOwner)
-        {
-            UIManager.instance.DeactivateDirections(); // deactivate directions UI when game starts (only want this to happen once - so we check if player is owner))
-            if (_ragdollOnOff.IsRagdoll()) _ragdollOnOff.ResetRagdoll(); // reset ragdoll if player is in ragdoll mode
-        }
-
-        _playerNetworkData = GetComponent<PlayerNetworkData>();
-        _ragdollOnOff._playerNetworkData = _playerNetworkData;
-
-        Debug.Log("inside Activate() owned by player " + OwnerClientId + " isOwner: " + IsOwner + "Is local player: " + IsLocalPlayer + "Is server: " + IsServer + "Is client: " + IsClient);
-
         // spawn players at firt hole
         _rb.MovePosition(new Vector3(390 + OwnerClientId * 2, 69.5f, 321)); //space players out by 2 units each
         _rb.MoveRotation(Quaternion.Euler(0, -179f, 0)); //face flag pole
-        Debug.Log("Player " + OwnerClientId + " spawned at " + transform.position);
 
         IsActive = true;
 
         if (IsServer)
         {
-            //activate game manager
-            GameObject gameManager = Instantiate(gameManagerPrefab, new Vector3(0, 0, 0), Quaternion.identity);
-            gameManager.GetComponent<NetworkObject>().Spawn();
-
             //activate spider
             GameObject spider = Instantiate(spiderPrefab, new Vector3(391, 72.1f, 289), Quaternion.identity);
             spider.GetComponent<NetworkObject>().Spawn();
@@ -192,20 +177,14 @@ public class BasicPlayerController : NetworkBehaviour
         foreach (GameObject flagPole in _flagPoles)
         {
             flagPole.GetComponent<HoleFlagPoleManager>().playerNetworkData = _playerNetworkData;
-            //flagPole.GetComponent<HoleFlagPoleManager>().playerController = this;
             flagPole.GetComponent<HoleFlagPoleManager>().uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
             flagPole.GetComponent<HoleFlagPoleManager>().Activate();
         }
 
-        // set initial player state
-        _currentPlayerState = new PlayerData
-        {
-            playerID = OwnerClientId,
-            currentHole = 1,
-            strokes = 0,
-            enemiesDefeated = 0,
-            score = 0
-        };
+        // set initial player state when game starts (after pre-lobby)
+        _currentPlayerState.currentHole = 1;
+        _currentPlayerState.playerColor = playerColor;
+        Debug.Log($"In activate: player {OwnerClientId} - {playerColor} - IsOwner {IsOwner} ");
         UpdatePlayerState(_currentPlayerState);
     }
 
@@ -418,8 +397,6 @@ public class BasicPlayerController : NetworkBehaviour
     }
     public void HandlePauseStarted(InputAction.CallbackContext ctx)
     {
-        Debug.Log("Pause button pressed");
-
         //Copied from the previous version
         if (!UIManager.isPaused)
         {
@@ -427,7 +404,6 @@ public class BasicPlayerController : NetworkBehaviour
             UIManager.instance.EnablePause();
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
-            Debug.Log("Pause! isPaused : " + UIManager.isPaused + " Cursor Lock State : " + Cursor.lockState + " Cursor Visible : " + Cursor.visible);
         }
         else
         {
@@ -435,7 +411,6 @@ public class BasicPlayerController : NetworkBehaviour
             UIManager.instance.DisablePause();
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
-            Debug.Log("Unpause! isPaused : " + UIManager.isPaused + " Cursor Lock State : " + Cursor.lockState + " Cursor Visible : " + Cursor.visible);
         }
     }
 
@@ -481,7 +456,11 @@ public class BasicPlayerController : NetworkBehaviour
 
         DisableInput();
 
+        UIManager.instance.DeactivateDirections(); // deactivate directions UI when game starts (only want this to happen once - so we check if player is owner))
+        if (_ragdollOnOff.IsRagdoll()) _ragdollOnOff.ResetRagdoll(); // reset ragdoll if player is in ragdoll mode
+
         Activate();
+
         EnableInput();
     }
 

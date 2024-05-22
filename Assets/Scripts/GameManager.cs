@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityTimer;
@@ -22,11 +21,12 @@ public class GameManager : NetworkBehaviour
     // Hole data
     int currentHole = 1;
 
-    public override void OnNetworkSpawn() {
+    public override void OnNetworkSpawn()
+    {
         instance = this;
-        Debug.Log("Test");
-        
-        if (IsServer) {
+
+        if (IsServer)
+        {
             SetStrokeTimerCheckpoint();
             StartStrokeTimer();
         }
@@ -41,19 +41,16 @@ public class GameManager : NetworkBehaviour
 
     private void OnStrokeTimeChanged(float prevTime, float newTime)
     {
-        Debug.Log("Stroke time changed to: " + newTime);
         _currentStrokeTime = newTime;
 
         if (IsOwner)
         {
             // BLANK
         }
-
     }
 
     private void StartStrokeTimer()
     {
-        Debug.Log("Starting timer");
         _strokeTimer = Timer.Register(
             duration: strokeTimerDuration,
             onComplete: () => OnStrokeTimerTimeout(),
@@ -69,7 +66,7 @@ public class GameManager : NetworkBehaviour
         else { _nextStrokeTimerCheckpoint = roundedFloat; } // If the stroke timer is a float
     }
 
-    private void TimerUpdateCheck() 
+    private void TimerUpdateCheck()
     {
         if (!IsServer) return;
 
@@ -82,8 +79,6 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-
-
     // Logic Setters
     public void SetGameStarted() { gameStarted = true; StartStrokeTimer(); }
 
@@ -92,7 +87,67 @@ public class GameManager : NetworkBehaviour
     public float GetStrokeTimerTimeLeft() => _strokeTimer.GetTimeRemaining();
 
     // Timer signals
-    private void OnStrokeTimerTimeout() {
-        Debug.Log("Done!");
+    private void OnStrokeTimerTimeout()
+    {
+        //Debug.Log("Done!");
     }
+
+
+    // Player Data Management ------------------------------------------------------------------------------------------------------------
+
+    private Dictionary<ulong, PlayerData> playersData = new Dictionary<ulong, PlayerData>();
+
+    public void UpdatePlayerData(PlayerData data)
+    {
+        UpdateData(data);
+    }
+
+    public void RemovePlayerData(ulong playerID)
+    {
+        RemoveData(playerID); // remove data on all clients (including host)
+    }
+
+    private void UpdateData(PlayerData playerData)
+    {
+        //check for existing player data
+        if (playersData.ContainsKey(playerData.playerID))
+        {
+            playersData[playerData.playerID] = playerData;
+            Debug.Log(" GameManager: Player data updated for player: " + playerData.playerID + " - " + playerData.playerColor + " - " + playerData.currentHole + " - " + playerData.strokes + " - " + playerData.score + " - " + playerData.enemiesDefeated);
+        }
+        else
+        {
+            playersData.Add(playerData.playerID, playerData);
+            Debug.Log(" GameManager: Player data created for player: " + playerData.playerID + " - " + playerData.playerColor + " - " + playerData.currentHole + " - " + playerData.strokes + " - " + playerData.score + " - " + playerData.enemiesDefeated);
+        }
+
+        Debug.Log(" GameManager: Players data count: " + playersData.Count);
+
+        UpdateScoreboard();
+    }
+
+    private void RemoveData(ulong playerID)
+    {
+        if (playersData.ContainsKey(playerID))
+        {
+            playersData.Remove(playerID);
+            Debug.Log(" GameManager: Player data removed for player: " + playerID + " - count: " + playersData.Count);
+        }
+
+        UpdateScoreboard();
+    }
+
+    private void UpdateScoreboard()
+    {
+        foreach (var player in NetworkManager.Singleton.ConnectedClientsList)
+        {
+            Debug.Log(" GameManager: Updating scoreboard for player: " + player.ClientId);
+            Debug.Log(player.PlayerObject);
+            Debug.Log(player.PlayerObject.gameObject);
+            Debug.Log(player.PlayerObject.gameObject.GetComponent<PlayerScoreboard>());
+            player.PlayerObject.gameObject.GetComponent<PlayerScoreboard>().AddScoreboardData(playersData);
+        }
+    }
+
+
 }
