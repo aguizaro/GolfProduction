@@ -360,7 +360,9 @@ public class SwingManager : NetworkBehaviour
         Vector3 swingForceVector = dir * swingForce * meterCanvas.GetComponent<PowerMeter>().GetPowerValue();
 
         // Play sound effect for swinging the ball
-        AudioManager.instance.PlayOneShot(FMODEvents.instance.playerGolfSwing, _playerController.transform.position);
+        //AudioManager.instance.PlayOneShotForAllClients(FMODEvents.instance.playerGolfSwing, _playerController.transform.position);
+        AudioManager.instance.PlayOneShotForAllClients("golf_swing", _playerController.transform.position);
+        //AudioManager.instance.PlayOneShot(FMODEvents.instance.playerGolfSwing, _playerController.transform.position);
 
         Debug.Log("force dir: " + dir);
         Debug.Log("force vector: " + swingForceVector);

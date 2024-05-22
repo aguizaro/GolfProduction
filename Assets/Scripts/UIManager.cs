@@ -205,6 +205,8 @@ public class UIManager : MonoBehaviour
         EnableMenu(MenuState.Settings);
     }
 
+    public void PlayUISelectSFX() => AudioManager.instance.PlayOneShot(FMODEvents.instance.playerGolfSwing, transform.position);
+
     // Quit lobby and return to title screen
     private async void QuitLobbyReturnToTitle()
     {
