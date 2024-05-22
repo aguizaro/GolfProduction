@@ -70,13 +70,6 @@ public class PlayerNetworkData : NetworkBehaviour
     public override void OnDestroy()
     {
         _networkPlayerData.OnValueChanged -= OnPlayerDataChanged;
-
-        if (IsOwner) // remove player data from game manager
-        {
-            if (IsServer) GameManager.instance.RemovePlayerData(_currentPlayerData.playerID);
-            else RemoveFromGameManagerServerRpc();
-        }
-
         base.OnDestroy();
     }
 
@@ -113,7 +106,6 @@ public class PlayerNetworkData : NetworkBehaviour
 
     public void StorePlayerState(PlayerData data)
     {
-        Debug.Log($"Storing player state for player: {data.playerID} - isOwner {IsOwner} - {data.playerColor} - {data.currentHole} - {data.strokes} - {data.score} - {data.enemiesDefeated}");
         if (IsOwner) StorePlayerStateServerRpc(data);
         else _currentPlayerData = _networkPlayerData.Value;
     }

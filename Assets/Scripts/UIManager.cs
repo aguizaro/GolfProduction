@@ -53,6 +53,7 @@ public class UIManager : MonoBehaviour
     [Header("Game UI Elements")]
     [SerializeField] private TMP_Text _gamePlayerStrokesText;
     [SerializeField] private GameObject _minimap;
+    [SerializeField] private GameObject _minimapImage;
 
     // Pause UI Elements
     [Header("Pause UI Elements")]
@@ -181,7 +182,8 @@ public class UIManager : MonoBehaviour
         _holeCountText.gameObject.SetActive(false);
         _lobbyJoinCodeText.gameObject.SetActive(false);
         _lobbyNameText.gameObject.SetActive(false);
-        _minimap.SetActive(false);
+        DeactivateMinimap();
+
         DeactivateDirections(); // not needed since basicplayer controller deactivates on game start (directions are for pre-lobby only)
     }
     public void ActivateHUD()
@@ -190,7 +192,7 @@ public class UIManager : MonoBehaviour
         _holeCountText.gameObject.SetActive(true);
         _lobbyJoinCodeText.gameObject.SetActive(true);
         _lobbyNameText.gameObject.SetActive(true);
-        _minimap.SetActive(true);
+        ActivateMinimap();
         ActivateDirections(NetworkManager.Singleton.IsHost);
     }
     public void DisplayCode(string code) => _lobbyJoinCodeText.text = code;
@@ -278,10 +280,12 @@ public class UIManager : MonoBehaviour
     public void ActivateMinimap()
     {
         _minimap.SetActive(true);
+        _minimapImage.GetComponent<RawImage>().enabled = true;
     }
 
     public void DeactivateMinimap()
     {
+        _minimapImage.GetComponent<RawImage>().enabled = false;
         _minimap.SetActive(false);
     }
 

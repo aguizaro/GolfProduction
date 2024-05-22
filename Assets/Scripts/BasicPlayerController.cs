@@ -184,6 +184,7 @@ public class BasicPlayerController : NetworkBehaviour
         // set initial player state when game starts (after pre-lobby)
         _currentPlayerState.currentHole = 1;
         _currentPlayerState.playerColor = playerColor;
+        _currentPlayerState.playerID = OwnerClientId;
         Debug.Log($"In activate: player {OwnerClientId} - {playerColor} - IsOwner {IsOwner} ");
         UpdatePlayerState(_currentPlayerState);
     }

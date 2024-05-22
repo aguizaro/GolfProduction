@@ -99,29 +99,22 @@ public class GameManager : NetworkBehaviour
 
     public void UpdatePlayerData(PlayerData data)
     {
+        if (!IsServer) return;
+
         UpdateData(data);
     }
 
     public void RemovePlayerData(ulong playerID)
     {
+        if (!IsServer) return;
+
         RemoveData(playerID); // remove data on all clients (including host)
     }
 
     private void UpdateData(PlayerData playerData)
     {
-        //check for existing player data
-        if (playersData.ContainsKey(playerData.playerID))
-        {
-            playersData[playerData.playerID] = playerData;
-            Debug.Log(" GameManager: Player data updated for player: " + playerData.playerID + " - " + playerData.playerColor + " - " + playerData.currentHole + " - " + playerData.strokes + " - " + playerData.score + " - " + playerData.enemiesDefeated);
-        }
-        else
-        {
-            playersData.Add(playerData.playerID, playerData);
-            Debug.Log(" GameManager: Player data created for player: " + playerData.playerID + " - " + playerData.playerColor + " - " + playerData.currentHole + " - " + playerData.strokes + " - " + playerData.score + " - " + playerData.enemiesDefeated);
-        }
-
-        Debug.Log(" GameManager: Players data count: " + playersData.Count);
+        if (playersData.ContainsKey(playerData.playerID)) playersData[playerData.playerID] = playerData;
+        else playersData.Add(playerData.playerID, playerData);
 
         UpdateScoreboard();
     }
@@ -131,7 +124,7 @@ public class GameManager : NetworkBehaviour
         if (playersData.ContainsKey(playerID))
         {
             playersData.Remove(playerID);
-            Debug.Log(" GameManager: Player data removed for player: " + playerID + " - count: " + playersData.Count);
+            Debug.Log($"Game Manager removed data for player: {playerID}");
         }
 
         UpdateScoreboard();
@@ -139,13 +132,10 @@ public class GameManager : NetworkBehaviour
 
     private void UpdateScoreboard()
     {
+        Debug.Log($"Game Manager sending data: Contains {playersData.Count} players on scoreboard");
         foreach (var player in NetworkManager.Singleton.ConnectedClientsList)
         {
-            Debug.Log(" GameManager: Updating scoreboard for player: " + player.ClientId);
-            Debug.Log(player.PlayerObject);
-            Debug.Log(player.PlayerObject.gameObject);
-            Debug.Log(player.PlayerObject.gameObject.GetComponent<PlayerScoreboard>());
-            player.PlayerObject.gameObject.GetComponent<PlayerScoreboard>().AddScoreboardData(playersData);
+            player.PlayerObject.gameObject.GetComponent<PlayerScoreboard>().UpdateScoreboardData(playersData);
         }
     }
 

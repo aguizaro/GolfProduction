@@ -978,7 +978,7 @@ public class LobbyManager : MonoBehaviour
 
     private void OnClientStarted()
     {
-        Debug.Log("NetManagerEvent: Client Started: " + NetworkManager.Singleton.LocalClientId);
+        //Debug.Log("NetManagerEvent: Client Started: " + NetworkManager.Singleton.LocalClientId);
     }
 
     // private async void OnServerStopped(bool wasHost)
