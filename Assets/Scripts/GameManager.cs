@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityTimer;
@@ -22,11 +21,12 @@ public class GameManager : NetworkBehaviour
     // Hole data
     int currentHole = 1;
 
-    public override void OnNetworkSpawn() {
+    public override void OnNetworkSpawn()
+    {
         instance = this;
-        Debug.Log("Test");
-        
-        if (IsServer) {
+
+        if (IsServer)
+        {
             SetStrokeTimerCheckpoint();
             StartStrokeTimer();
         }
@@ -41,19 +41,16 @@ public class GameManager : NetworkBehaviour
 
     private void OnStrokeTimeChanged(float prevTime, float newTime)
     {
-        Debug.Log("Stroke time changed to: " + newTime);
         _currentStrokeTime = newTime;
 
         if (IsOwner)
         {
             // BLANK
         }
-
     }
 
     private void StartStrokeTimer()
     {
-        Debug.Log("Starting timer");
         _strokeTimer = Timer.Register(
             duration: strokeTimerDuration,
             onComplete: () => OnStrokeTimerTimeout(),
@@ -69,7 +66,7 @@ public class GameManager : NetworkBehaviour
         else { _nextStrokeTimerCheckpoint = roundedFloat; } // If the stroke timer is a float
     }
 
-    private void TimerUpdateCheck() 
+    private void TimerUpdateCheck()
     {
         if (!IsServer) return;
 
@@ -82,8 +79,6 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-
-
     // Logic Setters
     public void SetGameStarted() { gameStarted = true; StartStrokeTimer(); }
 
@@ -92,7 +87,59 @@ public class GameManager : NetworkBehaviour
     public float GetStrokeTimerTimeLeft() => _strokeTimer.GetTimeRemaining();
 
     // Timer signals
-    private void OnStrokeTimerTimeout() {
-        Debug.Log("Done!");
+    private void OnStrokeTimerTimeout()
+    {
+        //Debug.Log("Done!");
     }
+
+
+    // Player Data Management ------------------------------------------------------------------------------------------------------------
+
+    private Dictionary<ulong, PlayerData> playersData = new Dictionary<ulong, PlayerData>();
+
+    public void UpdatePlayerData(PlayerData data)
+    {
+        if (!IsServer) { Debug.LogWarning("Game Manager is not the server. Use a ServerRpc to call this function"); return; }
+
+        UpdateData(data);
+    }
+
+    public void RemovePlayerData(ulong playerID)
+    { // this public function can be called by owners to remove player data from the game manager (no server rpc needed)
+        RemoveData(playerID);
+    }
+
+    private void UpdateData(PlayerData playerData)
+    {
+        if (playersData.ContainsKey(playerData.playerID)) playersData[playerData.playerID] = playerData;
+        else playersData.Add(playerData.playerID, playerData);
+
+        UpdateScoreboard();
+    }
+
+    private void RemoveData(ulong playerID)
+    {
+        if (playersData.ContainsKey(playerID))
+        {
+            playersData.Remove(playerID);
+        }
+
+        UpdateScoreboard();
+    }
+
+    private void UpdateScoreboard()
+    {
+        foreach (var player in NetworkManager.Singleton.ConnectedClientsList)
+        {
+            player.PlayerObject.gameObject.GetComponent<PlayerScoreboard>().UpdateScoreboardData(playersData);
+        }
+    }
+
+    [ServerRpc]
+    private void RemovePlayerDataServerRpc(ulong playerID)
+    {
+        RemoveData(playerID);
+    }
+
+
 }

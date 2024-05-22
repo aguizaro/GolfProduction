@@ -347,6 +347,7 @@ GameObject:
   - component: {fileID: 1651457965969626016}
   - component: {fileID: 3693991727007100362}
   - component: {fileID: -1082205881769161889}
+  - component: {fileID: -1415113967393590946}
   m_Layer: 7
   m_Name: GolfCharacter
   m_TagString: Player
@@ -410,7 +411,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 171685441
+  GlobalObjectIdHash: 3746147730
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 1
@@ -436,6 +437,7 @@ MonoBehaviour:
   _rotationSpeed: 100
   _isSprinting: 0
   _ragdollOnOff: {fileID: 0}
+  playerColor: 
   IsActive: 0
   canInput: 1
   _moveInput: {x: 0, y: 0}
@@ -645,6 +647,7 @@ MonoBehaviour:
   playerRig: {fileID: 3923257223769280674}
   _playerNetworkData: {fileID: 0}
   alreadyLaunched: 0
+  beingLaunched: 0
 --- !u!114 &1651457965969626016
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -721,6 +724,18 @@ MonoBehaviour:
       texture: {fileID: 0}
     - id: 1
       texture: {fileID: 851898434693736008, guid: 07c70f6bd37b78f4a8d1fb2f6ffd48c1, type: 3}
+--- !u!114 &-1415113967393590946
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 420073679474077443}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1381ff6b8e074063bf31a6993286b8d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &799593922335037580
 GameObject:
   m_ObjectHideFlags: 0

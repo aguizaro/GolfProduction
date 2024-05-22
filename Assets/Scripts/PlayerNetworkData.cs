@@ -4,12 +4,14 @@ using UnityEngine;
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using System.Threading.Tasks;
+using Unity.VisualScripting;
 
 
 // Storing player data over the network ------------------------------------------------------------------------------------------------------------
 public struct PlayerData : INetworkSerializable
 {
     public ulong playerID;
+    public string playerColor;
     public int currentHole;
     public int strokes;
     public ulong enemiesDefeated;
@@ -18,12 +20,23 @@ public struct PlayerData : INetworkSerializable
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
         serializer.SerializeValue(ref playerID);
+        // Handle null string for playerColor
+        if (serializer.IsWriter)
+        {
+            string nonNullPlayerColor = playerColor ?? string.Empty;
+            serializer.SerializeValue(ref nonNullPlayerColor);
+        }
+        else
+        {
+            serializer.SerializeValue(ref playerColor);
+            playerColor ??= string.Empty;
+        }
+
         serializer.SerializeValue(ref currentHole);
         serializer.SerializeValue(ref strokes);
         serializer.SerializeValue(ref enemiesDefeated);
         serializer.SerializeValue(ref score);
     }
-
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -50,10 +63,7 @@ public class PlayerNetworkData : NetworkBehaviour
         { Color.yellow, "Yellow" }
     };
 
-
-    // Update local variable when network variable updates  ------------------------------------------------------------------------------------------------------------
-
-    public override void OnNetworkSpawn()
+    private void Awake()
     {
         _networkPlayerData.OnValueChanged += OnPlayerDataChanged;
     }
@@ -65,22 +75,24 @@ public class PlayerNetworkData : NetworkBehaviour
 
     private void OnPlayerDataChanged(PlayerData prevData, PlayerData newData)
     {
+        //Debug.Log("Player data changed - isOwner:  " + IsOwner + " - playerColor: " + newData.playerColor + " - playerID: " + newData.playerID + " - currentHole: " + newData.currentHole + " - strokes: " + newData.strokes + " - enemiesDefeated: " + newData.enemiesDefeated + " - score: " + newData.score);
         _currentPlayerData = newData;
 
-        if (newData.currentHole < 1) return; // no need to check win during pre game
-
-        if (IsOwner) // the following logic will be ran on all clients that are the owner of the player object SIMULTANEOUSLY
+        if (IsOwner)
         {
+            if (IsServer) GameManager.instance.UpdatePlayerData(newData);
+            else UpdateGameManagerServerRpc(newData);
+
+            if (newData.currentHole < 1) return; // no need to check win during pre game           
+
             if (prevData.currentHole != newData.currentHole) // if current hole change, check player data for win or moves ball to next hole
             {
                 winner = GetComponent<SwingManager>().CheckForWin(newData);
                 if (winner >= 0)
                 {
-                    string winnerName = GetPlayerColor(newData.playerID);
-                    Debug.Log("Winner: " + winner + " " + winnerName);
+                    string winnerName = GetComponent<BasicPlayerController>().playerColor;
                     DisplayWinnerServerRpc(winnerName);
                 }
-
 
                 //  MAYBE WE SHOULD MOVE THE BALL TO THE NEXT HOLE HERE
             }
@@ -90,29 +102,12 @@ public class PlayerNetworkData : NetworkBehaviour
         }
     }
 
-    // public functions ------------------------------------------------------------------------------------------------------------
+    // player data / state ------------------------------------------------------------------------------------------------------------
 
-    // only owners should use this to send data to the server
-    public void StorePlayerState(PlayerData data) //senderID will be used later
+    public void StorePlayerState(PlayerData data)
     {
-        if (IsOwner)
-        {
-            PlayerData newData = new PlayerData()
-            {
-                playerID = data.playerID,
-                currentHole = data.currentHole,
-                strokes = data.strokes,
-                enemiesDefeated = data.enemiesDefeated,
-                score = data.score
-            };
-
-            // send data to server
-            StorePlayerStateServerRpc(newData);
-        }
-        else
-        {
-            _currentPlayerData = _networkPlayerData.Value;
-        }
+        if (IsOwner) StorePlayerStateServerRpc(data);
+        else _currentPlayerData = _networkPlayerData.Value;
     }
 
     public PlayerData GetPlayerData()
@@ -120,8 +115,18 @@ public class PlayerNetworkData : NetworkBehaviour
         return _currentPlayerData;
     }
 
+    public void RemovePlayerDataFromGameManager()
+    {
+        if (!IsOwner) return;
+        RemovePlayerDataFromGameManagerServerRpc(OwnerClientId);
+    }
 
-    // server rpcs ------------------------------------------------------------------------------------------------------------
+    [ServerRpc]
+    private void RemovePlayerDataFromGameManagerServerRpc(ulong playerID)
+    {
+        GameManager.instance.RemovePlayerData(playerID);
+    }
+
 
     [ServerRpc]
     private void StorePlayerStateServerRpc(PlayerData data)
@@ -129,30 +134,7 @@ public class PlayerNetworkData : NetworkBehaviour
         _networkPlayerData.Value = data;
     }
 
-    public string GetPlayerColor(ulong playerID)
-    {
-        if (OwnerClientId == playerID)
-        {
-            Color selfColor = GetComponent<PlayerColor>().CurrentColor;
-            Debug.Log("Self color: " + selfColor);
-            return colorNames[selfColor];
-        }
-        else
-        {
-            GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
-            foreach (GameObject player in players)
-            {
-                if (player.GetComponent<NetworkObject>().OwnerClientId == playerID)
-                {
-                    Color playerColor = player.GetComponent<PlayerColor>()._netColor.Value;
-                    Debug.Log("Player found with ID: " + playerID + " color: " + playerColor);
-                    return colorNames[playerColor];
-                }
-            }
-            Debug.LogError("Player not found with ID: " + playerID);
-            return "Unknown";
-        }
-    }
+    // Display Winner / Exit ------------------------------------------------------------------------------------------------------------
 
     [ServerRpc]
     private void DisplayWinnerServerRpc(string winnerName)
@@ -174,5 +156,14 @@ public class PlayerNetworkData : NetworkBehaviour
         UIManager.instance.DeactivateWinner();
         await LobbyManager.Instance.PlayerExit();
     }
+
+    // Update GameManager ------------------------------------------------------------------------------------------------------------
+
+    [ServerRpc]
+    private void UpdateGameManagerServerRpc(PlayerData data)
+    {
+        GameManager.instance.UpdatePlayerData(data);
+    }
+
 
 }
