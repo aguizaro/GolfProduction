@@ -12,6 +12,14 @@ public class SwingManager : NetworkBehaviour
 {
     public Transform playerTransform;
     public Animator playerAnimator;
+    public enum FrameFrozenTarget
+    {
+        TimeScale,
+        Animator,
+    }
+    public FrameFrozenTarget frameFrozenTarget;
+    [UnityEngine.Range(0f, 5f)] public float frameFrozenDuration = 0.5f;
+    [UnityEngine.Range(0f, 1f)] public float frameFrozenRate = 0.05f;
     public GameObject ballPrefab;
     public GameObject VFXPrefab;
     public StartCameraFollow cameraFollowScript;
@@ -295,6 +303,8 @@ public class SwingManager : NetworkBehaviour
         PoolManager.Release(VFXPrefab, thisBall.transform.position, Quaternion.LookRotation(dir.normalized * -1f));
         // SetThatBallServerRpc(OwnerClientId);
         VFXServerRpc(thisBall.transform.position, Quaternion.LookRotation(dir.normalized * -1f));
+        StartCoroutine(FrameFrozen(frameFrozenDuration));
+        //TODO:add camera shake
 
         // only count strokes if the game is active / not in pre-game lobby
         if (_playerController.IsActive)
@@ -305,6 +315,24 @@ public class SwingManager : NetworkBehaviour
         }
 
         ExitSwingMode();
+    }
+
+    IEnumerator FrameFrozen(float duration)
+    {
+        float ffTimeer = duration;
+        while (ffTimeer > 0)
+        {
+            ffTimeer = Mathf.Clamp(ffTimeer - Time.fixedDeltaTime, 0, duration);
+            if (frameFrozenTarget == FrameFrozenTarget.TimeScale)
+            {
+                Time.timeScale = Mathf.Lerp(frameFrozenRate, 1f, 1f - ffTimeer / duration);
+            }
+            else
+            {
+                playerAnimator.speed = Mathf.Lerp(frameFrozenRate, 1f, 1f - ffTimeer / duration);
+            }
+            yield return null;
+        }
     }
 
     void PerformSwingOnPlayer()
