@@ -204,7 +204,7 @@ public class RagdollOnOff : NetworkBehaviour
         _playerAnimator.enabled = true;
 
         // Update the main colliders position to the hips using helper function
-        //AlignRotationToHips();
+        AlignRotationToHips();
         AlignMainColliderToHips();
         PopulateBoneTransforms(_ragdollBoneTransforms);
 
@@ -333,7 +333,7 @@ public class RagdollOnOff : NetworkBehaviour
         Vector3 positionOffset = _standUpBoneTransforms[0].Position;
         positionOffset.y = 0;
         positionOffset = transform.rotation * positionOffset;
-        transform.position = positionOffset;
+        transform.position -= positionOffset;
 
         if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hitInfo))
         {
@@ -345,16 +345,22 @@ public class RagdollOnOff : NetworkBehaviour
 
     private void AlignRotationToHips()
     {
+        // Cache the original hips position and rotation
         Vector3 originalHipsPosition = _hipsBone.position;
         Quaternion originalHipsRotation = _hipsBone.rotation;
 
-        Vector3 desiredDirection = _hipsBone.up * 1;
-        desiredDirection.y = 0;
+        // Calculate the desired forward direction based on the hips' forward direction
+        Vector3 desiredDirection = _hipsBone.forward;
+        desiredDirection.y = 0; // Flatten the direction on the y-axis
         desiredDirection.Normalize();
 
-        Quaternion fromToRotation = Quaternion.FromToRotation(transform.forward, desiredDirection);
-        transform.rotation *= fromToRotation;
+        // Calculate the target rotation to align the character's forward direction with the desired direction
+        Quaternion targetRotation = Quaternion.LookRotation(desiredDirection);
 
+        // Apply the target rotation to the character
+        transform.rotation = targetRotation;
+
+        // Restore the original hips position and rotation
         _hipsBone.position = originalHipsPosition;
         _hipsBone.rotation = originalHipsRotation;
         
