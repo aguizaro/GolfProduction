@@ -28,7 +28,8 @@ public class RagdollOnOff : NetworkBehaviour
     private BoneTransform[] _ragdollBoneTransforms;
     private Transform[] _bones;
 
-    private float _timeToResetBones = 0.5f;
+    [SerializeField]
+    private float _timeToResetBones = 0.2f;
     private float _elapsedResetBonesTime;
 
 
@@ -50,6 +51,16 @@ public class RagdollOnOff : NetworkBehaviour
         _swingManager = GetComponentInChildren<SwingManager>();
         delay = getUpDelay;
 
+        // Find and reference the players hips bone
+        foreach (Transform child in transform)
+        {
+            if (child.CompareTag("Hips"))
+            {
+                _hipsBone = child;
+                break;
+            }
+        }
+
         _bones = _hipsBone.GetComponentsInChildren<Transform>();
         _standUpBoneTransforms = new BoneTransform[_bones.Length];
         _ragdollBoneTransforms = new BoneTransform[_bones.Length];
@@ -61,16 +72,6 @@ public class RagdollOnOff : NetworkBehaviour
         }
 
         PopulateAnimationStartBoneTransforms("StandUp", _standUpBoneTransforms);
-
-        // Find and reference the players hips bone
-        foreach (Transform child in transform)
-        {
-            if (child.CompareTag("Hips"))
-            {
-                _hipsBone = child;
-                break;
-            }
-        }
 
         foreach (Collider col in ragdollColliders)
         {
@@ -198,11 +199,12 @@ public class RagdollOnOff : NetworkBehaviour
         _playerAnimator.enabled = true;
 
         // Update the main colliders position to the hips using helper function
+        //AlignRotationToHips();
         AlignMainColliderToHips();
         PopulateBoneTransforms(_ragdollBoneTransforms);
 
         _elapsedResetBonesTime = 0;
-        ResetBones();
+        StartCoroutine(ResetBonesCoroutine());
     }
 
     // Collision Detection ------------------------------------------------------------------------------------------------------------
@@ -283,36 +285,48 @@ public class RagdollOnOff : NetworkBehaviour
     }
 
     // helper functions -----------------------------------------
-    private void ResetBones()
+    private IEnumerator ResetBonesCoroutine()
     {
-        _elapsedResetBonesTime += Time.deltaTime;
-        float elapsedPercentage = _elapsedResetBonesTime / _timeToResetBones;
+        _elapsedResetBonesTime = 0f;
+        float elapsedPercentage = 0f;
 
-        for (int boneIndex = 0; boneIndex < _bones.Length; boneIndex++)
+        while (elapsedPercentage < 1f)
         {
-            _bones[boneIndex].localPosition = Vector3.Lerp(
-                _ragdollBoneTransforms[boneIndex].Position,
-                _standUpBoneTransforms[boneIndex].Position,
-                elapsedPercentage);
-            
-            _bones[boneIndex].localRotation = Quaternion.Lerp(
-                _ragdollBoneTransforms[boneIndex].Rotation,
-                _standUpBoneTransforms[boneIndex].Rotation,
-                elapsedPercentage);
+            _elapsedResetBonesTime += Time.deltaTime;
+            elapsedPercentage = _elapsedResetBonesTime / _timeToResetBones;
+
+            for (int boneIndex = 0; boneIndex < _bones.Length; boneIndex++)
+            {
+                _bones[boneIndex].localPosition = Vector3.Lerp(
+                    _ragdollBoneTransforms[boneIndex].Position,
+                    _standUpBoneTransforms[boneIndex].Position,
+                    elapsedPercentage);
+
+                _bones[boneIndex].localRotation = Quaternion.Lerp(
+                    _ragdollBoneTransforms[boneIndex].Rotation,
+                    _standUpBoneTransforms[boneIndex].Rotation,
+                    elapsedPercentage);
+            }
+
+            Debug.Log(elapsedPercentage + " elapsedPercentage");
+            yield return null; // Wait for the next frame
         }
 
-        if (elapsedPercentage >= 1)
-        {
-            _playerAnimator.Play("StandUp");
-            // Execute rest of the logic after the standup animation
-            StartCoroutine(WaitForAnimationAndExecuteLogic("StandUp"));
-        }
+        Debug.Log("Play StandUp anim called");
+        _playerAnimator.Play("StandUp");
+        // Execute rest of the logic after the standup animation
+        StartCoroutine(WaitForAnimationAndExecuteLogic("StandUp"));
     }
 
     private void AlignMainColliderToHips()
     {
         Vector3 originalHipsPosition = _hipsBone.position;
         transform.position = _hipsBone.position;
+
+        Vector3 positionOffset = _standUpBoneTransforms[0].Position;
+        positionOffset.y = 0;
+        positionOffset = transform.rotation * positionOffset;
+        transform.position = positionOffset;
 
         if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hitInfo))
         {
@@ -322,8 +336,26 @@ public class RagdollOnOff : NetworkBehaviour
         _hipsBone.position = originalHipsPosition;
     }
 
+    private void AlignRotationToHips()
+    {
+        Vector3 originalHipsPosition = _hipsBone.position;
+        Quaternion originalHipsRotation = _hipsBone.rotation;
+
+        Vector3 desiredDirection = _hipsBone.up * 1;
+        desiredDirection.y = 0;
+        desiredDirection.Normalize();
+
+        Quaternion fromToRotation = Quaternion.FromToRotation(transform.forward, desiredDirection);
+        transform.rotation *= fromToRotation;
+
+        _hipsBone.position = originalHipsPosition;
+        _hipsBone.rotation = originalHipsRotation;
+        
+    }
+
     private void PopulateBoneTransforms(BoneTransform[] boneTransforms)
     {
+        Debug.Log("PopulateBoneTransforms() Called");
         for (int boneIndex = 0; boneIndex < _bones.Length; boneIndex++)
         {
             boneTransforms[boneIndex].Position = _bones[boneIndex].localPosition;
@@ -333,6 +365,7 @@ public class RagdollOnOff : NetworkBehaviour
 
     private void PopulateAnimationStartBoneTransforms(string clipName, BoneTransform[] boneTransforms)
     {
+        Debug.Log("PopulateAnimationStartBoneTransforms() Called");
         Vector3 positionBeforeSampling = transform.position;
         Quaternion rotationBeforeSampling = transform.rotation;
 
@@ -354,6 +387,7 @@ public class RagdollOnOff : NetworkBehaviour
     //
     private IEnumerator WaitForAnimationAndExecuteLogic(string animationName)
     {
+        Debug.Log("Waitforanim coroutine called");
         AnimatorStateInfo animationState = _playerAnimator.GetCurrentAnimatorStateInfo(0);
 
         while (!animationState.IsName(animationName))
