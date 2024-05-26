@@ -334,6 +334,7 @@ public class RagdollOnOff : NetworkBehaviour
         positionOffset.y = 0;
         positionOffset = transform.rotation * positionOffset;
         transform.position -= positionOffset;
+        
 
         if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hitInfo))
         {
@@ -345,25 +346,18 @@ public class RagdollOnOff : NetworkBehaviour
 
     private void AlignRotationToHips()
     {
-        // Cache the original hips position and rotation
         Vector3 originalHipsPosition = _hipsBone.position;
         Quaternion originalHipsRotation = _hipsBone.rotation;
 
-        // Calculate the desired forward direction based on the hips' forward direction
-        Vector3 desiredDirection = _hipsBone.forward;
+        Vector3 desiredDirection = _hipsBone.up;
         desiredDirection.y = 0; // Flatten the direction on the y-axis
         desiredDirection.Normalize();
 
-        // Calculate the target rotation to align the character's forward direction with the desired direction
-        Quaternion targetRotation = Quaternion.LookRotation(desiredDirection);
+        Quaternion fromToRotation = Quaternion.FromToRotation(transform.forward, desiredDirection);
+        transform.rotation *= fromToRotation;
 
-        // Apply the target rotation to the character
-        transform.rotation = targetRotation;
-
-        // Restore the original hips position and rotation
         _hipsBone.position = originalHipsPosition;
         _hipsBone.rotation = originalHipsRotation;
-        
     }
 
     private void PopulateBoneTransforms(BoneTransform[] boneTransforms)
