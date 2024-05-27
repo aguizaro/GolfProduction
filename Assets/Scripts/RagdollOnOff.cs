@@ -42,6 +42,24 @@ public class RagdollOnOff : NetworkBehaviour
         public Quaternion Rotation { get; set; }
     }
 
+    private BoneTransform[] _standUpBoneTransforms;
+    private BoneTransform[] _standUp2BoneTransforms;
+    private BoneTransform[] _ragdollBoneTransforms;
+    private Transform[] _bones;
+    private bool _isFacingUp;
+
+    [SerializeField]
+    private float _timeToResetBones = 0.2f;
+    private float _elapsedResetBonesTime;
+
+
+    private class BoneTransform
+    {
+        public Vector3 Position { get; set; }
+
+        public Quaternion Rotation { get; set; }
+    }
+
     // Activation -------------------------------------------------------------------------------------------------------------
     public void Activate()
     {
@@ -122,15 +140,6 @@ public class RagdollOnOff : NetworkBehaviour
                 delay = getUpDelay;
                 ResetRagdoll();
             }
-        }
-        
-        if(Input.GetKeyDown(KeyCode.T))
-        {
-            RagdollModeOn();
-        }
-        if(Input.GetKeyDown(KeyCode.Y))
-        {
-            RagdollModeOff();
         }
     }
 
@@ -461,24 +470,6 @@ public class RagdollOnOff : NetworkBehaviour
             playerRB.useGravity = false;
             playerRB.isKinematic = false;
         }
-    }
-
-
-
-    [ServerRpc]
-    private void AddForceToSelfServerRpc(Vector3 force)
-    {
-        AddForceToSelfClientRpc(force);
-    }
-
-    [ClientRpc]
-    private void AddForceToSelfClientRpc(Vector3 force)
-    {
-        foreach (Rigidbody limb in limbsRigidBodies)
-        {
-            if (limb != playerRB) limb.AddForce(force, ForceMode.Impulse);
-        }
-        alreadyLaunched = true;
     }
 
 }

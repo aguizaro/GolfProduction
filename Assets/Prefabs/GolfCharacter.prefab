@@ -648,6 +648,7 @@ MonoBehaviour:
   _playerNetworkData: {fileID: 0}
   alreadyLaunched: 0
   beingLaunched: 0
+  _timeToResetBones: 0.2
 --- !u!114 &1651457965969626016
 MonoBehaviour:
   m_ObjectHideFlags: 0
