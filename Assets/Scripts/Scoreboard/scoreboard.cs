@@ -20,6 +20,7 @@ public class Scoreboard : MonoBehaviour
 
     [SerializeField] private float _spaceBetweenEntries;
 
+
     private Dictionary<ulong, GameObject> _scoreboardEntries;
 
     // Start is called before the first frame update
@@ -27,7 +28,7 @@ public class Scoreboard : MonoBehaviour
     {
         for (var i = 0; i <6; i++) {
             //todo space them
-            Instantiate(_scoreboardEntry);
+            //Instantiate(_scoreboardEntry);
         }
 
         //initialize
@@ -36,7 +37,7 @@ public class Scoreboard : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        uIManager.
+        
     }
 
     void updatePlayer(PlayerData playerData) {
