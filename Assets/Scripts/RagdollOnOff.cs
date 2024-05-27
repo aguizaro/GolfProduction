@@ -128,15 +128,6 @@ public class RagdollOnOff : NetworkBehaviour
 
             }
         }
-        
-        if(Input.GetKeyDown(KeyCode.T))
-        {
-            RagdollModeOn();
-        }
-        if(Input.GetKeyDown(KeyCode.Y))
-        {
-            RagdollModeOff();
-        }
     }
 
 
