@@ -143,7 +143,7 @@ public class SwingManager : NetworkBehaviour
                 playerAnimator.ResetTrigger("Stance");
             }
 
-            return; // Don't execute further logic
+            return;
         }
 
     }
@@ -236,7 +236,6 @@ public class SwingManager : NetworkBehaviour
             targetPosition = thisBall.transform.position + (-playerTransform.forward * 0.12f) + playerTransform.right * -.75f;
         }
 
-        //targetPosition.y -= 0.12f;    // Instead of moving targ pos down, use a raycast to touch the ground
         // Perform a raycast downwards to find the ground position beneath the target position
         RaycastHit hit;
         if (Physics.Raycast(targetPosition, Vector3.down, out hit, 3))
