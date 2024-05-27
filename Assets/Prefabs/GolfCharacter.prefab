@@ -3557,6 +3557,26 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: -3033667219593020291, guid: 68b036ed0c773c64883cfd2d6135a9db, type: 3}
+    - target: {fileID: 5060832427484913718, guid: c7e67803eb93f48e3ae7cefc71713163, type: 3}
+      propertyPath: m_Size.x
+      value: 0.05617613
+      objectReference: {fileID: 0}
+    - target: {fileID: 5060832427484913718, guid: c7e67803eb93f48e3ae7cefc71713163, type: 3}
+      propertyPath: m_Size.y
+      value: 0.023836508
+      objectReference: {fileID: 0}
+    - target: {fileID: 5060832427484913718, guid: c7e67803eb93f48e3ae7cefc71713163, type: 3}
+      propertyPath: m_Center.x
+      value: -0.007893681
+      objectReference: {fileID: 0}
+    - target: {fileID: 5060832427484913718, guid: c7e67803eb93f48e3ae7cefc71713163, type: 3}
+      propertyPath: m_Center.y
+      value: -0.003585163
+      objectReference: {fileID: 0}
+    - target: {fileID: 5060832427484913718, guid: c7e67803eb93f48e3ae7cefc71713163, type: 3}
+      propertyPath: m_Center.z
+      value: 0.110000394
+      objectReference: {fileID: 0}
     - target: {fileID: 5587058772437339562, guid: c7e67803eb93f48e3ae7cefc71713163, type: 3}
       propertyPath: m_Name
       value: golfClub

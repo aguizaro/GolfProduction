@@ -25,8 +25,10 @@ public class RagdollOnOff : NetworkBehaviour
     public bool beingLaunched = false; //this will be true if another player has entered swing state on this player
 
     private BoneTransform[] _standUpBoneTransforms;
+    private BoneTransform[] _standUp2BoneTransforms;
     private BoneTransform[] _ragdollBoneTransforms;
     private Transform[] _bones;
+    private bool _isFacingUp;
 
     [SerializeField]
     private float _timeToResetBones = 0.2f;
@@ -63,15 +65,18 @@ public class RagdollOnOff : NetworkBehaviour
 
         _bones = _hipsBone.GetComponentsInChildren<Transform>();
         _standUpBoneTransforms = new BoneTransform[_bones.Length];
+        _standUp2BoneTransforms = new BoneTransform[_bones.Length];
         _ragdollBoneTransforms = new BoneTransform[_bones.Length];
 
         for (int boneIndex = 0; boneIndex < _bones.Length; boneIndex++)
         {
             _standUpBoneTransforms[boneIndex] = new BoneTransform();
+            _standUp2BoneTransforms[boneIndex] = new BoneTransform();
             _ragdollBoneTransforms[boneIndex] = new BoneTransform();
         }
 
         PopulateAnimationStartBoneTransforms("StandUp", _standUpBoneTransforms);
+        PopulateAnimationStartBoneTransforms("StandUp2", _standUp2BoneTransforms);
 
         foreach (Collider col in ragdollColliders)
         {
@@ -184,8 +189,9 @@ public class RagdollOnOff : NetworkBehaviour
     // Dev Note: Don't call this function directly. Use the RPCs instead. - this will only exectute locally
     void RagdollModeOff()
     {
-
         if (!isRagdoll) return; //don't deactivate if not in ragdoll mode
+
+        _isFacingUp = _hipsBone.forward.y > 0;
 
         foreach (Collider col in ragdollColliders)
         {
@@ -195,8 +201,6 @@ public class RagdollOnOff : NetworkBehaviour
         {
             if (rb != playerRB) rb.isKinematic = true;
         }
-
-        _playerAnimator.enabled = true;
 
         // Update the main colliders position to the hips using helper function
         AlignRotationToHips();
@@ -295,16 +299,17 @@ public class RagdollOnOff : NetworkBehaviour
             _elapsedResetBonesTime += Time.deltaTime;
             elapsedPercentage = _elapsedResetBonesTime / _timeToResetBones;
 
+            BoneTransform[] standUpBoneTransforms = GetStandUpBoneTransforms();
             for (int boneIndex = 0; boneIndex < _bones.Length; boneIndex++)
             {
                 _bones[boneIndex].localPosition = Vector3.Lerp(
                     _ragdollBoneTransforms[boneIndex].Position,
-                    _standUpBoneTransforms[boneIndex].Position,
+                    standUpBoneTransforms[boneIndex].Position,
                     elapsedPercentage);
 
                 _bones[boneIndex].localRotation = Quaternion.Lerp(
                     _ragdollBoneTransforms[boneIndex].Rotation,
-                    _standUpBoneTransforms[boneIndex].Rotation,
+                    standUpBoneTransforms[boneIndex].Rotation,
                     elapsedPercentage);
             }
 
@@ -312,10 +317,10 @@ public class RagdollOnOff : NetworkBehaviour
             yield return null; // Wait for the next frame
         }
 
-        Debug.Log("Play StandUp anim called");
-        _playerAnimator.Play("StandUp");
+        _playerAnimator.enabled = true;
+        _playerAnimator.Play(GetStandUpStateName(), 0, 0);
         // Execute rest of the logic after the standup animation
-        StartCoroutine(WaitForAnimationAndExecuteLogic("StandUp"));
+        StartCoroutine(WaitForAnimationAndExecuteLogic(GetStandUpStateName()));
     }
 
     private void AlignMainColliderToHips()
@@ -323,11 +328,14 @@ public class RagdollOnOff : NetworkBehaviour
         Vector3 originalHipsPosition = _hipsBone.position;
         transform.position = _hipsBone.position;
 
-        Vector3 positionOffset = _standUpBoneTransforms[0].Position;
+        /*
+        // This section is meant to put the hips in the right spot to prevent the little amount of sliding that happens \
+        // before standing up, but the position is not correct.
+        Vector3 positionOffset = GetStandUpBoneTransforms()[0].Position;
         positionOffset.y = 0;
-        positionOffset = transform.rotation * positionOffset;
+        positionOffset = transform.position * positionOffset;
         transform.position -= positionOffset;
-        
+        */
 
         if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hitInfo))
         {
@@ -343,6 +351,11 @@ public class RagdollOnOff : NetworkBehaviour
         Quaternion originalHipsRotation = _hipsBone.rotation;
 
         Vector3 desiredDirection = _hipsBone.up;
+        if (_isFacingUp)
+        {
+            desiredDirection *= -1;
+        }
+
         desiredDirection.y = 0; // Flatten the direction on the y-axis
         desiredDirection.Normalize();
 
@@ -374,7 +387,7 @@ public class RagdollOnOff : NetworkBehaviour
             if (clip.name == clipName)
             {
                 clip.SampleAnimation(gameObject, 0);
-                PopulateBoneTransforms(_standUpBoneTransforms);
+                PopulateBoneTransforms(boneTransforms);
                 break;
             }
         }
@@ -416,6 +429,20 @@ public class RagdollOnOff : NetworkBehaviour
     {
         yield return new WaitForSeconds(ragdollDelay);
         playerRB.useGravity = true;
+    }
+
+    private string GetStandUpStateName()
+    {
+        if (_isFacingUp) { return "StandUp2"; } else return "StandUp";
+    }
+
+    private BoneTransform[] GetStandUpBoneTransforms()
+    {
+        if (_isFacingUp)
+        {
+            return _standUp2BoneTransforms;
+        }
+        else return _standUpBoneTransforms;
     }
 
     // public functions ------------------------------------------------------------------------------------------------------------
