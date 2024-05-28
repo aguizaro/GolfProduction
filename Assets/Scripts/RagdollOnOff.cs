@@ -31,7 +31,7 @@ public class RagdollOnOff : NetworkBehaviour
     private bool _isFacingUp;
 
     [SerializeField]
-    private float _timeToResetBones = 0.2f;
+    private float _timeToResetBones = 0.5f;
     private float _elapsedResetBonesTime;
 
 
