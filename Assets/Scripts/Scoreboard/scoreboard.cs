@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using Unity.Services.Lobbies.Models;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -37,6 +38,9 @@ public class Scoreboard : MonoBehaviour
         {
             updatePlayer(data);
         }
+        //sort the entries
+
+        //TODO
 
         int i = 0;
         //order if needed
@@ -50,11 +54,26 @@ public class Scoreboard : MonoBehaviour
     void updatePlayer(PlayerData playerData) {
         //given player data, update it
         //first, if we dont have a scoreboard entry, create it
+        if (!_scoreboardEntries.ContainsKey(playerData.playerID))
+        {
+            _scoreboardEntries.Add(playerData.playerID, Instantiate(_scoreboardEntry, _scoreboard.transform));
+        }
         //then put the info we have from player data in the entry
-        //then sort the ent
+        updateEntry(playerData, _scoreboardEntries[playerData.playerID]);
     }
 
-    void setEntry(GameObject entry, int position) {
+    private void updateEntry(PlayerData playerData, GameObject entry)
+    {
+        //ScoreboardEntry Structure:
+        //Player (text)
+        //  Hole1
+        //  ...
+        //  Hole9
+        TMP_Text hole = entry.transform.GetChild(0).GetChild(playerData.currentHole).GetComponent<TMP_Text>();
+        hole.text = playerData.strokes.ToString();
+    }
+
+    private void setEntry(GameObject entry, int position) {
         //todo set the object to the correct position
     }
 }
