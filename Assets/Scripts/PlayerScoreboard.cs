@@ -44,7 +44,7 @@ public class PlayerScoreboard : NetworkBehaviour
     // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     //this is the dictionary is reserved for players(owners) - will be empty for non owners
-    private Dictionary<ulong, PlayerData> ScoreboardData = new Dictionary<ulong, PlayerData>();
+    public static Dictionary<ulong, PlayerData> ScoreboardData = new Dictionary<ulong, PlayerData>();
 
     private void UpdateScoreboardUI()
     {

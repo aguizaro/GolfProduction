@@ -10,15 +10,15 @@ public class Scoreboard : MonoBehaviour
 {
     private UIManager uIManager = UIManager.instance;
     
-    //probably could get this from UI manager\
-    [Header("Imports")]
-    [SerializeField] private GameObject _scoreboard;
+    private GameObject _scoreboard;
 
-    [SerializeField] private GameObject _scoreboardEntry;
+    private GameObject _scoreboardEntry;
 
     [Header("Config")]
 
     [SerializeField] private float _spaceBetweenEntries;
+    [SerializeField] private float _initialX;
+    [SerializeField] private float _initialY;
 
 
     private Dictionary<ulong, GameObject> _scoreboardEntries;
@@ -26,22 +26,32 @@ public class Scoreboard : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        for (var i = 0; i <6; i++) {
-            //todo space them
-            //Instantiate(_scoreboardEntry);
-        }
-
-        //initialize
+        _scoreboard = uIManager.scoreboardUI;
+        _scoreboardEntry = uIManager.scoreboardEntry;
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        foreach (PlayerData data in PlayerScoreboard.ScoreboardData.Values)
+        {
+            updatePlayer(data);
+        }
+
+        int i = 0;
+        //order if needed
+        foreach (GameObject entry in _scoreboardEntries.Values)
+        {
+            setEntry(entry, i);
+            i++;
+        }
     }
 
     void updatePlayer(PlayerData playerData) {
-        //given new player data, update it
+        //given player data, update it
+        //first, if we dont have a scoreboard entry, create it
+        //then put the info we have from player data in the entry
+        //then sort the ent
     }
 
     void setEntry(GameObject entry, int position) {
