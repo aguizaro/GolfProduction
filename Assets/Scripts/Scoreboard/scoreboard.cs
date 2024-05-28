@@ -66,14 +66,16 @@ public class Scoreboard : MonoBehaviour
     {
         //ScoreboardEntry Structure:
         //Player (text)
-        //  Hole1
-        //  ...
-        //  Hole9
-        TMP_Text hole = entry.transform.GetChild(0).GetChild(playerData.currentHole).GetComponent<TMP_Text>();
+        //Hole1
+        //...
+        //Hole9
+        TMP_Text hole = entry.transform.GetChild(playerData.currentHole).GetComponent<TMP_Text>();
         hole.text = playerData.strokes.ToString();
     }
 
     private void setEntry(GameObject entry, int position) {
         //todo set the object to the correct position
+        Vector3 newPosition = new Vector3(_initialX, _initialY + (position * _spaceBetweenEntries), 0);
+        entry.transform.SetLocalPositionAndRotation(newPosition, Quaternion.identity);
     }
 }
