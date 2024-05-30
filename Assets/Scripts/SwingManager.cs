@@ -17,9 +17,12 @@ public class SwingManager : NetworkBehaviour
         TimeScale,
         Animator,
     }
-    public FrameFrozenTarget frameFrozenTarget;
-    [UnityEngine.Range(0f, 5f)] public float frameFrozenDuration = 0.5f;
+    public FrameFrozenTarget frameFrozenTarget = FrameFrozenTarget.Animator;
+    [UnityEngine.Range(0f, 5f)] public float frameFrozenDuration = 0.25f;
     [UnityEngine.Range(0f, 1f)] public float frameFrozenRate = 0.05f;
+    public Vector3 cameraShakeOffset = new Vector3(0f, 0.1f, 0f);
+    [UnityEngine.Range(0f, 1f)] public float cameraShakeDuration = 0.33f;
+    public float cameraShakeRemainingTime;
     public GameObject ballPrefab;
     public GameObject VFXPrefab;
     public StartCameraFollow cameraFollowScript;
@@ -304,6 +307,7 @@ public class SwingManager : NetworkBehaviour
         VFXServerRpc(thisBall.transform.position, Quaternion.LookRotation(dir.normalized * -1f));
         StartCoroutine(FrameFrozen(frameFrozenDuration));
         //TODO:add camera shake
+        StartCoroutine(ShakeCamera());
 
         // only count strokes if the game is active / not in pre-game lobby
         if (_playerController.IsActive)
@@ -332,6 +336,22 @@ public class SwingManager : NetworkBehaviour
             }
             yield return null;
         }
+    }
+
+    IEnumerator ShakeCamera()
+    {
+        // if(Camera.main != null)
+        //     Debug.Log("Camera.main is founded.");
+        cameraShakeRemainingTime = cameraShakeDuration;
+        bool sign = true;
+        while (cameraShakeRemainingTime > 0)
+        {
+            Camera.main.transform.position += sign ? cameraShakeOffset : -cameraShakeOffset;
+            sign = !sign;
+            cameraShakeRemainingTime -= Time.deltaTime;
+            yield return null;
+        }
+        Camera.main.transform.position += sign ? -cameraShakeOffset : Vector3.zero;
     }
 
     void PerformSwingOnPlayer()

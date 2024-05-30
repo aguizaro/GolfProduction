@@ -411,7 +411,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 171685441
+  GlobalObjectIdHash: 3746147730
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 1
@@ -507,6 +507,7 @@ MonoBehaviour:
   followSpeed: 100
   xCamRotation: 15
   camOffset: {x: 0, y: -2, z: 5}
+  followTransitionSpeed: 3
 --- !u!54 &4649621009289334031
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -646,6 +647,7 @@ MonoBehaviour:
   playerRB: {fileID: 4649621009289334031}
   playerRig: {fileID: 3923257223769280674}
   _playerNetworkData: {fileID: 0}
+  _hipsBone: {fileID: 0}
   alreadyLaunched: 0
   beingLaunched: 0
   _timeToResetBones: 0.2
@@ -663,9 +665,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerTransform: {fileID: 6247323603675803764}
   playerAnimator: {fileID: 7225643878605417583}
-  frameFrozenTarget: 0
-  frameFrozenDuration: 0.5
+  frameFrozenTarget: 1
+  frameFrozenDuration: 0.25
   frameFrozenRate: 0.05
+  cameraShakeOffset: {x: 0, y: 1, z: 0}
+  cameraShakeDuration: 0.5
+  cameraShakeRemainingTime: 0
   ballPrefab: {fileID: 3665726570761771704, guid: 3d0ef90e59c624be5bf18a934047635a, type: 3}
   VFXPrefab: {fileID: 3956086017517648266, guid: e68873219e72e614c930532369fd93d8, type: 3}
   cameraFollowScript: {fileID: 4118846366210689039}
