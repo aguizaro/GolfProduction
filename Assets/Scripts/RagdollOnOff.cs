@@ -18,7 +18,7 @@ public class RagdollOnOff : NetworkBehaviour
     private float delay;
     private bool isRagdoll = false; //is player in ragdoll mode
     private bool isActive = false; //is player instance active
-    private Transform _hipsBone;
+    public Transform _hipsBone;
 
     private bool firstDone = false;
     public bool alreadyLaunched = false;
@@ -286,6 +286,7 @@ public class RagdollOnOff : NetworkBehaviour
             if (limb != playerRB) limb.AddForce(force, ForceMode.Impulse);
         }
         alreadyLaunched = true;
+
         Debug.Log($"Already launched: {alreadyLaunched} for owner: {OwnerClientId} isOwner: {IsOwner}");
     }
 
