@@ -75,7 +75,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1636166918144
-    m_Localized: Camera Sensitivity
+    m_Localized: Sensitivity
     m_Metadata:
       m_Items: []
   - m_Id: 1762407079936
@@ -96,6 +96,46 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 20430404150099968
     m_Localized: Controls
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22504884913352704
+    m_Localized: move
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22504985362739200
+    m_Localized: Ball Spawn/\nExit Swing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22504885815128064
+    m_Localized: swing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22505782435688448
+    m_Localized: Sprint
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22508027613065216
+    m_Localized: reset
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22516097198108672
+    m_Localized: Cancel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22516281512603648
+    m_Localized: up
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22516325850591232
+    m_Localized: down
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22516326211301376
+    m_Localized: left
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22516401775882240
+    m_Localized: right
     m_Metadata:
       m_Items: []
   references:

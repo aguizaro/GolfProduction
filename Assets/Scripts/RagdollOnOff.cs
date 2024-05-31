@@ -11,7 +11,6 @@ public class RagdollOnOff : NetworkBehaviour
     private Animator _playerAnimator;
     private BasicPlayerController _basicPlayerController;
     public PlayerNetworkData _playerNetworkData;
-    private BoxCollider _golfClubCollider;
     private SwingManager _swingManager;
 
     private float ragdollDelay = 0.5f; //Slight delay defore ragdoll mode is activated
@@ -19,8 +18,30 @@ public class RagdollOnOff : NetworkBehaviour
     private float delay;
     private bool isRagdoll = false; //is player in ragdoll mode
     private bool isActive = false; //is player instance active
+    public Transform _hipsBone;
 
     private bool firstDone = false;
+    public bool alreadyLaunched = false;
+    public bool beingLaunched = false; //this will be true if another player has entered swing state on this player
+
+    private BoneTransform[] _standUpBoneTransforms;
+    private BoneTransform[] _standUp2BoneTransforms;
+    private BoneTransform[] _ragdollBoneTransforms;
+    private Transform[] _bones;
+    private bool _isFacingUp;
+
+    [SerializeField]
+    private float _timeToResetBones = 0.5f;
+    private float _elapsedResetBonesTime;
+
+
+    private class BoneTransform
+    {
+        public Vector3 Position { get; set; }
+
+        public Quaternion Rotation { get; set; }
+    }
+
 
     // Activation -------------------------------------------------------------------------------------------------------------
     public void Activate()
@@ -30,9 +51,33 @@ public class RagdollOnOff : NetworkBehaviour
         limbsRigidBodies = playerRig.GetComponentsInChildren<Rigidbody>();
         _basicPlayerController = GetComponent<BasicPlayerController>();
         _playerAnimator = GetComponent<Animator>();
-        _golfClubCollider = GetComponentInChildren<BoxCollider>();
         _swingManager = GetComponentInChildren<SwingManager>();
         delay = getUpDelay;
+
+        // Find and reference the players hips bone
+        foreach (Transform child in transform)
+        {
+            if (child.CompareTag("Hips"))
+            {
+                _hipsBone = child;
+                break;
+            }
+        }
+
+        _bones = _hipsBone.GetComponentsInChildren<Transform>();
+        _standUpBoneTransforms = new BoneTransform[_bones.Length];
+        _standUp2BoneTransforms = new BoneTransform[_bones.Length];
+        _ragdollBoneTransforms = new BoneTransform[_bones.Length];
+
+        for (int boneIndex = 0; boneIndex < _bones.Length; boneIndex++)
+        {
+            _standUpBoneTransforms[boneIndex] = new BoneTransform();
+            _standUp2BoneTransforms[boneIndex] = new BoneTransform();
+            _ragdollBoneTransforms[boneIndex] = new BoneTransform();
+        }
+
+        PopulateAnimationStartBoneTransforms("StandUp", _standUpBoneTransforms);
+        PopulateAnimationStartBoneTransforms("StandUp2", _standUp2BoneTransforms);
 
         foreach (Collider col in ragdollColliders)
         {
@@ -44,7 +89,6 @@ public class RagdollOnOff : NetworkBehaviour
         }
 
         _playerAnimator.enabled = true;
-        _basicPlayerController.enabled = true;
         mainCollider.enabled = true;
         playerRB.isKinematic = false;
         isRagdoll = false;
@@ -61,38 +105,34 @@ public class RagdollOnOff : NetworkBehaviour
         if (!isActive) return; //prevent updates until player is fully activated
         if (!IsOwner) return;
 
-        if (!firstDone)
-        {
-            firstDone = true;
-            PerformRagdoll();
-            ResetRagdoll();
-            Debug.Log("Finished first hack fix");
-        }
-
-        // dev cheat keys
-        if (Input.GetKeyDown("q")) PerformRagdoll();
-        if (Input.GetKeyDown("r")) ResetRagdoll();
+        // if (!firstDone)
+        // {
+        //     firstDone = true;
+        //     PerformRagdoll();
+        //     ResetRagdoll();
+        //     Debug.Log("Finished first hack fix");
+        // }
 
         if (isRagdoll) //auto reset ragdoll after delay
         {
+            if (_basicPlayerController.canInput) _basicPlayerController.DisableInput(); //disable input while in ragdoll mode
+
             delay -= Time.deltaTime;
             if (delay <= 0)
             {
                 delay = getUpDelay;
                 ResetRagdoll();
-                Debug.Log("Update: after reset ragdoll: pos: " + transform.position);
-
             }
         }
 
-    }
-
-    // this coroutine is required to set the gravity after a delay - if the gravity is immediately set true, the player will not have its position updated correctly - this is a hack fix
-
-    private IEnumerator DelayedGravityActivation()
-    {
-        yield return new WaitForSeconds(ragdollDelay);
-        playerRB.useGravity = true;
+        if(Input.GetKeyDown(KeyCode.T))
+        {
+            PerformRagdoll();
+        }
+        if(Input.GetKeyDown(KeyCode.Y))
+        {
+            ResetRagdoll();
+        }
     }
 
 
@@ -111,7 +151,6 @@ public class RagdollOnOff : NetworkBehaviour
     {
         if (IsServer) RagdollModeOffClientRpc();
         else RagdollModeOffServerRpc();
-
     }
 
     Collider[] ragdollColliders;
@@ -129,7 +168,8 @@ public class RagdollOnOff : NetworkBehaviour
             _swingManager.ExitSwingMode();
         }
         _playerAnimator.enabled = false;
-        _basicPlayerController.enabled = false;
+        //_basicPlayerController.enabled = false;
+        _basicPlayerController.DisableInput(); // it would be nice to disable input but still allow the player to move the camera (only allow input rotation)
 
         foreach (Collider col in ragdollColliders)
         {
@@ -150,8 +190,9 @@ public class RagdollOnOff : NetworkBehaviour
     // Dev Note: Don't call this function directly. Use the RPCs instead. - this will only exectute locally
     void RagdollModeOff()
     {
-
         if (!isRagdoll) return; //don't deactivate if not in ragdoll mode
+
+        _isFacingUp = _hipsBone.forward.y > 0;
 
         foreach (Collider col in ragdollColliders)
         {
@@ -162,22 +203,13 @@ public class RagdollOnOff : NetworkBehaviour
             if (rb != playerRB) rb.isKinematic = true;
         }
 
-        foreach (Transform child in transform)
-        {
-            if (child.CompareTag("Hips"))
-            {
-                transform.position = child.GetComponent<HipsLocation>().endPosition;
-                Debug.Log("RagdollOnOff: Moved player to hips end position: " + transform.position);
-                break;
-            }
-        }
+        // Update the main colliders position to the hips using helper function
+        AlignRotationToHips();
+        AlignMainColliderToHips();
+        PopulateBoneTransforms(_ragdollBoneTransforms);
 
-        _playerAnimator.enabled = true;
-        _basicPlayerController.enabled = true;
-        mainCollider.enabled = true;
-        playerRB.isKinematic = false;
-        isRagdoll = false;
-        StartCoroutine(DelayedGravityActivation());
+        _elapsedResetBonesTime = 0;
+        StartCoroutine(ResetBonesCoroutine());
     }
 
     // Collision Detection ------------------------------------------------------------------------------------------------------------
@@ -189,7 +221,6 @@ public class RagdollOnOff : NetworkBehaviour
     }
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log("OnTriggerEnter: " + other.gameObject.name);
         RagdollTrigger(other);
     }
     private void OnTriggerExit(Collider other)
@@ -205,9 +236,8 @@ public class RagdollOnOff : NetworkBehaviour
         {
             if (!isRagdoll && other.gameObject.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Strike"))
             {
-                Debug.Log("RagdollTrigger: got hit by player strike");
+                //Debug.Log("RagdollTrigger: got hit by player strike");
                 if (!IsOwner) return;
-                Debug.Log("RagdollTrigger: Owner - perform ragdoll");
                 PerformRagdoll();
             }
         }
@@ -242,28 +272,6 @@ public class RagdollOnOff : NetworkBehaviour
         RagdollModeOff();
     }
 
-
-    // public functions ------------------------------------------------------------------------------------------------------------
-
-    // public function to check if ragdoll mode is active
-    public bool IsRagdoll()
-    {
-        return isRagdoll;
-    }
-
-    public void AddForceToSelf(Vector3 force)
-    {
-        if (IsOwner)
-        {
-            delay = getUpDelay; //reset delay to avoid instant reset after force is applied
-            AddForceToSelfServerRpc(force * 2.5f);
-
-            playerRB.useGravity = false;
-            playerRB.isKinematic = false;
-        }
-    }
-
-
     [ServerRpc]
     private void AddForceToSelfServerRpc(Vector3 force)
     {
@@ -276,6 +284,184 @@ public class RagdollOnOff : NetworkBehaviour
         foreach (Rigidbody limb in limbsRigidBodies)
         {
             if (limb != playerRB) limb.AddForce(force, ForceMode.Impulse);
+        }
+        alreadyLaunched = true;
+
+        Debug.Log($"Already launched: {alreadyLaunched} for owner: {OwnerClientId} isOwner: {IsOwner}");
+    }
+
+    // helper functions -----------------------------------------
+    private IEnumerator ResetBonesCoroutine()
+    {
+        _elapsedResetBonesTime = 0f;
+        float elapsedPercentage = 0f;
+
+        while (elapsedPercentage < 1f)
+        {
+            _elapsedResetBonesTime += Time.deltaTime;
+            elapsedPercentage = _elapsedResetBonesTime / _timeToResetBones;
+
+            BoneTransform[] standUpBoneTransforms = GetStandUpBoneTransforms();
+            for (int boneIndex = 0; boneIndex < _bones.Length; boneIndex++)
+            {
+                _bones[boneIndex].localPosition = Vector3.Lerp(
+                    _ragdollBoneTransforms[boneIndex].Position,
+                    standUpBoneTransforms[boneIndex].Position,
+                    elapsedPercentage);
+
+                _bones[boneIndex].localRotation = Quaternion.Lerp(
+                    _ragdollBoneTransforms[boneIndex].Rotation,
+                    standUpBoneTransforms[boneIndex].Rotation,
+                    elapsedPercentage);
+            }
+
+            Debug.Log(elapsedPercentage + " elapsedPercentage");
+            yield return null; // Wait for the next frame
+        }
+
+        _playerAnimator.enabled = true;
+        _playerAnimator.Play(GetStandUpStateName(), 0, 0);
+        // Execute rest of the logic after the standup animation
+        StartCoroutine(WaitForAnimationAndExecuteLogic(GetStandUpStateName()));
+    }
+
+    private void AlignMainColliderToHips()
+    {
+        Vector3 originalHipsPosition = _hipsBone.position;
+        transform.position = _hipsBone.position;
+
+        /*
+        // This section is meant to put the hips in the right spot to prevent the little amount of sliding that happens \
+        // before standing up, but the position is not correct.
+        Vector3 positionOffset = GetStandUpBoneTransforms()[0].Position;
+        positionOffset.y = 0;
+        positionOffset = transform.position * positionOffset;
+        transform.position -= positionOffset;
+        */
+
+        if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hitInfo))
+        {
+            transform.position = new Vector3(transform.position.x, hitInfo.point.y, transform.position.z);
+        }
+
+        _hipsBone.position = originalHipsPosition;
+    }
+
+    private void AlignRotationToHips()
+    {
+        Vector3 originalHipsPosition = _hipsBone.position;
+        Quaternion originalHipsRotation = _hipsBone.rotation;
+
+        Vector3 desiredDirection = _hipsBone.up;
+        if (_isFacingUp)
+        {
+            desiredDirection *= -1;
+        }
+
+        desiredDirection.y = 0; // Flatten the direction on the y-axis
+        desiredDirection.Normalize();
+
+        Quaternion fromToRotation = Quaternion.FromToRotation(transform.forward, desiredDirection);
+        transform.rotation *= fromToRotation;
+
+        _hipsBone.position = originalHipsPosition;
+        _hipsBone.rotation = originalHipsRotation;
+    }
+
+    private void PopulateBoneTransforms(BoneTransform[] boneTransforms)
+    {
+        Debug.Log("PopulateBoneTransforms() Called");
+        for (int boneIndex = 0; boneIndex < _bones.Length; boneIndex++)
+        {
+            boneTransforms[boneIndex].Position = _bones[boneIndex].localPosition;
+            boneTransforms[boneIndex].Rotation = _bones[boneIndex].localRotation;
+        }
+    }
+
+    private void PopulateAnimationStartBoneTransforms(string clipName, BoneTransform[] boneTransforms)
+    {
+        Debug.Log("PopulateAnimationStartBoneTransforms() Called");
+        Vector3 positionBeforeSampling = transform.position;
+        Quaternion rotationBeforeSampling = transform.rotation;
+
+        foreach (AnimationClip clip in _playerAnimator.runtimeAnimatorController.animationClips)
+        {
+            if (clip.name == clipName)
+            {
+                clip.SampleAnimation(gameObject, 0);
+                PopulateBoneTransforms(boneTransforms);
+                break;
+            }
+        }
+
+        transform.position = positionBeforeSampling;
+        transform.rotation = rotationBeforeSampling;
+    }
+
+    
+    //
+    private IEnumerator WaitForAnimationAndExecuteLogic(string animationName)
+    {
+        Debug.Log("Waitforanim coroutine called");
+        AnimatorStateInfo animationState = _playerAnimator.GetCurrentAnimatorStateInfo(0);
+
+        while (!animationState.IsName(animationName))
+        {
+            yield return null;
+            animationState = _playerAnimator.GetCurrentAnimatorStateInfo(0);
+        }
+
+        while (animationState.normalizedTime < 0.62f)
+        {
+            yield return null;
+            animationState = _playerAnimator.GetCurrentAnimatorStateInfo(0);
+        }
+        // Animation finished, execute further logic
+        _basicPlayerController.EnableInput();
+        mainCollider.enabled = true;
+        playerRB.isKinematic = false;
+        isRagdoll = false;
+        alreadyLaunched = false;
+        Debug.Log($"Already launched: {alreadyLaunched} for owner: {OwnerClientId} isOwner: {IsOwner}");
+        StartCoroutine(DelayedGravityActivation());
+    }
+
+    // this coroutine is required to set the gravity after a delay - if the gravity is immediately set true, the player will not have its position updated correctly - this is a hack fix
+    private IEnumerator DelayedGravityActivation()
+    {
+        yield return new WaitForSeconds(ragdollDelay);
+        playerRB.useGravity = true;
+    }
+
+    private string GetStandUpStateName()
+    {
+        if (_isFacingUp) { return "StandUp2"; } else return "StandUp";
+    }
+
+    private BoneTransform[] GetStandUpBoneTransforms()
+    {
+        if (_isFacingUp)
+        {
+            return _standUp2BoneTransforms;
+        }
+        else return _standUpBoneTransforms;
+    }
+
+    // public functions ------------------------------------------------------------------------------------------------------------
+
+    public bool IsRagdoll()
+    {
+        return isRagdoll;
+    }
+
+    public void AddForceToSelf(Vector3 force)
+    {
+        if (IsOwner)
+        {
+            delay = getUpDelay; //reset delay to avoid instant reset after force is applied
+            AddForceToSelfServerRpc(force * 2.5f);
+            playerRB.useGravity = false;
+            playerRB.isKinematic = false;
         }
     }
 

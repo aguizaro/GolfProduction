@@ -52,6 +52,7 @@ public class UIManager : MonoBehaviour
     // Game UI Elements
     [Header("Game UI Elements")]
     [SerializeField] private TMP_Text _gamePlayerStrokesText;
+    [SerializeField] private GameObject _minimapImage;
 
     // Pause UI Elements
     [Header("Pause UI Elements")]
@@ -78,6 +79,10 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button _controlsBackButton;
     [Header("Other")]
     [SerializeField] private TMP_Text _holeCountText;
+
+    [SerializeField] private TMP_Text _directionsTextP;
+    [SerializeField] private TMP_Text _directionsTextL;
+    [SerializeField] private TMP_Text _winnerText;
 
     // UIManager instance
     public static UIManager instance { get; private set; }
@@ -134,6 +139,8 @@ public class UIManager : MonoBehaviour
 
         // Start playing ambience sounds
         PlayAmbience();
+
+        DeactivateMinimap();
     }
 
     private void PlayAmbience()
@@ -149,6 +156,7 @@ public class UIManager : MonoBehaviour
         RefreshDisplayList();
         EnableUI(UIState.Lobby);
         PlayUISelectSFX();
+        _minimapImage.GetComponent<RawImage>().enabled = false;
     }
     private void TitleSettings() { EnableSettings(); PlayUISelectSFX(); }
     private void TitleQuit() => Application.Quit();
@@ -158,14 +166,16 @@ public class UIManager : MonoBehaviour
     {
         DisableAllLobbyButtons();
         PlayUISelectSFX();
-        await LobbyManager.Instance.PlayNow();
+        //await LobbyManager.Instance.PlayNow();
+        await LobbyManager.Instance.PlayNow(_inputField.text);
         EnableAllLobbyButtons();
     }
     private async void CreateLobby()
     {
         DisableAllLobbyButtons();
         PlayUISelectSFX();
-        await LobbyManager.Instance.Create(_inputField.text, 5);
+        //await LobbyManager.Instance.Create(_inputField.text, 5);
+        await LobbyManager.Instance.Create(_inputField.text);
         EnableAllLobbyButtons();
     }
     private async void JoinLobby()
@@ -186,8 +196,19 @@ public class UIManager : MonoBehaviour
         _holeCountText.gameObject.SetActive(false);
         _lobbyJoinCodeText.gameObject.SetActive(false);
         _lobbyNameText.gameObject.SetActive(false);
+        DeactivateMinimap();
+
+        DeactivateDirections(); // not needed since basicplayer controller deactivates on game start (directions are for pre-lobby only)
     }
-    public void ActivateHUD() { _gamePlayerStrokesText.gameObject.SetActive(true); _holeCountText.gameObject.SetActive(true); _lobbyJoinCodeText.gameObject.SetActive(true); _lobbyNameText.gameObject.SetActive(true); }
+    public void ActivateHUD()
+    {
+        _gamePlayerStrokesText.gameObject.SetActive(true);
+        _holeCountText.gameObject.SetActive(true);
+        _lobbyJoinCodeText.gameObject.SetActive(true);
+        _lobbyNameText.gameObject.SetActive(true);
+        ActivateMinimap();
+        ActivateDirections(NetworkManager.Singleton.IsHost);
+    }
     public void DisplayCode(string code) => _lobbyJoinCodeText.text = code;
     public void DisplayLobbyName(string name) => _lobbyNameText.text = name;
     public async void DisplaySignedIn() => _lobbySignedInText.text = await LobbyManager.Instance.GetPlayerName();
@@ -202,8 +223,21 @@ public class UIManager : MonoBehaviour
     }
 
     // Pause UI Methods
-    public void EnablePause() { isPaused = true; _pauseScreenUI.SetActive(true); onEnablePause?.Invoke(); }
-    public void DisablePause() { isPaused = false; _pauseScreenUI.SetActive(false); _settingsScreenUI.SetActive(false); onDisablePause?.Invoke(); }
+    public void EnablePause()
+    {
+        isPaused = true;
+        _pauseScreenUI.SetActive(true);
+        onEnablePause?.Invoke();
+        DeactivateMinimap();
+    }
+    public void DisablePause()
+    {
+        isPaused = false;
+        _pauseScreenUI.SetActive(false);
+        _settingsScreenUI.SetActive(false);
+        onDisablePause?.Invoke();
+        ActivateMinimap();
+    }
     public void EnableSettings() { EnableMenu(MenuState.Settings); }
     public void DisableSettings() { _settingsScreenUI.SetActive(false); if (!titleScreenMode) { EnablePause(); } }
     public void PauseStartSettings() { _pauseScreenUI.SetActive(false); EnableSettings(); }
@@ -213,13 +247,13 @@ public class UIManager : MonoBehaviour
     }
     public void DisableControls()
     {
-        Debug.Log("Disable Control");
         EnableMenu(MenuState.Settings);
     }
 
     public void PlayUISelectSFX() => AudioManager.instance.PlayOneShotForOwner(FMODEvents.instance.uiSelect, transform.position);
 
     // Quit lobby and return to title screen
+    // IN THE FUTURE: USE "await LobbyManager.Instance.PlayerExit()" - then ReturnToTitle() will not be necessary here
     private async void QuitLobbyReturnToTitle()
     {
         await LobbyManager.Instance.TryQuitLobby();
@@ -229,7 +263,6 @@ public class UIManager : MonoBehaviour
     // returns to title screen
     public void ReturnToTitle()
     {
-        DeactivateHUD();
         _mainCamera.transform.position = _cameraStartTransform.position;
         _mainCamera.transform.rotation = _cameraStartTransform.rotation;
         titleScreenMode = true;
@@ -237,6 +270,7 @@ public class UIManager : MonoBehaviour
         Cursor.visible = true;
         DisablePause();
         EnableUI(UIState.Title);
+        DeactivateHUD();
     }
 
     // Settings UI Methods
@@ -260,6 +294,42 @@ public class UIManager : MonoBehaviour
 
     }
 
+    public void ActivateMinimap()
+    {
+        _minimapImage.GetComponent<RawImage>().enabled = true;
+    }
+
+    public void DeactivateMinimap()
+    {
+        _minimapImage.GetComponent<RawImage>().enabled = false;
+    }
+
+    // temp ui to activate directions text
+    public void ActivateDirections(bool isHost)
+    {
+        if (isHost) _directionsTextP.gameObject.SetActive(true);
+        _directionsTextL.gameObject.SetActive(true);
+    }
+    // temp ui to deactivate directions text
+    public void DeactivateDirections()
+    {
+        _directionsTextP.gameObject.SetActive(false);
+        _directionsTextL.gameObject.SetActive(false);
+    }
+
+    //temp ui to activate winner text
+    public void ActivateWinner(string winner)
+    {
+        _winnerText.text = winner;
+        _winnerText.gameObject.SetActive(true);
+    }
+    // temp ui to deactivate winner text
+    public void DeactivateWinner()
+    {
+        _winnerText.text = "";
+        _winnerText.gameObject.SetActive(false);
+    }
+
     public void LoadSettings()
     {
         // Load settings data
@@ -276,7 +346,6 @@ public class UIManager : MonoBehaviour
 
     public void ApplySettings()
     {
-        Debug.Log("Applying settings");
         SettingsData sData = DataManager.instance.GetSettingsData();
         // apply all settings
         sData.cameraSensitivity = settingsSensitivity;
@@ -339,7 +408,6 @@ public class UIManager : MonoBehaviour
 
     IEnumerator SetLocale(int _localeID)
     {
-        Debug.Log("Locale entered: " + _localeID);
         localeActive = true;
         yield return LocalizationSettings.InitializationOperation;
         LocalizationSettings.SelectedLocale = LocalizationSettings.AvailableLocales.Locales[_localeID];
@@ -362,7 +430,6 @@ public class UIManager : MonoBehaviour
             int i = 0;
             foreach (LobbyEntry entry in foundLobbies)
             {
-                Debug.Log($"Found {entry.Name} with code: {entry.LobbyType} with {entry.SpotsAvailable} spots left");
                 if (i < maxDisplayLen)
                 {
                     if (entry != null)
@@ -398,20 +465,14 @@ public class UIManager : MonoBehaviour
         }
     }
 
-
-    ulong timesPressed = 0;
     bool isJoining = false;
 
     private async void HandleJoinLobbyButton(LobbyEntry entry)
     {
-        Debug.Log($"pressed join button - count : {++timesPressed} - lobbyID: {entry.Id} lobbyName: {entry.Name}");
-
         if (isJoining) return;
         isJoining = true;
         DisableAllLobbyButtons();
 
-
-        Debug.Log($"calling lobbymanager join() with id: {entry.Id} and name: {entry.Name}");
         bool success = await LobbyManager.Instance.Join(lobbyID: entry.Id);
 
         if (!success) Debug.LogWarning("Failed to join lobby");

@@ -9,7 +9,6 @@ public class StartCameraFollow : NetworkBehaviour
     private bool isActive = true;
     private bool isSwingState = false;
 
-    // transitioning between camera states
     private bool transitioning = false;
     private float transitionProgress = 0f;
     private Vector3 regularPosition;
@@ -20,6 +19,16 @@ public class StartCameraFollow : NetworkBehaviour
 
     private bool isFirstFrame = true;
 
+    private RagdollOnOff ragdollOnOff;
+    private Transform targetTransform;
+
+    private Transform currentFollowTarget;
+    private Transform newFollowTarget;
+    private bool isFollowTransitioning = false;
+    private float followTransitionProgress = 0f;
+    [SerializeField]
+    private float followTransitionSpeed = 3f; // Adjust the speed of transition between follow targets
+
     public override void OnNetworkSpawn()
     {
         if (!IsOwner) isActive = false;
@@ -29,12 +38,53 @@ public class StartCameraFollow : NetworkBehaviour
         regularRotation = Quaternion.Euler(xCamRotation, transform.eulerAngles.y, 0f);
         Camera.main.transform.position = regularPosition;
         Camera.main.transform.rotation = regularRotation;
-    }
 
+        // Get the RagdollOnOff component
+        ragdollOnOff = GetComponent<RagdollOnOff>();
+        if (ragdollOnOff != null)
+        {
+            currentFollowTarget = ragdollOnOff.mainCollider.transform; // Start with mainCollider as the target
+        }
+    }
 
     private void LateUpdate()
     {
         if (!isActive) return;
+
+        // Determine the new follow target based on the alreadyLaunched state
+        if (ragdollOnOff != null && ragdollOnOff.alreadyLaunched)
+        {
+            newFollowTarget = ragdollOnOff._hipsBone;
+        }
+        else
+        {
+            newFollowTarget = ragdollOnOff.mainCollider.transform;
+        }
+
+        // Smooth transition between follow targets
+        if (newFollowTarget != currentFollowTarget)
+        {
+            if (!isFollowTransitioning)
+            {
+                isFollowTransitioning = true;
+                followTransitionProgress = 0f;
+            }
+
+            followTransitionProgress += Time.deltaTime * followTransitionSpeed;
+            if (followTransitionProgress >= 1f)
+            {
+                followTransitionProgress = 1f;
+                isFollowTransitioning = false;
+                currentFollowTarget = newFollowTarget;
+            }
+        }
+        else
+        {
+            followTransitionProgress = 1f;
+        }
+
+        Vector3 followPosition = Vector3.Lerp(currentFollowTarget.position, newFollowTarget.position, followTransitionProgress);
+        Quaternion followRotation = Quaternion.Slerp(currentFollowTarget.rotation, newFollowTarget.rotation, followTransitionProgress);
 
         if (isSwingState)
         {
@@ -47,14 +97,14 @@ public class StartCameraFollow : NetworkBehaviour
                 regularRotation = Camera.main.transform.rotation;
 
                 // Calculate camera position and rotation for alternate mode
-                float angle = transform.eulerAngles.y;
+                float angle = followRotation.eulerAngles.y;
                 Quaternion camRotation = Quaternion.Euler(xCamRotation, angle, 0f);
 
                 // Define the offset for the alternate mode (forward and downward)
                 Vector3 alternateCamOffset = new Vector3(0f, -0.5f, 1.5f); // Adjust these values as needed
 
                 // Calculate the target position using the alternate offset
-                targetPosition = transform.position - (camRotation * alternateCamOffset);
+                targetPosition = followPosition - (camRotation * alternateCamOffset);
 
                 // Keep the same rotation as regular mode
                 targetRotation = camRotation;
@@ -80,9 +130,9 @@ public class StartCameraFollow : NetworkBehaviour
             }
 
             // Calculate camera position and rotation for regular follow mode
-            float angle = transform.eulerAngles.y;
+            float angle = followRotation.eulerAngles.y;
             Quaternion camRotation = Quaternion.Euler(xCamRotation, angle, 0f);
-            targetPosition = transform.position - (camRotation * camOffset);
+            targetPosition = followPosition - (camRotation * camOffset);
             targetRotation = camRotation;
 
             // Smoothly interpolate camera position and rotation
@@ -93,7 +143,6 @@ public class StartCameraFollow : NetworkBehaviour
             transitionProgress += Time.deltaTime * transitionSpeed;
             transitionProgress = Mathf.Clamp01(transitionProgress);
         }
-
     }
 
     public void SetSwingState(bool swing)

@@ -1,54 +1,82 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
-// Data Manager class acts as an interface for other classes to read and write specific data to data classes.
-// Data is broken up into separate classes (GameData, SettingsData, etc.) to allow relevant data to be accessed
-// Reference DataManager methods from any class using "DataManager.instance.methodName()"
 public class DataManager : MonoBehaviour
 {
-    // Assigns an instance of this manager singleton and allows access to be public but edits to be private
     public static DataManager instance { get; private set; }
-
+    public InputActionAsset actions;
     private SettingsData settingsData;
 
     private void Awake()
     {
-        // Do not allow for multiple instances of the DataManager
         if (instance != null)
         {
             Debug.LogError("Found more than one Data Persistence Manager in the scene");
             Destroy(gameObject);
             return;
         }
-
         instance = this;
         DontDestroyOnLoad(gameObject);
+        LoadData();
     }
 
     private void Start()
     {
-        LoadData();
+        
     }
 
     public void NewSettingsData()
     {
         settingsData = new SettingsData();
+        settingsData.rebinds = actions.SaveBindingOverridesAsJson();
     }
 
-    // Loads json data into data class variable (not yet implemented)
     public void LoadData()
     {
-        if (settingsData == null)
+        string filePath = Path.Combine(Application.streamingAssetsPath, "SettingsData.json");
+        if (File.Exists(filePath))
+        {
+            string jsonData = File.ReadAllText(filePath);
+            settingsData = JsonUtility.FromJson<SettingsData>(jsonData);
+            if (settingsData == null)
+            {
+                Debug.LogError("Failed to load settings data. Creating new data.");
+                NewSettingsData();
+            }
+            else
+            {
+                Debug.Log("Settings data loaded successfully.");
+            }
+        }
+        else
         {
             Debug.Log("No save data found, creating new data.");
             NewSettingsData();
         }
     }
 
-    // Saves data class variable to json data (not yet implemented)
     public void SaveData()
     {
+        if (settingsData == null)
+        {
+            Debug.LogError("SettingsData is null. Cannot save data.");
+            return;
+        }
+
+        string jsonData = JsonUtility.ToJson(settingsData, true);
+        string folderPath = Application.streamingAssetsPath;
+        string filePath = Path.Combine(folderPath, "SettingsData.json");
+
+        // Ensure the directory exists
+        Directory.CreateDirectory(folderPath);
+
+        File.WriteAllText(filePath, jsonData);
+
+        Debug.Log("Settings data saved to: " + filePath);
     }
 
     public SettingsData GetSettingsData()
@@ -59,5 +87,19 @@ public class DataManager : MonoBehaviour
     public void SetSettingsData(SettingsData new_settings_data)
     {
         settingsData = new_settings_data;
+    }
+
+    private void OnApplicationQuit()
+    {
+        settingsData.playTimes += 1;
+        settingsData.rebinds = actions.SaveBindingOverridesAsJson();
+        SaveData();
+    }
+
+    private void OnEnable()
+    {
+        var rebinds = settingsData.rebinds;
+        if (!string.IsNullOrEmpty(rebinds))
+            actions.LoadBindingOverridesFromJson(rebinds);
     }
 }
