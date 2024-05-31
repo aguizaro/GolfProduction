@@ -309,6 +309,9 @@ public class SwingManager : NetworkBehaviour
         //TODO:add camera shake
         StartCoroutine(ShakeCamera());
 
+        // Play sound effect for swinging the ball
+        AudioManager.instance.PlayOneShotForAllClients(FMODEvents.instance.playerGolfSwing, _playerController.transform.position, IsOwner);
+
         // only count strokes if the game is active / not in pre-game lobby
         if (_playerController.IsActive)
         {
@@ -366,6 +369,11 @@ public class SwingManager : NetworkBehaviour
         // add forces
         Vector3 swingForceVector = dir * swingForce * meterCanvas.GetComponent<PowerMeter>().GetPowerValue();
 
+        // Play sound effect for swinging the ball
+        AudioManager.instance.PlayOneShotForAllClients(FMODEvents.instance.playerGolfSwing, _playerController.transform.position, IsOwner);
+
+        Debug.Log("force dir: " + dir);
+        Debug.Log("force vector: " + swingForceVector);
         //ask the ragdolled player to add force on themselves
         if (ragdolled_player != null)
         {
@@ -626,6 +634,9 @@ public class SwingManager : NetworkBehaviour
             {
                 playerAnimator.SetBool("isStriking", true);
                 playerAnimator.SetBool("justStriked", true);
+
+                // Play sound effect for swinging the ball
+                AudioManager.instance.PlayOneShotForAllClients(FMODEvents.instance.playerGolfStrike, _playerController.transform.position, IsOwner);
             }
         }
     }

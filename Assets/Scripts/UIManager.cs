@@ -137,7 +137,15 @@ public class UIManager : MonoBehaviour
 
         DisablePause(); DisableSettings(); EnableUI(UIState.Title); // start with title screen
 
+        // Start playing ambience sounds
+        PlayAmbience();
+
         DeactivateMinimap();
+    }
+
+    private void PlayAmbience()
+    {
+        AudioManager.instance.PlayTimelineSoundForOwner(FMODEvents.instance.titleScreenAmbience);
     }
 
 
@@ -147,27 +155,33 @@ public class UIManager : MonoBehaviour
         LobbyManager.Instance.ResetQuit();
         RefreshDisplayList();
         EnableUI(UIState.Lobby);
+        PlayUISelectSFX();
         _minimapImage.GetComponent<RawImage>().enabled = false;
     }
-    private void TitleSettings() => EnableSettings();
+    private void TitleSettings() { EnableSettings(); PlayUISelectSFX(); }
     private void TitleQuit() => Application.Quit();
 
     // Lobby UI Methods
     private async void PlayNow()
     {
         DisableAllLobbyButtons();
+        PlayUISelectSFX();
+        //await LobbyManager.Instance.PlayNow();
         await LobbyManager.Instance.PlayNow(_inputField.text);
         EnableAllLobbyButtons();
     }
     private async void CreateLobby()
     {
         DisableAllLobbyButtons();
+        PlayUISelectSFX();
+        //await LobbyManager.Instance.Create(_inputField.text, 5);
         await LobbyManager.Instance.Create(_inputField.text);
         EnableAllLobbyButtons();
     }
     private async void JoinLobby()
     {
         DisableAllLobbyButtons();
+        PlayUISelectSFX();
         await LobbyManager.Instance.Join(joinCode: _inputField.text);
         EnableAllLobbyButtons();
     }
@@ -236,6 +250,9 @@ public class UIManager : MonoBehaviour
         EnableMenu(MenuState.Settings);
     }
 
+    public void PlayUISelectSFX() => AudioManager.instance.PlayOneShotForOwner(FMODEvents.instance.uiSelect, transform.position);
+
+    // Quit lobby and return to title screen
     // IN THE FUTURE: USE "await LobbyManager.Instance.PlayerExit()" - then ReturnToTitle() will not be necessary here
     private async void QuitLobbyReturnToTitle()
     {
