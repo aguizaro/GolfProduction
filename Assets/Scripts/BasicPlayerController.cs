@@ -102,7 +102,8 @@ public class BasicPlayerController : NetworkBehaviour
         #endregion
 
         GameObject.Find("Main Camera").GetComponent<StudioListener>().SetAttenuationObject(gameObject);
-        playerFootsteps = AudioManager.instance.CreateInstance(FMODEvents.instance.playerFootsteps, gameObject);
+        AudioManager.instance.PlayTimelineSoundForAllClients(FMODEvents.instance.playerFootsteps, gameObject);
+        //playerFootsteps = AudioManager.instance.CreateInstance(FMODEvents.instance.playerFootsteps, gameObject);
 
         // activate player controller - controller will activate the player movement, animations, shooting and ragdoll
         //_playerHat.RandomizeHatTexture();

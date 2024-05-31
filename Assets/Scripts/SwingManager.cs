@@ -594,6 +594,9 @@ public class SwingManager : NetworkBehaviour
             {
                 playerAnimator.SetBool("isStriking", true);
                 playerAnimator.SetBool("justStriked", true);
+
+                // Play sound effect for swinging the ball
+                AudioManager.instance.PlayOneShotForAllClients(FMODEvents.instance.playerGolfStrike, _playerController.transform.position, IsOwner);
             }
         }
     }

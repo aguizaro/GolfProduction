@@ -131,6 +131,14 @@ public class UIManager : MonoBehaviour
         await LobbyManager.Instance.Authenticate(); //does not block main thread while being atuthenticated
 
         DisablePause(); DisableSettings(); EnableUI(UIState.Title); // start with title screen
+
+        // Start playing ambience sounds
+        PlayAmbience();
+    }
+
+    private void PlayAmbience()
+    {
+        AudioManager.instance.PlayTimelineSoundForOwner(FMODEvents.instance.titleScreenAmbience);
     }
 
 
@@ -149,18 +157,21 @@ public class UIManager : MonoBehaviour
     private async void PlayNow()
     {
         DisableAllLobbyButtons();
+        PlayUISelectSFX();
         await LobbyManager.Instance.PlayNow();
         EnableAllLobbyButtons();
     }
     private async void CreateLobby()
     {
         DisableAllLobbyButtons();
+        PlayUISelectSFX();
         await LobbyManager.Instance.Create(_inputField.text, 5);
         EnableAllLobbyButtons();
     }
     private async void JoinLobby()
     {
         DisableAllLobbyButtons();
+        PlayUISelectSFX();
         await LobbyManager.Instance.Join(joinCode: _inputField.text);
         EnableAllLobbyButtons();
     }

@@ -229,6 +229,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5af595ec8b368714e99b414fe9183feb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <titleScreenAmbience>k__BackingField:
+    Guid:
+      Data1: 574299986
+      Data2: 1190102551
+      Data3: -169186923
+      Data4: -1388177298
+    Path: event:/ParkAmbience
   <playerGolfSwing>k__BackingField:
     Guid:
       Data1: -322936877
@@ -236,6 +243,13 @@ MonoBehaviour:
       Data3: 185113227
       Data4: 1611160647
     Path: event:/GolfSwing
+  <playerGolfStrike>k__BackingField:
+    Guid:
+      Data1: -1323889597
+      Data2: 1180010151
+      Data3: 2081011605
+      Data4: -1980164077
+    Path: event:/GolfWhiff
   <golfHoleEnter>k__BackingField:
     Guid:
       Data1: 2110502546
@@ -787,7 +801,7 @@ GameObject:
   - component: {fileID: 1019545633}
   - component: {fileID: 1019545632}
   - component: {fileID: 1019545631}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: WaitingRoom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1461,7 +1475,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2633831677343895932, guid: d0fffed310d2f4993b1c553ea341674c, type: 3}
       propertyPath: m_Layer
-      value: 0
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 3302275055123276168, guid: d0fffed310d2f4993b1c553ea341674c, type: 3}
       propertyPath: m_NavMeshData
@@ -1485,15 +1499,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7447625657391508893, guid: d0fffed310d2f4993b1c553ea341674c, type: 3}
       propertyPath: m_Layer
-      value: 0
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8133747672010626667, guid: d0fffed310d2f4993b1c553ea341674c, type: 3}
       propertyPath: m_Layer
-      value: 0
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8413577635754221683, guid: d0fffed310d2f4993b1c553ea341674c, type: 3}
       propertyPath: m_Layer
-      value: 0
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

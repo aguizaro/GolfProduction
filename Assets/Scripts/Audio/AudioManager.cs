@@ -22,19 +22,7 @@ public class AudioManager : NetworkBehaviour
         instance = this;
     }
 
-    public void PlayOneShot(EventReference sound, Vector3 worldPos)
-    {
-        RuntimeManager.PlayOneShot(sound, worldPos);
-    }
-
-    public EventInstance CreateInstance(EventReference eventReference, GameObject playerReference)
-    {
-        EventInstance eventInstance = RuntimeManager.CreateInstance(eventReference);
-        RuntimeManager.AttachInstanceToGameObject(eventInstance, playerReference.GetComponent<Transform>(), playerReference.GetComponent<Rigidbody>());
-        //eventInstance.set3DAttributes();
-        return eventInstance;
-    }
-
+    // ############## Play Oneshot sounds ################################
     public void PlayOneShotForOwner(EventReference soundRef, Vector3 worldPos)
     {
         RuntimeManager.PlayOneShot(soundRef, worldPos);
@@ -42,10 +30,56 @@ public class AudioManager : NetworkBehaviour
 
     public void PlayOneShotForAllClients(EventReference soundRef, Vector3 worldPos, bool isOwner)
     {
-        if (!isOwner) return;
+        if (!IsOwner) return;
         PlayOneShotForAllClientsServerRpc(FMODEvents.instance.GetEventIDFromEventReference(soundRef), worldPos); // Gets ulong id for event reference
     }
 
+    // ############## Play Timeline sounds ################################
+    public void PlayTimelineSoundForOwner(EventReference soundRef, GameObject playerRef=null) 
+    {
+        // If the provided sound doesn't already exist, create it
+        if (!FMODEvents.instance.DoesEventInstanceExist(soundRef))
+        {
+            FMODEvents.instance.CreateEventInstance(soundRef, playerRef);
+        }
+
+        PLAYBACK_STATE playbackState;
+        EventInstance eventInstance = FMODEvents.instance.GetEventInstanceFromEventReference(soundRef);
+
+        eventInstance.getPlaybackState(out playbackState);
+        if (playbackState.Equals(PLAYBACK_STATE.STOPPED))
+        {
+            eventInstance.start();
+        }
+    }
+
+    public void PlayTimelineSoundForAllClients(EventReference soundRef, GameObject playerRef=null) // This requires a NetworkObject to 
+    {
+        if (!IsOwner) return; 
+
+        if (playerRef) {
+            NetworkObject networkObject = playerRef.GetComponent<NetworkObject>();
+
+            if (networkObject)
+            {
+                //Debug.Log(networkObject.NetworkObjectId);
+                PlayTimelineSoundForAllClientsServerRpc(FMODEvents.instance.GetEventIDFromEventReference(soundRef), networkObject.OwnerClientId);
+                //PlayTimelineSoundForAllClientsServerRpc(0, 0);
+            }
+        }
+    }
+
+    public void StopTimelineSoundForOwner(EventReference soundRef) 
+    {
+        // If the provided sound doesn't already exist, don't do anything
+        if (!FMODEvents.instance.DoesEventInstanceExist(soundRef))
+        {
+            EventInstance eventInstance = FMODEvents.instance.GetEventInstanceFromEventReference(soundRef);
+            eventInstance.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
+        }
+    }
+
+    // ############## Oneshot Rpcs ################################
     [ServerRpc (RequireOwnership=false)]
     void PlayOneShotForAllClientsServerRpc(ulong soundID, Vector3 worldPos)
     {
@@ -56,5 +90,28 @@ public class AudioManager : NetworkBehaviour
     void PlayOneShotForAllClientsClientRpc(ulong soundID, Vector3 worldPos)
     {
         RuntimeManager.PlayOneShot(FMODEvents.instance.GetEventRefenceFromEventID(soundID), worldPos);
+    }
+
+    [ServerRpc (RequireOwnership=false)]
+    void PlayTimelineSoundForAllClientsServerRpc(ulong soundID, ulong ownerID)
+    {
+        Debug.Log("Before the client rpc is called: " + GetComponent<NetworkObject>().NetworkObjectId);
+        PlayTimelineSoundForAllClientsClientRpc(soundID, ownerID);
+    }
+
+    [ClientRpc]
+    void PlayTimelineSoundForAllClientsClientRpc(ulong soundID, ulong ownerID)
+    {
+        Debug.Log($"Owner Client id: {OwnerClientId} Id owner: {IsOwner}");
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+
+        foreach (GameObject player in players)
+        {
+            if (player.GetComponent<NetworkObject>().OwnerClientId == ownerID)
+            {
+                Debug.Log($"Owner Client id: {OwnerClientId} Id owner: {IsOwner} Found {player.GetComponent<NetworkObject>().OwnerClientId}");
+                PlayTimelineSoundForOwner(FMODEvents.instance.GetEventRefenceFromEventID(soundID), player);
+            }
+        }
     }
 }
