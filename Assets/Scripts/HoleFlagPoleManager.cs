@@ -40,6 +40,9 @@ public class HoleFlagPoleManager : NetworkBehaviour
 
             if (!_playerIDs.Contains(playerID))
             {
+                AudioManager.instance.PlayOneShotForAllClients(FMODEvents.instance.golfHoleEnter, this.transform.position, true);
+                AudioManager.instance.PlayOneShotForOwner(FMODEvents.instance.golfClap, this.transform.position);
+
                 _playerIDs.Add(playerID);
                 HandlePlayerScoreClientRpc(playerID);
             }
@@ -57,8 +60,6 @@ public class HoleFlagPoleManager : NetworkBehaviour
         if (NetworkManager.Singleton.LocalClientId != playerID) return; //only the player that scored should handle this
 
         PlayerData currentPlayerData = playerNetworkData.GetPlayerData();
-        Debug.Log("OnTriggerEnter: Player " + playerID + " made hole " + currentPlayerData.currentHole + " in " + currentPlayerData.strokes + " strokes");
-
         currentPlayerData.currentHole++;
         playerNetworkData.StorePlayerState(currentPlayerData);
 

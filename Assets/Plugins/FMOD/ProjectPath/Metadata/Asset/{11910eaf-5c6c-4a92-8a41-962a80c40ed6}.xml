@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="EncodableAsset" id="{11910eaf-5c6c-4a92-8a41-962a80c40ed6}">
+		<property name="assetPath">
+			<value>UI_Sounds/</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{9c3b92b7-e52f-4804-9cc3-0c5f3df62a14}</destination>
+		</relationship>
+	</object>
+</objects>
