@@ -80,6 +80,15 @@ public partial class @Actions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ScoreBoard"",
+                    ""type"": ""Button"",
+                    ""id"": ""052566f0-cd39-4c01-9839-2ef30048d927"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -192,6 +201,17 @@ public partial class @Actions: IInputActionCollection2, IDisposable
                     ""action"": ""Ball Spawn/Exit Swing"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""fe9858c7-4d9c-411f-be75-7a9420d36e4c"",
+                    ""path"": ""<Keyboard>/tab"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ScoreBoard"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -293,6 +313,15 @@ public partial class @Actions: IInputActionCollection2, IDisposable
                     ""name"": ""Pause"",
                     ""type"": ""Button"",
                     ""id"": ""c9f8fe57-f854-4999-8a48-ba9a407e7e11"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ScoreBoard"",
+                    ""type"": ""Button"",
+                    ""id"": ""087b68ed-2813-4317-b184-2e5bc4e95301"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """",
@@ -728,6 +757,17 @@ public partial class @Actions: IInputActionCollection2, IDisposable
                     ""action"": ""Pause"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8a1f91bd-a1ed-4ebc-af03-35e276cea9f2"",
+                    ""path"": ""<Keyboard>/tab"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ScoreBoard"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -803,6 +843,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
         m_Gameplay_Sprint = m_Gameplay.FindAction("Sprint", throwIfNotFound: true);
         m_Gameplay_Pause = m_Gameplay.FindAction("Pause", throwIfNotFound: true);
         m_Gameplay_BallSpawnExitSwing = m_Gameplay.FindAction("Ball Spawn/Exit Swing", throwIfNotFound: true);
+        m_Gameplay_ScoreBoard = m_Gameplay.FindAction("ScoreBoard", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -816,6 +857,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
         m_UI_TrackedDevicePosition = m_UI.FindAction("TrackedDevicePosition", throwIfNotFound: true);
         m_UI_TrackedDeviceOrientation = m_UI.FindAction("TrackedDeviceOrientation", throwIfNotFound: true);
         m_UI_Pause = m_UI.FindAction("Pause", throwIfNotFound: true);
+        m_UI_ScoreBoard = m_UI.FindAction("ScoreBoard", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -883,6 +925,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Gameplay_Sprint;
     private readonly InputAction m_Gameplay_Pause;
     private readonly InputAction m_Gameplay_BallSpawnExitSwing;
+    private readonly InputAction m_Gameplay_ScoreBoard;
     public struct GameplayActions
     {
         private @Actions m_Wrapper;
@@ -893,6 +936,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
         public InputAction @Sprint => m_Wrapper.m_Gameplay_Sprint;
         public InputAction @Pause => m_Wrapper.m_Gameplay_Pause;
         public InputAction @BallSpawnExitSwing => m_Wrapper.m_Gameplay_BallSpawnExitSwing;
+        public InputAction @ScoreBoard => m_Wrapper.m_Gameplay_ScoreBoard;
         public InputActionMap Get() { return m_Wrapper.m_Gameplay; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -920,6 +964,9 @@ public partial class @Actions: IInputActionCollection2, IDisposable
             @BallSpawnExitSwing.started += instance.OnBallSpawnExitSwing;
             @BallSpawnExitSwing.performed += instance.OnBallSpawnExitSwing;
             @BallSpawnExitSwing.canceled += instance.OnBallSpawnExitSwing;
+            @ScoreBoard.started += instance.OnScoreBoard;
+            @ScoreBoard.performed += instance.OnScoreBoard;
+            @ScoreBoard.canceled += instance.OnScoreBoard;
         }
 
         private void UnregisterCallbacks(IGameplayActions instance)
@@ -942,6 +989,9 @@ public partial class @Actions: IInputActionCollection2, IDisposable
             @BallSpawnExitSwing.started -= instance.OnBallSpawnExitSwing;
             @BallSpawnExitSwing.performed -= instance.OnBallSpawnExitSwing;
             @BallSpawnExitSwing.canceled -= instance.OnBallSpawnExitSwing;
+            @ScoreBoard.started -= instance.OnScoreBoard;
+            @ScoreBoard.performed -= instance.OnScoreBoard;
+            @ScoreBoard.canceled -= instance.OnScoreBoard;
         }
 
         public void RemoveCallbacks(IGameplayActions instance)
@@ -974,6 +1024,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
     private readonly InputAction m_UI_TrackedDevicePosition;
     private readonly InputAction m_UI_TrackedDeviceOrientation;
     private readonly InputAction m_UI_Pause;
+    private readonly InputAction m_UI_ScoreBoard;
     public struct UIActions
     {
         private @Actions m_Wrapper;
@@ -989,6 +1040,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
         public InputAction @TrackedDevicePosition => m_Wrapper.m_UI_TrackedDevicePosition;
         public InputAction @TrackedDeviceOrientation => m_Wrapper.m_UI_TrackedDeviceOrientation;
         public InputAction @Pause => m_Wrapper.m_UI_Pause;
+        public InputAction @ScoreBoard => m_Wrapper.m_UI_ScoreBoard;
         public InputActionMap Get() { return m_Wrapper.m_UI; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1031,6 +1083,9 @@ public partial class @Actions: IInputActionCollection2, IDisposable
             @Pause.started += instance.OnPause;
             @Pause.performed += instance.OnPause;
             @Pause.canceled += instance.OnPause;
+            @ScoreBoard.started += instance.OnScoreBoard;
+            @ScoreBoard.performed += instance.OnScoreBoard;
+            @ScoreBoard.canceled += instance.OnScoreBoard;
         }
 
         private void UnregisterCallbacks(IUIActions instance)
@@ -1068,6 +1123,9 @@ public partial class @Actions: IInputActionCollection2, IDisposable
             @Pause.started -= instance.OnPause;
             @Pause.performed -= instance.OnPause;
             @Pause.canceled -= instance.OnPause;
+            @ScoreBoard.started -= instance.OnScoreBoard;
+            @ScoreBoard.performed -= instance.OnScoreBoard;
+            @ScoreBoard.canceled -= instance.OnScoreBoard;
         }
 
         public void RemoveCallbacks(IUIActions instance)
@@ -1138,6 +1196,7 @@ public partial class @Actions: IInputActionCollection2, IDisposable
         void OnSprint(InputAction.CallbackContext context);
         void OnPause(InputAction.CallbackContext context);
         void OnBallSpawnExitSwing(InputAction.CallbackContext context);
+        void OnScoreBoard(InputAction.CallbackContext context);
     }
     public interface IUIActions
     {
@@ -1152,5 +1211,6 @@ public partial class @Actions: IInputActionCollection2, IDisposable
         void OnTrackedDevicePosition(InputAction.CallbackContext context);
         void OnTrackedDeviceOrientation(InputAction.CallbackContext context);
         void OnPause(InputAction.CallbackContext context);
+        void OnScoreBoard(InputAction.CallbackContext context);
     }
 }
