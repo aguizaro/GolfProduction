@@ -91,6 +91,8 @@ public class BasicPlayerController : NetworkBehaviour
         gameplayActionMap = _inputActionAsset.FindActionMap("Gameplay", throwIfNotFound: true);
         gameplayActionMap.Enable();
         _inputActionAsset.FindActionMap("UI")["Pause"].started += HandlePauseStarted;
+        _inputActionAsset.FindActionMap("UI")["ScoreBoard"].started += HandleScoreBoardStarted;
+        _inputActionAsset.FindActionMap("UI")["ScoreBoard"].canceled += HandleScoreBoardCanceled;
         _inputActionAsset.FindActionMap("UI").Disable();
 
         gameplayActionMap["Pause"].started += HandlePauseStarted;
@@ -100,6 +102,8 @@ public class BasicPlayerController : NetworkBehaviour
         gameplayActionMap["Swing"].canceled += HandleSwingCanceled;
         gameplayActionMap["Ball Spawn/Exit Swing"].started += HandleBallSpawnExitSwingStarted;
         gameplayActionMap["Ball Spawn/Exit Swing"].canceled += HandleBallSpawnExitSwingCanceled;
+        gameplayActionMap["ScoreBoard"].started += HandleScoreBoardStarted;
+        gameplayActionMap["ScoreBoard"].canceled += HandleScoreBoardCanceled;
         #endregion
 
         GameObject.Find("Main Camera").GetComponent<StudioListener>().SetAttenuationObject(gameObject);
@@ -452,6 +456,17 @@ public class BasicPlayerController : NetworkBehaviour
     public void HandleBallSpawnExitSwingCanceled(InputAction.CallbackContext ctx)
     {
         _ballSpawnExitSwingPressed = false;
+    }
+
+    public void HandleScoreBoardStarted(InputAction.CallbackContext ctx)
+    {
+        //TODO: Turn on Score Board Panel 
+        Debug.Log("Tab pressed");
+    }
+    public void HandleScoreBoardCanceled(InputAction.CallbackContext ctx)
+    {
+        //TODO: Turn off Score Board Panel
+        Debug.Log("Tab released");
     }
     #endregion
 

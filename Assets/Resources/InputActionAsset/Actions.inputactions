@@ -58,6 +58,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "ScoreBoard",
+                    "type": "Button",
+                    "id": "052566f0-cd39-4c01-9839-2ef30048d927",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -170,6 +179,17 @@
                     "action": "Ball Spawn/Exit Swing",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "fe9858c7-4d9c-411f-be75-7a9420d36e4c",
+                    "path": "<Keyboard>/tab",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ScoreBoard",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },
@@ -271,6 +291,15 @@
                     "name": "Pause",
                     "type": "Button",
                     "id": "c9f8fe57-f854-4999-8a48-ba9a407e7e11",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ScoreBoard",
+                    "type": "Button",
+                    "id": "087b68ed-2813-4317-b184-2e5bc4e95301",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -704,6 +733,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Pause",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8a1f91bd-a1ed-4ebc-af03-35e276cea9f2",
+                    "path": "<Keyboard>/tab",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ScoreBoard",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
