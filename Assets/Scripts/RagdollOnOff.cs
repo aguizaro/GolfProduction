@@ -20,7 +20,6 @@ public class RagdollOnOff : NetworkBehaviour
     private bool isActive = false; //is player instance active
     public Transform _hipsBone;
 
-    private bool firstDone = false;
     public bool alreadyLaunched = false;
     public bool beingLaunched = false; //this will be true if another player has entered swing state on this player
 
@@ -105,14 +104,6 @@ public class RagdollOnOff : NetworkBehaviour
         if (!isActive) return; //prevent updates until player is fully activated
         if (!IsOwner) return;
 
-        // if (!firstDone)
-        // {
-        //     firstDone = true;
-        //     PerformRagdoll();
-        //     ResetRagdoll();
-        //     Debug.Log("Finished first hack fix");
-        // }
-
         if (isRagdoll) //auto reset ragdoll after delay
         {
             if (_basicPlayerController.canInput) _basicPlayerController.DisableInput(); //disable input while in ragdoll mode
@@ -125,11 +116,11 @@ public class RagdollOnOff : NetworkBehaviour
             }
         }
 
-        if(Input.GetKeyDown(KeyCode.T))
+        if (Input.GetKeyDown(KeyCode.T))
         {
             PerformRagdoll();
         }
-        if(Input.GetKeyDown(KeyCode.Y))
+        if (Input.GetKeyDown(KeyCode.Y))
         {
             ResetRagdoll();
         }
@@ -398,7 +389,7 @@ public class RagdollOnOff : NetworkBehaviour
         transform.rotation = rotationBeforeSampling;
     }
 
-    
+
     //
     private IEnumerator WaitForAnimationAndExecuteLogic(string animationName)
     {

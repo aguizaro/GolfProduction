@@ -7,6 +7,7 @@ using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using System.Threading.Tasks;
 using NUnit.Framework;
+using System;
 
 public class SwingManager : NetworkBehaviour
 {
@@ -136,7 +137,9 @@ public class SwingManager : NetworkBehaviour
                     playerAnimator.SetTrigger("Swing");
                     playerAnimator.ResetTrigger("Stance");
 
-                    PerformSwingOnPlayer();
+                    Debug.Log("performing swing animation on ragdolled player");
+
+                    //PerformSwingOnPlayer();
                 }
             }
             else if (powerMeterRef.GetShotStatus() == true && waitingForSwing)
@@ -283,13 +286,24 @@ public class SwingManager : NetworkBehaviour
     void PerformSwing()     // Called by the animation event in Swing animation - not called from code
     {
         if (!IsOwner) return;
-        if (ragdolled_player != null)
+
+        Debug.Log($"PerformSwing() called from player: {OwnerClientId}, is ragdolled player null? {ragdolled_player == null}");
+        // if (ragdolled_player != null)
+        // {
+        //     // still need to reset triggers since performSwingonPlayer does not exit swing mode (swing on player is handled in Update())
+        //     ExitSwingMode();
+        //     return;
+        // }
+        if (ragdolled_player == null && thisBall != null)
         {
-            // still need to reset triggers since performSwingonPlayer does not exit swing mode (swing on player is handled in Update())
-            ExitSwingMode();
-            return;
+            Debug.Log("Perform Swing on Ball");
+            PerformSwingOnBall();
         }
-        PerformSwingOnBall();
+        else
+        {
+            Debug.Log("Perform Swing on Player");
+            PerformSwingOnPlayer();
+        }
     }
 
     void PerformSwingOnBall()
@@ -389,6 +403,8 @@ public class SwingManager : NetworkBehaviour
             _currentPlayerData.strokes++;
             _playerNetworkData.StorePlayerState(_currentPlayerData);
         }
+
+        ExitSwingMode();
     }
 
     // Exit swing state without performing swing
