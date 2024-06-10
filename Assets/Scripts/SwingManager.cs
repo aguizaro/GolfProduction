@@ -631,7 +631,7 @@ public class SwingManager : NetworkBehaviour
     #region  For New Input System
     public void HandleSwingStarted(InputAction.CallbackContext ctx)
     {
-        if (!_isActive || !IsOwner || !isActiveAndEnabled)
+        if (!_isActive || !IsOwner || !isActiveAndEnabled || _ragdollOnOff.IsRagdoll())
             return;
         if (inSwingMode)
         {
@@ -658,7 +658,7 @@ public class SwingManager : NetworkBehaviour
     }
     public void HandleSwingCanceled(InputAction.CallbackContext ctx)
     {
-        if (!_isActive || !IsOwner || !isActiveAndEnabled) return;
+        if (!_isActive || !IsOwner || !isActiveAndEnabled || _ragdollOnOff.IsRagdoll()) return;
         if (inSwingMode && powerMeterRef.MouseDown)
         {
             //TODO: do swing logic here
