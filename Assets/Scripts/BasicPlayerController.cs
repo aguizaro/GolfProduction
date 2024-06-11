@@ -20,6 +20,7 @@ public class BasicPlayerController : NetworkBehaviour
     public float _moveSpeed = 2f;
     private float _sprintMultiplier = 2.5f;
     public float _rotationSpeed = 100f;
+    public Quaternion _playerRotation;
     [SerializeField] private bool _isSprinting = false;
 
     // Physics
@@ -50,7 +51,42 @@ public class BasicPlayerController : NetworkBehaviour
     public bool IsActive = false;
 
     [Header("For Input System Only")]
-    public bool canInput = true;
+    [SerializeField] private bool _canInput = true;
+    public bool canInput
+    {
+        get
+        {
+            return _canInput;
+        }
+        set
+        {
+            _canInput = value;
+        }
+    }
+    [SerializeField] private bool _canMove = true;
+    public bool canMove
+    {
+        get
+        {
+            return canInput && _canMove;
+        }
+        set
+        {
+            _canMove = value;
+        }
+    }
+    [SerializeField] private bool _canLook = true;
+    public bool canLook
+    {
+        get
+        {
+            return canInput && _canLook;
+        }
+        set
+        {
+            _canLook = value;
+        }
+    }
     public Vector2 _moveInput;
     public Vector2 _lookInput;
     public const float _inputThreshold = 0.001f;
@@ -104,6 +140,9 @@ public class BasicPlayerController : NetworkBehaviour
         gameplayActionMap["Ball Spawn/Exit Swing"].canceled += HandleBallSpawnExitSwingCanceled;
         gameplayActionMap["ScoreBoard"].started += HandleScoreBoardStarted;
         gameplayActionMap["ScoreBoard"].canceled += HandleScoreBoardCanceled;
+        canInput = true;
+        canMove = true;
+        canLook = true;
         #endregion
 
         GameObject.Find("Main Camera").GetComponent<StudioListener>().SetAttenuationObject(gameObject);
@@ -272,7 +311,7 @@ public class BasicPlayerController : NetworkBehaviour
 
         if (IsOwner)
         {
-            _moveInput = canInput ? gameplayActionMap["Move"].ReadValue<Vector2>().normalized : Vector2.zero;
+            _moveInput = canMove ? gameplayActionMap["Move"].ReadValue<Vector2>().normalized : Vector2.zero;
             _animator.SetFloat("moveX", _moveInput.x);
             _animator.SetFloat("moveY", _moveInput.y);
 
@@ -360,7 +399,7 @@ public class BasicPlayerController : NetworkBehaviour
     #region  Input Actions Functions
     public void InputSystemRotation()
     {
-        _lookInput = canInput ? gameplayActionMap["Look"].ReadValue<Vector2>() : Vector2.zero;
+        _lookInput = canLook ? gameplayActionMap["Look"].ReadValue<Vector2>() : Vector2.zero;
         if (_lookInput.sqrMagnitude > _inputThreshold)
         {
             float deltaTimeMultiplier = 0f;
@@ -434,11 +473,13 @@ public class BasicPlayerController : NetworkBehaviour
 
     public void HandleSprintStarted(InputAction.CallbackContext ctx)
     {
+        if (!canInput || !canMove) return;
         _isSprinting = _moveInput.y > _inputThreshold;
     }
 
     public void HandleSprintCanceled(InputAction.CallbackContext ctx)
     {
+        if (!canInput || !canMove) return;
         _isSprinting = false;
     }
     public void HandleSwingStarted(InputAction.CallbackContext ctx)

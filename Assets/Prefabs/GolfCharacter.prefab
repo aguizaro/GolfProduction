@@ -348,6 +348,7 @@ GameObject:
   - component: {fileID: 3693991727007100362}
   - component: {fileID: -1082205881769161889}
   - component: {fileID: -1415113967393590946}
+  - component: {fileID: 3504892299959207336}
   m_Layer: 7
   m_Name: GolfCharacter
   m_TagString: Player
@@ -375,6 +376,7 @@ Transform:
   - {fileID: 196195685194800327}
   - {fileID: 5697056259534442416}
   - {fileID: 4597625059367106489}
+  - {fileID: 5699961155522844437}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &7225643878605417583
@@ -435,11 +437,14 @@ MonoBehaviour:
   spiderPrefab: {fileID: 179937010355921882, guid: 767a2296540c81e4194906bff1ec91ea, type: 3}
   _moveSpeed: 2
   _rotationSpeed: 100
+  _playerRotation: {x: 0, y: 0, z: 0, w: 0}
   _isSprinting: 0
   _ragdollOnOff: {fileID: 0}
   playerColor: 
   IsActive: 0
-  canInput: 1
+  _canInput: 1
+  _canMove: 1
+  _canLook: 1
   _moveInput: {x: 0, y: 0}
   _lookInput: {x: 0, y: 0}
   _inputActionAsset: {fileID: 0}
@@ -745,6 +750,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1381ff6b8e074063bf31a6993286b8d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &3504892299959207336
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 420073679474077443}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6c0be61502bb534f922ebb746851216, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &799593922335037580
 GameObject:
   m_ObjectHideFlags: 0
@@ -1031,6 +1048,37 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mainPlayerSprite: {fileID: 21300000, guid: 7014e9ed1892c7f4eb20416ae97262b1, type: 3}
   otherPlayerSprite: {fileID: 21300000, guid: 33cd579deb6056d4e9db65c977243617, type: 3}
+--- !u!1 &1405408099573242586
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5699961155522844437}
+  m_Layer: 7
+  m_Name: CameraLookAt
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5699961155522844437
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1405408099573242586}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 7.82, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6247323603675803764}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1745822496000605606
 GameObject:
   m_ObjectHideFlags: 0

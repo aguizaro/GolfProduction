@@ -10,7 +10,7 @@ public class StrikeBehaviour : StateMachineBehaviour
     {
         _playerController = animator.GetComponent<BasicPlayerController>();
         _playerController.isStriking = true;
-        _playerController.canInput = false;
+        _playerController.canMove = false;
     }
 
     // OnStateUpdate is called on each Update frame between OnStateEnter and OnStateExit callbacks
@@ -23,7 +23,7 @@ public class StrikeBehaviour : StateMachineBehaviour
         if (stateInfo.normalizedTime > 0.7f)
         {
             animator.SetBool("isStriking", false);
-            _playerController.canInput = false;
+            _playerController.canMove = false;
         }
     }
 
@@ -32,7 +32,7 @@ public class StrikeBehaviour : StateMachineBehaviour
     {
         animator.SetBool("isStriking", false);
         _playerController.isStriking = false;
-        _playerController.canInput = true;
+        _playerController.canMove = true;
     }
 
     // OnStateMove is called right after Animator.OnAnimatorMove()

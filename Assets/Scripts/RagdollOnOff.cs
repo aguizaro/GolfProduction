@@ -106,7 +106,6 @@ public class RagdollOnOff : NetworkBehaviour
 
         if (isRagdoll) //auto reset ragdoll after delay
         {
-            if (_basicPlayerController.canInput) _basicPlayerController.DisableInput(); //disable input while in ragdoll mode
 
             delay -= Time.deltaTime;
             if (delay <= 0)
@@ -159,8 +158,7 @@ public class RagdollOnOff : NetworkBehaviour
             _swingManager.ExitSwingMode();
         }
         _playerAnimator.enabled = false;
-        //_basicPlayerController.enabled = false;
-        _basicPlayerController.DisableInput(); // it would be nice to disable input but still allow the player to move the camera (only allow input rotation)
+        _basicPlayerController.canMove = false; // it would be nice to disable input but still allow the player to move the camera (only allow input rotation)
 
         foreach (Collider col in ragdollColliders)
         {
@@ -175,7 +173,8 @@ public class RagdollOnOff : NetworkBehaviour
         playerRB.isKinematic = true;
         isRagdoll = true;
 
-        Debug.Log("RagdollModeOn done for owner: " + OwnerClientId + " isOwner: " + IsOwner);
+        // dont send rotation updates while in ragdoll mode
+        GetComponent<CustomClientNetworkTransform>().SyncRotAngleY = false;
 
     }
     // Dev Note: Don't call this function directly. Use the RPCs instead. - this will only exectute locally
@@ -201,6 +200,9 @@ public class RagdollOnOff : NetworkBehaviour
 
         _elapsedResetBonesTime = 0;
         StartCoroutine(ResetBonesCoroutine());
+
+        // restore rotation updates
+        GetComponent<CustomClientNetworkTransform>().SyncRotAngleY = true;
     }
 
     // Collision Detection ------------------------------------------------------------------------------------------------------------
@@ -408,7 +410,7 @@ public class RagdollOnOff : NetworkBehaviour
             animationState = _playerAnimator.GetCurrentAnimatorStateInfo(0);
         }
         // Animation finished, execute further logic
-        _basicPlayerController.EnableInput();
+        _basicPlayerController.canMove = true;
         mainCollider.enabled = true;
         playerRB.isKinematic = false;
         isRagdoll = false;
