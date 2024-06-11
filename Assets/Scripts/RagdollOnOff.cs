@@ -106,7 +106,6 @@ public class RagdollOnOff : NetworkBehaviour
 
         if (isRagdoll) //auto reset ragdoll after delay
         {
-            if (_basicPlayerController.canInput) _basicPlayerController.DisableInput(); //disable input while in ragdoll mode
 
             delay -= Time.deltaTime;
             if (delay <= 0)
@@ -159,8 +158,7 @@ public class RagdollOnOff : NetworkBehaviour
             _swingManager.ExitSwingMode();
         }
         _playerAnimator.enabled = false;
-        //_basicPlayerController.enabled = false;
-        _basicPlayerController.DisableInput(); // it would be nice to disable input but still allow the player to move the camera (only allow input rotation)
+        _basicPlayerController.canMove = false; // it would be nice to disable input but still allow the player to move the camera (only allow input rotation)
 
         foreach (Collider col in ragdollColliders)
         {
@@ -408,7 +406,7 @@ public class RagdollOnOff : NetworkBehaviour
             animationState = _playerAnimator.GetCurrentAnimatorStateInfo(0);
         }
         // Animation finished, execute further logic
-        _basicPlayerController.EnableInput();
+        _basicPlayerController.canMove = true;
         mainCollider.enabled = true;
         playerRB.isKinematic = false;
         isRagdoll = false;

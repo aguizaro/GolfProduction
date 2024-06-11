@@ -120,7 +120,8 @@ public class SwingManager : NetworkBehaviour
         if (inSwingMode)
         {
             //check if input is enabled - input is enabled when player unpauses game - this prevents player from moving while in swing mode
-            if (_playerController.canInput) _playerController.DisableInput();
+            _playerController.canMove = false;
+            _playerController.canLook = false;
 
             // Check if the ragdolled player has gotten up
             if (ragdolled_player != null)
@@ -219,7 +220,8 @@ public class SwingManager : NetworkBehaviour
         inSwingMode = true;
 
         // Lock player controls
-        _playerController.canInput = false;
+        _playerController.canMove = false;
+        _playerController.canLook = false;
 
         // Set camera to swing state
         cameraFollowScript.SetSwingState(true);
@@ -418,6 +420,8 @@ public class SwingManager : NetworkBehaviour
         //enableRotation();
 
         _playerController.canInput = true;
+        _playerController.canMove = true;
+        _playerController.canLook = true;
         cameraFollowScript.SetSwingState(false);
         // Make sure its no longer waiting for swing
         waitingForSwing = false;
@@ -631,7 +635,7 @@ public class SwingManager : NetworkBehaviour
     #region  For New Input System
     public void HandleSwingStarted(InputAction.CallbackContext ctx)
     {
-        if (!_isActive || !IsOwner || !isActiveAndEnabled || _ragdollOnOff.IsRagdoll())
+        if (!_isActive || !IsOwner || !isActiveAndEnabled || _ragdollOnOff.IsRagdoll() || !_playerController.canInput)
             return;
         if (inSwingMode)
         {
@@ -658,7 +662,7 @@ public class SwingManager : NetworkBehaviour
     }
     public void HandleSwingCanceled(InputAction.CallbackContext ctx)
     {
-        if (!_isActive || !IsOwner || !isActiveAndEnabled || _ragdollOnOff.IsRagdoll()) return;
+        if (!_isActive || !IsOwner || !isActiveAndEnabled || _ragdollOnOff.IsRagdoll() || !_playerController.canInput) return;
         if (inSwingMode && powerMeterRef.MouseDown)
         {
             //TODO: do swing logic here
@@ -668,7 +672,7 @@ public class SwingManager : NetworkBehaviour
     }
     public void HandleBallSpawnExitSwingStarted(InputAction.CallbackContext ctx)
     {
-        if (!_isActive || !IsOwner || !isActiveAndEnabled)
+        if (!_isActive || !IsOwner || !isActiveAndEnabled || !_playerController.canInput)
             return;
         if (inSwingMode)
         {
@@ -687,7 +691,7 @@ public class SwingManager : NetworkBehaviour
     }
     public void HandleBallSpawnExitSwingCanceled(InputAction.CallbackContext ctx)
     {
-        if (!_isActive || !IsOwner || !isActiveAndEnabled) return;
+        if (!_isActive || !IsOwner || !isActiveAndEnabled || !_playerController.canInput) return;
     }
     #endregion
 
