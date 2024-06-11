@@ -173,7 +173,8 @@ public class RagdollOnOff : NetworkBehaviour
         playerRB.isKinematic = true;
         isRagdoll = true;
 
-        Debug.Log("RagdollModeOn done for owner: " + OwnerClientId + " isOwner: " + IsOwner);
+        // dont send rotation updates while in ragdoll mode
+        GetComponent<CustomClientNetworkTransform>().SyncRotAngleY = false;
 
     }
     // Dev Note: Don't call this function directly. Use the RPCs instead. - this will only exectute locally
@@ -199,6 +200,9 @@ public class RagdollOnOff : NetworkBehaviour
 
         _elapsedResetBonesTime = 0;
         StartCoroutine(ResetBonesCoroutine());
+
+        // restore rotation updates
+        GetComponent<CustomClientNetworkTransform>().SyncRotAngleY = true;
     }
 
     // Collision Detection ------------------------------------------------------------------------------------------------------------
