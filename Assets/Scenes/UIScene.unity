@@ -234,6 +234,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5af595ec8b368714e99b414fe9183feb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <music>k__BackingField:
+    Guid:
+      Data1: 377852175
+      Data2: 1135826209
+      Data3: 1326543494
+      Data4: -1635309355
+    Path: event:/Music
   <titleScreenAmbience>k__BackingField:
     Guid:
       Data1: 574299986

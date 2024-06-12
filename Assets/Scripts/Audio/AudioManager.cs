@@ -12,6 +12,7 @@ using FMOD.Studio;
 public class AudioManager : NetworkBehaviour
 {
     public static AudioManager instance { get; private set; }
+    private EventInstance BGM;
 
     private void Awake()
     {
@@ -20,6 +21,17 @@ public class AudioManager : NetworkBehaviour
             Debug.LogError("Found more than one Audio Manager in the scene.");
         }
         instance = this;
+
+        // Assign the BGM
+        BGM = RuntimeManager.CreateInstance(FMODEvents.instance.music);
+        BGM.start();
+        BGM.setParameterByNameWithLabel("Music", "Title Screen");
+    }
+
+    // ############## Music Management ################################
+    public void ChangeMusic(string trackName)
+    {
+        Debug.Log("Music Change Status: " + BGM.setParameterByNameWithLabel("Music", trackName));
     }
 
     // ############## Play Oneshot sounds ################################

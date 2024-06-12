@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="AudioFile" id="{a1e00407-9ae2-41fc-ba2b-7f315deee600}">
+		<property name="assetPath">
+			<value>test_lobby_screen.ogg</value>
+		</property>
+		<property name="isStreaming">
+			<value>true</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>44.0999985</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>18.285714285714285</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{9c3b92b7-e52f-4804-9cc3-0c5f3df62a14}</destination>
+		</relationship>
+	</object>
+</objects>
