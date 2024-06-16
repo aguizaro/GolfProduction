@@ -501,12 +501,14 @@ public class BasicPlayerController : NetworkBehaviour
 
     public void HandleScoreBoardStarted(InputAction.CallbackContext ctx)
     {
+        UIManager.instance.scoreboardUI.SetActive(true);
         //TODO: Turn on Score Board Panel 
         Debug.Log("Tab pressed");
     }
     public void HandleScoreBoardCanceled(InputAction.CallbackContext ctx)
     {
         //TODO: Turn off Score Board Panel
+         UIManager.instance.scoreboardUI.SetActive(false);
         Debug.Log("Tab released");
     }
     #endregion

@@ -90,7 +90,7 @@ GameObject:
   - component: {fileID: 2653820143761442765}
   - component: {fileID: 7334630865071468298}
   m_Layer: 5
-  m_Name: SettingsText
+  m_Name: ScoreboardText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -112,7 +112,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 4.7029495, y: 50}
+  m_AnchoredPosition: {x: 0, y: 50}
   m_SizeDelta: {x: 450.42, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2213978607833697446
@@ -299,6 +299,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56750344ae60c0e44aa7bac7269724be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _spaceBetweenEntries: 50
+  _initialX: -50
+  _initialY: -30
 --- !u!1001 &4777925497100654822
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -311,17 +314,9 @@ PrefabInstance:
       propertyPath: m_Name
       value: ScoreboardEntry
       objectReference: {fileID: 0}
-    - target: {fileID: 4354803661763877131, guid: e6b8b8cd3e9eb8f469b1b1583d1e70ec, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.11566547
-      objectReference: {fileID: 0}
-    - target: {fileID: 4354803661763877131, guid: e6b8b8cd3e9eb8f469b1b1583d1e70ec, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.22327796
-      objectReference: {fileID: 0}
-    - target: {fileID: 4354803661763877131, guid: e6b8b8cd3e9eb8f469b1b1583d1e70ec, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 0.08435566
+    - target: {fileID: 2868575354080523497, guid: e6b8b8cd3e9eb8f469b1b1583d1e70ec, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4354803661763877131, guid: e6b8b8cd3e9eb8f469b1b1583d1e70ec, type: 3}
       propertyPath: m_LocalPosition.x
@@ -329,7 +324,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4354803661763877131, guid: e6b8b8cd3e9eb8f469b1b1583d1e70ec, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -30.5
+      value: -243.1
       objectReference: {fileID: 0}
     - target: {fileID: 4354803661763877131, guid: e6b8b8cd3e9eb8f469b1b1583d1e70ec, type: 3}
       propertyPath: m_LocalPosition.z

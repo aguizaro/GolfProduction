@@ -8107,6 +8107,8 @@ MonoBehaviour:
   _settingsLanguageDropdown: {fileID: 3617788962536984438}
   _controlsScreenUI: {fileID: 4116854453598699058}
   _controlsBackButton: {fileID: 8366865535364806195}
+  scoreboardUI: {fileID: 7235397403312309636}
+  scoreboardEntry: {fileID: 8402851342273963469}
   _holeCountText: {fileID: 2256757951396714063}
   _directionsTextP: {fileID: 2470515337587400851}
   _directionsTextL: {fileID: 1928706640271664078}
@@ -19579,6 +19581,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Scoreboard
       objectReference: {fileID: 0}
+    - target: {fileID: 8463394714288000070, guid: a3950d70e93a5f44fa7ccd6ddaa3d0a8, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -19587,6 +19593,16 @@ PrefabInstance:
 --- !u!4 &6162340262992175436 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4942780776107518094, guid: a3950d70e93a5f44fa7ccd6ddaa3d0a8, type: 3}
+  m_PrefabInstance: {fileID: 1233228993465469378}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &7235397403312309636 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8463394714288000070, guid: a3950d70e93a5f44fa7ccd6ddaa3d0a8, type: 3}
+  m_PrefabInstance: {fileID: 1233228993465469378}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &8402851342273963469 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7314307567698553871, guid: a3950d70e93a5f44fa7ccd6ddaa3d0a8, type: 3}
   m_PrefabInstance: {fileID: 1233228993465469378}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &2546599715483483557
