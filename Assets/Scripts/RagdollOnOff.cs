@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
+using System;
 
 public class RagdollOnOff : NetworkBehaviour
 {
@@ -321,7 +322,13 @@ public class RagdollOnOff : NetworkBehaviour
     private void AlignMainColliderToHips()
     {
         Vector3 originalHipsPosition = _hipsBone.position;
-        transform.position = _hipsBone.position;
+        //find dist between hips and pos
+        float dist = Vector3.Distance(transform.position, _hipsBone.position);
+        Debug.Log($"Distance between hips and pos: {dist}");
+        if (dist < 100)
+        {
+            transform.position = _hipsBone.position;
+        }
 
         /*
         // This section is meant to put the hips in the right spot to prevent the little amount of sliding that happens \

@@ -101,7 +101,7 @@ public class LobbyManager : MonoBehaviour
         UIManager.instance.DisplaySignedIn();
         Debug.Log("Signed in as: " + _playerName);
 
-        //ConnectionNotificationManager.Singleton.OnClientConnectionNotification += HandleClientConnectionNotification;
+        ConnectionNotificationManager.Singleton.OnClientConnectionNotification += HandleClientConnectionNotification;
 
     }
     // Player Operations --------------------------------------------------------------------------------------------------------------
@@ -681,7 +681,7 @@ public class LobbyManager : MonoBehaviour
         Cursor.visible = true;
 
         gameIsActive = false;
-        //ConnectionNotificationManager.Singleton.OnClientConnectionNotification -= HandleClientConnectionNotification;
+        ConnectionNotificationManager.Singleton.OnClientConnectionNotification -= HandleClientConnectionNotification;
 
         UIManager.instance.DisableUIText();
         UIManager.instance.DeactivateHUD();
@@ -893,11 +893,13 @@ public class LobbyManager : MonoBehaviour
         if (status == ConnectionNotificationManager.ConnectionStatus.Connected)
         {
             Debug.Log($"Client {clientId} connected!");
+            Debug.Log($"local client: {NetworkManager.Singleton.LocalClientId} Calling update player hat config");
+            NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerHatController>().UpdateHatConfig();
             // Perform actions when a client connects, e.g., update UI, spawn player, etc.
         }
         else if (status == ConnectionNotificationManager.ConnectionStatus.Disconnected)
         {
-            Debug.Log($"Client {clientId} disconnected!");
+            //Debug.Log($"Client {clientId} disconnected!");
             // Perform actions when a client disconnects, e.g., remove player, update UI, etc.
         }
     }

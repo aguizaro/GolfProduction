@@ -205,7 +205,8 @@ public class BasicPlayerController : NetworkBehaviour
             // Randomize player's hat config
             if (IsOwner && Input.GetKeyDown(KeyCode.L))
             {
-                _playerHat.RandomizeHatConfig();
+                _playerHat.CycleHatConfig();
+                Debug.Log($"new hat config: Mesh: {_playerHat.GetCurrentMeshId()} Texture: {_playerHat.GetCurrentTextureId()}");
             }
         }
 

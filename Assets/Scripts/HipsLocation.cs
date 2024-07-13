@@ -7,17 +7,11 @@ public class HipsLocation : MonoBehaviour
 
     void OnCollisionStay(Collision collision)
     {
-        //make sure we are checkign if collision with floor (tagged "Ground" - not yet implemented)
-
-        if (/*collision.gameObject.CompareTag("Ground") &&*/ true)
+        if (collision.gameObject.name == "WaitingRoom" || collision.gameObject.name == "Terrain")
         {
             float diffMagnitude = (endPosition - transform.position).magnitude;
             //Debug.Log("HipsLocation: Updated end position: " + transform.position + "\n diffMagnitude: " + diffMagnitude);
             endPosition = transform.position;
-            if (diffMagnitude > 0.1f)
-            {
-                //Debug.Log("HipsLocation: Player is moving");
-            }
         }
     }
 }
