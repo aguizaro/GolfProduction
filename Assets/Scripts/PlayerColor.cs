@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -29,7 +30,6 @@ public class PlayerColor : NetworkBehaviour
 
     public readonly NetworkVariable<Color> _netColor = new(readPerm: NetworkVariableReadPermission.Everyone);
     private readonly Color[] _colors = { Color.red, Color.blue, Color.green, Color.yellow, Color.cyan, Color.magenta, Color.gray };
-    private int _index;
     public MeshRenderer _renderer;
     public Color CurrentColor;
 
@@ -55,6 +55,7 @@ public class PlayerColor : NetworkBehaviour
             PlayerData preLobbyState = new PlayerData
             {
                 playerID = OwnerClientId,
+                playerNum = (ulong) Array.IndexOf(_colors, next),
                 playerColor = colorNames[next],
                 currentHole = 0,
                 strokes = 0,
@@ -76,29 +77,15 @@ public class PlayerColor : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        // Take note, RPCs are queued up to run.
-        // If we tried to immediately set our color locally after calling this RPC it wouldn't have propagated
-        if (IsOwner)
-        {
-            _index = (int)OwnerClientId;
-            Color nextColor = GetNextColor();
-            CommitNetworkColorServerRpc(nextColor);
-        }
-        else
-        {
-            _renderer.material.color = _netColor.Value;
-        }
+        if (IsOwner) CommitNetworkColorServerRpc();
+        else _renderer.material.color = _netColor.Value;
     }
 
     [ServerRpc]
-    private void CommitNetworkColorServerRpc(Color color)
-    {
-        _netColor.Value = color;
-    }
-
-    private Color GetNextColor()
-    {
-        return _colors[_index++ % _colors.Length];
+    private void CommitNetworkColorServerRpc(){
+        int playerNum = GameManager.instance.GetNumberOfPlayers(); //1st player = 0, 2nd player = 1, etc.
+        _netColor.Value = _colors[playerNum];
+        Debug.Log("player num: " + playerNum + " - color: " + colorNames[_colors[playerNum]]);
     }
 
 }

@@ -206,7 +206,6 @@ public class BasicPlayerController : NetworkBehaviour
             if (IsOwner && Input.GetKeyDown(KeyCode.L))
             {
                 _playerHat.CycleHatConfig();
-                Debug.Log($"Playercontroller: cycle hat config: Mesh: {_playerHat.GetCurrentMeshId()} Texture: {_playerHat.GetCurrentTextureId()}");
             }
         }
 
@@ -241,8 +240,6 @@ public class BasicPlayerController : NetworkBehaviour
 
         // set initial player state when game starts (after pre-lobby)
         _currentPlayerState.currentHole = 1;
-        _currentPlayerState.playerColor = playerColor;
-        _currentPlayerState.playerID = OwnerClientId;
         UpdatePlayerState(_currentPlayerState);
     }
 

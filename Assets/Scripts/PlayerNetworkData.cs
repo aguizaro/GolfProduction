@@ -10,7 +10,8 @@ using Unity.VisualScripting;
 // Storing player data over the network ------------------------------------------------------------------------------------------------------------
 public struct PlayerData : INetworkSerializable
 {
-    public ulong playerID;
+    public ulong playerID; // used for network (OwnerClientID)
+    public ulong playerNum; // used for gameplay (player 0, player 1, player 2)
     public string playerColor;
     public int currentHole;
     public int strokes;
@@ -20,6 +21,7 @@ public struct PlayerData : INetworkSerializable
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
         serializer.SerializeValue(ref playerID);
+        serializer.SerializeValue(ref playerNum);
         // Handle null string for playerColor
         if (serializer.IsWriter)
         {
@@ -70,12 +72,13 @@ public class PlayerNetworkData : NetworkBehaviour
     public override void OnDestroy()
     {
         _networkPlayerData.OnValueChanged -= OnPlayerDataChanged;
+        RemoveClientDataFromGameManager(OwnerClientId);
         base.OnDestroy();
     }
 
     private void OnPlayerDataChanged(PlayerData prevData, PlayerData newData)
     {
-        //Debug.Log("Player data changed - isOwner:  " + IsOwner + " - playerColor: " + newData.playerColor + " - playerID: " + newData.playerID + " - currentHole: " + newData.currentHole + " - strokes: " + newData.strokes + " - enemiesDefeated: " + newData.enemiesDefeated + " - score: " + newData.score);
+        Debug.Log("Player data changed - isOwner:  " + IsOwner + " - playerColor: " + newData.playerColor + " - playerNum: " + newData.playerNum  + " - playerID: " + newData.playerID + " - currentHole: " + newData.currentHole + " - strokes: " + newData.strokes + " - enemiesDefeated: " + newData.enemiesDefeated + " - score: " + newData.score);
         _currentPlayerData = newData;
 
         if (IsOwner)
@@ -115,16 +118,18 @@ public class PlayerNetworkData : NetworkBehaviour
         return _currentPlayerData;
     }
 
-    public void RemovePlayerDataFromGameManager()
+    public void RemoveClientDataFromGameManager(ulong clientID)
     {
         if (!IsOwner) return;
-        RemovePlayerDataFromGameManagerServerRpc(OwnerClientId);
+        RemovePlayerDataFromGameManagerServerRpc(clientID);
     }
 
+
     [ServerRpc]
-    private void RemovePlayerDataFromGameManagerServerRpc(ulong playerID)
+    private void RemovePlayerDataFromGameManagerServerRpc(ulong clientID)
     {
-        GameManager.instance.RemovePlayerData(playerID);
+        Debug.Log("inside serverrpc removing player data");
+        GameManager.instance.RemovePlayerData(clientID);
     }
 
 

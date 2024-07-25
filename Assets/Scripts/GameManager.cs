@@ -141,5 +141,8 @@ public class GameManager : NetworkBehaviour
         RemoveData(playerID);
     }
 
+    public int GetNumberOfPlayers(){
+        return playersData.Count;
+    }
 
 }

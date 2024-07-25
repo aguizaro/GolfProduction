@@ -53,7 +53,7 @@ public class LobbyManager : MonoBehaviour
     private const string LobbyTypeKey = "LobbyType";
 
     private string _playerName;
-    private string _playerId;
+    public string _playerId;
     private ulong _localClientId;
 
     private const string playerNameKey = "PlayerName";
@@ -357,7 +357,7 @@ public class LobbyManager : MonoBehaviour
         }
         catch (LobbyServiceException e)
         {
-            Debug.LogWarning($"Failed to quick join lobby: {e.Message}");
+            Debug.Log($"Failed to quick join lobby: {e.Message}");
         }
     }
 
@@ -526,17 +526,17 @@ public class LobbyManager : MonoBehaviour
     {
         foreach (var playerEntry in players)
         {
-            Debug.LogWarning($"player: {playerEntry.Player.Data[playerNameKey].Value} joined lobby");
+            Debug.Log($"player: {playerEntry.Player.Data[playerNameKey].Value} joined lobby {ConnectedLobby.Name} with join code {ConnectedLobby.Data[RelayJoinCodeKey]}");
         }
         // Refresh the UI in some way
     }
 
     private void OnPlayerLeft(List<int> playerNumbers)
     {
-        foreach (var playerNumber in playerNumbers)
-        {
-            Debug.LogWarning($"player: {playerNumber} left lobby");
-        }
+        // foreach (var playerNumber in playerNumbers)
+        // {
+        //     //Debug.Log($"player: {playerNumber} left lobby");
+        // }
         // Refresh the UI in some way
     }
 
@@ -738,18 +738,6 @@ public class LobbyManager : MonoBehaviour
 
     // Application Quit --------------------------------------------------------------------------------------------------------------
 
-    private async void OnApplicationQuit()
-    {
-        // failsafe if application quits before PlayerExit() can finish
-        // dont need to bother to quit gracefully if the applicaiton is shutting down, 
-        // just make sure to delete lobby for host and leave lobby for non-hosts
-        if (ConnectedLobby != null)
-        {
-            if (ConnectedLobby.HostId == _playerId) await LobbyService.Instance.DeleteLobbyAsync(ConnectedLobby.Id);
-            else await Lobbies.Instance.RemovePlayerAsync(ConnectedLobby.Id, _playerId);
-        }
-    }
-
     public async Task PlayerExit()
     {
         try
@@ -778,30 +766,16 @@ public class LobbyManager : MonoBehaviour
 
         isQuitting = true;
 
-        //Remove player data from GameManager
-        GameObject[] playersfound = GameObject.FindGameObjectsWithTag("Player");
-        foreach (GameObject player in playersfound)
-        {
-            if (player.GetComponent<NetworkObject>().OwnerClientId == NetworkManager.Singleton.LocalClientId)
-            {
-                player.GetComponent<PlayerNetworkData>().RemovePlayerDataFromGameManager();
-                break;
-            }
-        }
-
         if (ConnectedLobbyyEvents != null) await UnsubscribeFromLobbyEvents();
         if (subscribedToNetworkManagerEvents) UnsubscribeFromNetworkManagerEvents();
 
         if (ConnectedLobby != null)
         {
-
             if (ConnectedLobby.HostId == _playerId) await DeleteLobby();
             else await LeaveLobby();
         }
-        if (NetworkManager.Singleton.IsClient)
-        {
-            NetworkManager.Singleton.Shutdown();
-        }
+        
+        if (NetworkManager.Singleton.IsClient) NetworkManager.Singleton.Shutdown();
         quitDone = true;
     }
 
@@ -887,12 +861,12 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    // Connection Notifications - not used --------------------------------------------------------------------------------------------------------------
+    // Connection Notifications --------------------------------------------------------------------------------------------------------------
     private void HandleClientConnectionNotification(ulong clientId, ConnectionNotificationManager.ConnectionStatus status)
     {
         if (status == ConnectionNotificationManager.ConnectionStatus.Connected)
         {
-            Debug.Log($"Client {clientId} connected!");
+            Debug.Log($"NOTIF: Client {clientId} connected!");
 
             if(clientId == NetworkManager.Singleton.LocalClientId) return; // exit if we are the new connected client
 
@@ -901,8 +875,12 @@ public class LobbyManager : MonoBehaviour
         }
         else if (status == ConnectionNotificationManager.ConnectionStatus.Disconnected)
         {
-            //Debug.Log($"Client {clientId} disconnected!");
+            Debug.Log($"NOTIF: Client {clientId} disconnected!");
             // Perform actions when a client disconnects, e.g., remove player, update UI, etc.
+            if (NetworkManager.Singleton.IsServer){
+                Debug.Log("Server removing player data for client: " + clientId);
+                GameManager.instance.RemovePlayerData(clientId);
+            }
         }
     }
 
@@ -911,12 +889,12 @@ public class LobbyManager : MonoBehaviour
     private void SubscribeToNetworkManagerEvents()
     {
         NetworkManager.Singleton.OnTransportFailure += OnTransportFailure;
-        //NetworkManager.Singleton.OnServerStarted += OnServerStarted;
-        NetworkManager.Singleton.OnClientStarted += OnClientStarted;
-        //NetworkManager.Singleton.OnServerStopped += OnServerStopped;
         NetworkManager.Singleton.OnClientStopped += OnClientStopped;
-        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
         NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnect;
+        //NetworkManager.Singleton.OnServerStarted += OnServerStarted;
+        //NetworkManager.Singleton.OnClientStarted += OnClientStarted;
+        //NetworkManager.Singleton.OnServerStopped += OnServerStopped;
+        //NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
 
         subscribedToNetworkManagerEvents = true;
     }
@@ -924,16 +902,47 @@ public class LobbyManager : MonoBehaviour
     private void UnsubscribeFromNetworkManagerEvents()
     {
         NetworkManager.Singleton.OnTransportFailure -= OnTransportFailure;
-        //NetworkManager.Singleton.OnServerStarted -= OnServerStarted;
-        NetworkManager.Singleton.OnClientStarted -= OnClientStarted;
-        //NetworkManager.Singleton.OnServerStopped -= OnServerStopped;
         NetworkManager.Singleton.OnClientStopped -= OnClientStopped;
-        NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
         NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnect;
+        //NetworkManager.Singleton.OnServerStarted -= OnServerStarted;
+        //NetworkManager.Singleton.OnClientStarted -= OnClientStarted;
+        //NetworkManager.Singleton.OnServerStopped -= OnServerStopped;
+        //NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
 
         subscribedToNetworkManagerEvents = false;
 
     }
+
+/*
+    private void OnServerStarted()
+    {
+        Debug.Log("NetManagerEvent: Server Started");
+    }
+
+    private void OnClientStarted()
+    {
+        //Debug.Log("NetManagerEvent: Client Started: " + NetworkManager.Singleton.LocalClientId);
+    }
+
+    private async void OnServerStopped(bool wasHost)
+    {
+        Debug.LogWarning("NetManagerEvent: Server Stopped - wasHost: " + wasHost);
+        await PlayerExit();
+    }
+
+    this callback is only ran on the server and on the local client that disconnects.
+    private void OnClientConnected(ulong clientId)
+    {
+        // if (clientId == NetworkManager.Singleton.LocalClientId) Debug.Log("NetManagerEvent: Local Client Connected");
+        // else Debug.Log("NetManagerEvent: Remote Client Connected: " + clientId);
+    }
+*/
+
+    // THESE 3 EVENT HANDLERS ARE CALLED LAST (AFTER HandleClientConnectionNotification) AND SERVE 
+    // AS A FAILSAFE (QUIT GRACEFULLY) IN CASE A CLIENT FAILS AND ^ HANDLER MISSES IT.
+    
+    // MOST LIKELY - PLAYEREXIT() HAS ALREADY BEEN CALLED BY THE TIME THESE FUNCTIONS RUN, SO
+    // PLAYEREXIT() WILL RETURN EARLY IN THAT CASE
 
     private async void OnTransportFailure()
     {
@@ -941,39 +950,16 @@ public class LobbyManager : MonoBehaviour
         await PlayerExit();
     }
 
-    // private void OnServerStarted()
-    // {
-    //     Debug.Log("NetManagerEvent: Server Started");
-    // }
-
-    private void OnClientStarted()
-    {
-        //Debug.Log("NetManagerEvent: Client Started: " + NetworkManager.Singleton.LocalClientId);
-    }
-
-    // private async void OnServerStopped(bool wasHost)
-    // {
-    //     Debug.LogWarning("NetManagerEvent: Server Stopped - wasHost: " + wasHost);
-    //     await PlayerExit();
-    // }
-
     private async void OnClientStopped(bool wasHost)
     {
-        Debug.LogWarning("NetManagerEvent: Client Stopped - wasHost: " + wasHost);
+        //Debug.LogWarning("NetManagerEvent: Client Stopped - wasHost: " + wasHost);
         await PlayerExit();
-    }
-
-    // this callback is only ran on the server and on the local client that disconnects.
-    private void OnClientConnected(ulong clientId)
-    {
-        // if (clientId == NetworkManager.Singleton.LocalClientId) Debug.Log("NetManagerEvent: Local Client Connected");
-        // else Debug.Log("NetManagerEvent: Remote Client Connected: " + clientId);
     }
 
     // this callback is only ran on the server and on the local client that disconnects.
     private async void OnClientDisconnect(ulong clientId)
     {
-        Debug.LogWarning("NetManagerEvent: Client Disconnected: " + clientId);
+        //Debug.LogWarning("NetManagerEvent: Client Disconnected: " + clientId);
         // only disconnect if the client is the local client (since this function runs simultaneously on all clients)
         if (clientId == NetworkManager.Singleton.LocalClientId) await PlayerExit();
     }
