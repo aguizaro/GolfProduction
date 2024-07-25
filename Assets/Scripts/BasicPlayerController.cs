@@ -542,6 +542,5 @@ public class BasicPlayerController : NetworkBehaviour
         if (!IsOwner) return;
 
         _rb.MovePosition(new Vector3(-80f + OwnerClientId * 2, 10f, 64.25f)); //space players out by 2 units each
-        Debug.Log("Hellooo");
     }
 }
