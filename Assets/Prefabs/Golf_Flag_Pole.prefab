@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 3436934623838969297}
   - component: {fileID: 453317908816728015}
   - component: {fileID: 4744803208973068190}
-  - component: {fileID: 8498321358095861049}
   m_Layer: 0
   m_Name: hole
   m_TagString: Untagged
@@ -29,7 +28,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
   m_LocalPosition: {x: -0, y: -0.49, z: 0}
-  m_LocalScale: {x: 111.5133, y: 111.5133, z: 57.402843}
+  m_LocalScale: {x: 117.4235, y: 117.4235, z: 60.445194}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6684136195925516328}
@@ -64,7 +63,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: ea59a01eebe219f4fae094d87e499b88, type: 2}
+  - {fileID: -3033667219593020291, guid: 68b036ed0c773c64883cfd2d6135a9db, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -86,27 +85,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &8498321358095861049
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 694870926248842462}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.019999998, y: 0.019999996, z: 0.019999996}
-  m_Center: {x: 0, y: -0.0000076293945, z: 0}
 --- !u!1 &4781439950184969689
 GameObject:
   m_ObjectHideFlags: 0
@@ -280,10 +258,10 @@ PrefabInstance:
       addedObject: {fileID: 8958540579648821722}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: cce459c69c55eda43939406eedd2a5b2, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1218529006669713987}
+      addedObject: {fileID: 731007907471157982}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: cce459c69c55eda43939406eedd2a5b2, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 676549419622347072}
+      addedObject: {fileID: 6580914137419147282}
     - targetCorrespondingSourceObject: {fileID: 8951236648222592777, guid: cce459c69c55eda43939406eedd2a5b2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3506872865089650784}
@@ -339,7 +317,7 @@ MonoBehaviour:
   SpawnWithObservers: 1
   DontDestroyWithOwner: 1
   AutoObjectParentSync: 1
---- !u!114 &1218529006669713987
+--- !u!114 &731007907471157982
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -353,8 +331,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerNetworkData: {fileID: 0}
   uiManager: {fileID: 0}
---- !u!136 &676549419622347072
-CapsuleCollider:
+--- !u!65 &6580914137419147282
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -368,14 +346,12 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 11.030263
-  m_Height: 34.59571
-  m_Direction: 1
-  m_Center: {x: 0, y: 16.989101, z: 0}
+  serializedVersion: 3
+  m_Size: {x: 2.8220215, y: 5.244629, z: 2.7609863}
+  m_Center: {x: -0.032592773, y: 1.3551636, z: -0.04284668}
 --- !u!4 &6684136195925516328 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: cce459c69c55eda43939406eedd2a5b2, type: 3}

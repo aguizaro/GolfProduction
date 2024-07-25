@@ -174,7 +174,7 @@ public class BasicPlayerController : NetworkBehaviour
         if (!IsOwner) return;
 
         //handle player falling through the map
-        if (transform.position.y < 40)
+        if (transform.position.y < 0)
         {
             _rb.useGravity = false;
             _rb.velocity = Vector3.zero;
@@ -217,9 +217,9 @@ public class BasicPlayerController : NetworkBehaviour
 
     public void Activate()
     {
-        // spawn players at firt hole
-        _rb.MovePosition(new Vector3(390 + OwnerClientId * 2, 69.5f, 321)); //space players out by 2 units each
-        _rb.MoveRotation(Quaternion.Euler(0, -179f, 0)); //face flag pole
+        // spawn players at first hole ------ remove on new map
+        //_rb.MovePosition(new Vector3(390 + OwnerClientId * 2, 69.5f, 321)); //space players out by 2 units each
+        //_rb.MoveRotation(Quaternion.Euler(0, -179f, 0)); //face flag pole
 
         IsActive = true;
 
@@ -539,6 +539,7 @@ public class BasicPlayerController : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        _rb.MovePosition(new Vector3(94.2f + OwnerClientId * 2, 100.5f, -136.3f));//space players out by 2 units each
+        _rb.MovePosition(new Vector3(-80f + OwnerClientId * 2, 10f, 64.25f)); //space players out by 2 units each
+        Debug.Log("Hellooo");
     }
 }
