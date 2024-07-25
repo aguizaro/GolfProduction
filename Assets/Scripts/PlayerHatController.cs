@@ -56,20 +56,20 @@ public class PlayerHatController : NetworkBehaviour
     }
     private void OnHatConfigChanged(PlayerHatConfig prevData, PlayerHatConfig newData)
     {
-        Debug.Log($"Owner: {OwnerClientId} hat config changed: {prevData.meshID}, {prevData.textureID} -> {newData.meshID}, {newData.textureID}");
+        //Debug.Log($"Owner: {OwnerClientId} hat config changed: {prevData.meshID}, {prevData.textureID} -> {newData.meshID}, {newData.textureID}");
         _currentHatConfig = newData;
-        ApplyCurrentHatConfig();
+        ApplyCurrentHatConfig(_currentHatConfig);
     }
 
-    public void ApplyCurrentHatConfig()
+    public void ApplyCurrentHatConfig(PlayerHatConfig hatconfig)
     {
         // TODO: Update player mesh
-        hatMesh.mesh = meshes[_currentHatConfig.meshID];
+        hatMesh.mesh = meshes[hatconfig.meshID];
 
         // Update player texture
-        hatMaterial.mainTexture = textures[_currentHatConfig.textureID];
+        hatMaterial.mainTexture = textures[hatconfig.textureID];
 
-        Debug.Log($"Owner: {OwnerClientId} applied hat config: {_currentHatConfig.meshID}, {_currentHatConfig.textureID}");
+        //Debug.Log($"Owner: {OwnerClientId} applied hat config: {hatconfig.meshID}, {_currentHatConfig.textureID}");
     }
 
     // Takes ulong arg which represents the texture ID
@@ -100,15 +100,15 @@ public class PlayerHatController : NetworkBehaviour
                 textureID = textureID
             };
             _currentHatConfig = newPlayerConfig;
-            Debug.Log($"Owner: {OwnerClientId} setting hat config: {meshID}, {textureID}");
+            //Debug.Log($"Owner: {OwnerClientId} setting hat config: {meshID}, {textureID}");
             CommitNetworkHatConfigServerRpc(_currentHatConfig);
         }
         else
         {
             // Apply config from network variable
             _currentHatConfig = _networkPlayerHatConfig.Value;
-            Debug.Log($"non-owner: {OwnerClientId} reading hat config: {meshID}, {textureID}");
-            ApplyCurrentHatConfig();
+            //Debug.Log($"non-owner: {OwnerClientId} reading hat config: {meshID}, {textureID}");
+            ApplyCurrentHatConfig(_currentHatConfig);
         }
     }
 
@@ -120,7 +120,7 @@ public class PlayerHatController : NetworkBehaviour
             meshID = config.meshID,
             textureID = config.textureID
         };
-        Debug.Log("server set hat config: " + config.meshID + ", " + config.textureID + "for OwnerClientId " + OwnerClientId);
+        //Debug.Log("server set hat config: " + config.meshID + ", " + config.textureID + "for OwnerClientId " + OwnerClientId);
     }
 
     public void CycleHatConfig()
@@ -153,15 +153,19 @@ public class PlayerHatController : NetworkBehaviour
     // }
 
     // re-sends current hat config over network
-    public void UpdateHatConfig()
+    public void RefreshHatConfig()
     {
-        StartCoroutine(DelayedHatUpdate());
+        if (IsOwner) ApplyCurrentHatConfigServerRpc(_currentHatConfig);
     }
 
-    IEnumerator DelayedHatUpdate()
-    {
-        yield return new WaitForSecondsRealtime(5f);
-        SetHatConfig(_currentHatConfig.meshID, _currentHatConfig.textureID);
+    [ServerRpc]
+    private void ApplyCurrentHatConfigServerRpc(PlayerHatConfig hatconfig){
+        ApplyCurrentHatConfigClientRpc(hatconfig);
+    }
+
+    [ClientRpc]
+    private void ApplyCurrentHatConfigClientRpc(PlayerHatConfig hatconfig){
+        ApplyCurrentHatConfig(hatconfig);
     }
 
 

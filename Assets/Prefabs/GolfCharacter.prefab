@@ -342,7 +342,6 @@ GameObject:
   - component: {fileID: 8306750990183899985}
   - component: {fileID: -7954830342355126766}
   - component: {fileID: 3868171582620149218}
-  - component: {fileID: -3407844358631336923}
   - component: {fileID: 7363029190862775147}
   - component: {fileID: 1651457965969626016}
   - component: {fileID: 3693991727007100362}
@@ -607,35 +606,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   TransitionStateInfoList: []
   m_Animator: {fileID: 7225643878605417583}
---- !u!114 &-3407844358631336923
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 420073679474077443}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 19f6cdbc0b67342dfae0708718e3fe2c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _uiManager: {fileID: 0}
-  _projectilePrefab: {fileID: 3665726570761771704, guid: 3d0ef90e59c624be5bf18a934047635a, type: 3}
-  _projectileForce: 20
-  _cooldown: 0.5
-  _spawnDist: 1
-  playerClubRange: 4
-  verticalAngle: 0.5
-  holeStartPositions:
-  - {x: 395.84076, y: 71, z: 321.73}
-  - {x: 417.69016, y: 79, z: 234.9218}
-  - {x: 451.41544, y: 80, z: 172.0176}
-  - {x: 374.98602, y: 93.3, z: 99.01516}
-  - {x: 306.8986, y: 103.3, z: 89.000725}
-  - {x: 235.68904, y: 97.2, z: 114.393}
-  - {x: 217.79292, y: 86.5, z: 163.65755}
-  - {x: 150.85167, y: 90, z: 163.36249}
-  - {x: 76.411804, y: 93.15, z: 169.82652}
 --- !u!114 &7363029190862775147
 MonoBehaviour:
   m_ObjectHideFlags: 0

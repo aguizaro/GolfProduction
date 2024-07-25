@@ -893,8 +893,10 @@ public class LobbyManager : MonoBehaviour
         if (status == ConnectionNotificationManager.ConnectionStatus.Connected)
         {
             Debug.Log($"Client {clientId} connected!");
-            Debug.Log($"local client: {NetworkManager.Singleton.LocalClientId} Calling update player hat config");
-            NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerHatController>().UpdateHatConfig();
+
+            if(clientId == NetworkManager.Singleton.LocalClientId) return; // exit if we are the new connected client
+
+            NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerHatController>().RefreshHatConfig();
             // Perform actions when a client connects, e.g., update UI, spawn player, etc.
         }
         else if (status == ConnectionNotificationManager.ConnectionStatus.Disconnected)

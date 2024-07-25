@@ -370,7 +370,7 @@ public class RagdollOnOff : NetworkBehaviour
 
     private void PopulateBoneTransforms(BoneTransform[] boneTransforms)
     {
-        Debug.Log("PopulateBoneTransforms() Called");
+        //Debug.Log("PopulateBoneTransforms() Called");
         for (int boneIndex = 0; boneIndex < _bones.Length; boneIndex++)
         {
             boneTransforms[boneIndex].Position = _bones[boneIndex].localPosition;
@@ -380,7 +380,7 @@ public class RagdollOnOff : NetworkBehaviour
 
     private void PopulateAnimationStartBoneTransforms(string clipName, BoneTransform[] boneTransforms)
     {
-        Debug.Log("PopulateAnimationStartBoneTransforms() Called");
+        //Debug.Log("PopulateAnimationStartBoneTransforms() Called");
         Vector3 positionBeforeSampling = transform.position;
         Quaternion rotationBeforeSampling = transform.rotation;
 

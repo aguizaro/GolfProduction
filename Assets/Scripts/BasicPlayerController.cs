@@ -206,7 +206,7 @@ public class BasicPlayerController : NetworkBehaviour
             if (IsOwner && Input.GetKeyDown(KeyCode.L))
             {
                 _playerHat.CycleHatConfig();
-                Debug.Log($"new hat config: Mesh: {_playerHat.GetCurrentMeshId()} Texture: {_playerHat.GetCurrentTextureId()}");
+                Debug.Log($"Playercontroller: cycle hat config: Mesh: {_playerHat.GetCurrentMeshId()} Texture: {_playerHat.GetCurrentTextureId()}");
             }
         }
 

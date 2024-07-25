@@ -289,7 +289,7 @@ public class SwingManager : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        Debug.Log($"PerformSwing() called from player: {OwnerClientId}, is ragdolled player null? {ragdolled_player == null}");
+        //Debug.Log($"PerformSwing() called from player: {OwnerClientId}, is ragdolled player null? {ragdolled_player == null}");
         // if (ragdolled_player != null)
         // {
         //     // still need to reset triggers since performSwingonPlayer does not exit swing mode (swing on player is handled in Update())
@@ -678,7 +678,7 @@ public class SwingManager : NetworkBehaviour
         {
             ExitSwingMode();
         }
-        else if (thisBall != null)
+        else if (thisBall != null && !_ragdollOnOff.IsRagdoll())
         {
             ReturnBallToPlayer();
 
