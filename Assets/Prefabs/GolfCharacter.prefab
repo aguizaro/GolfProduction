@@ -413,7 +413,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3746147730
+  GlobalObjectIdHash: 171685441
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 1
@@ -441,6 +441,7 @@ MonoBehaviour:
   _isSprinting: 0
   _ragdollOnOff: {fileID: 0}
   playerColor: 
+  _gateAnimator: {fileID: 6890737507849851154, guid: 27243fe933b7a4848853268b2c17e5f7, type: 3}
   IsActive: 0
   _canInput: 1
   _canMove: 1

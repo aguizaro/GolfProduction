@@ -43,6 +43,6 @@ Material:
     - _Wind_Strength: 0.4
     m_Colors:
     - _BotGrass: {r: 0.18431373, g: 0.35686275, b: 0.14509805, a: 1}
-    - _TopGrass: {r: 0.5254902, g: 0.627451, b: 0.21960786, a: 1}
+    - _TopGrass: {r: 0.43921572, g: 0.5176471, b: 0.1764706, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
