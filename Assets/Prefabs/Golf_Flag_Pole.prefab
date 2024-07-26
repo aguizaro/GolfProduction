@@ -28,7 +28,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
   m_LocalPosition: {x: -0, y: -0.49, z: 0}
-  m_LocalScale: {x: 117.4235, y: 117.4235, z: 60.445194}
+  m_LocalScale: {x: 215.9252, y: 215.9252, z: 75.98215}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6684136195925516328}
@@ -346,12 +346,12 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2.8220215, y: 5.244629, z: 2.7609863}
-  m_Center: {x: -0.032592773, y: 1.3551636, z: -0.04284668}
+  m_Size: {x: 5.2180176, y: 5.244629, z: 5.1501465}
+  m_Center: {x: -0.068725586, y: 1.3551636, z: 0.03137207}
 --- !u!4 &6684136195925516328 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: cce459c69c55eda43939406eedd2a5b2, type: 3}

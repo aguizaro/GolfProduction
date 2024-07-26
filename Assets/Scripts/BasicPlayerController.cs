@@ -37,7 +37,7 @@ public class BasicPlayerController : NetworkBehaviour
     // Animation
     private Animator _animator;
     private GameObject[] _flagPoles;
-    [SerializeField] private Animator _gateAnimator;
+    private Animator _gateAnimator;
 
     // Spawning
     private bool _isSpawnedAtPos = false; // used to check if player has been spawned in correct position
@@ -227,7 +227,8 @@ public class BasicPlayerController : NetworkBehaviour
             spider.GetComponent<NetworkObject>().Spawn();
 
             // swing open lobby gates
-            _gateAnimator.Play("OpenGates");
+            _gateAnimator = GameObject.FindWithTag("Gates").GetComponent<Animator>();
+            _gateAnimator.SetTrigger("OpenGate");
             Debug.Log("Open gates");
         }
 
