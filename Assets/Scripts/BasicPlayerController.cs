@@ -202,10 +202,16 @@ public class BasicPlayerController : NetworkBehaviour
 
             }
 
-            // Randomize player's hat config
+            // Cycle player's hat config
             if (IsOwner && Input.GetKeyDown(KeyCode.L))
             {
                 _playerHat.CycleHatConfig();
+            }
+
+            // Cycle player's color config
+            if (IsOwner && Input.GetKeyDown(KeyCode.K))
+            {
+                GetComponent<PlayerColor>().CyclePlayerColor();
             }
         }
 

@@ -50,12 +50,12 @@ public class PlayerColor : NetworkBehaviour
         CurrentColor = next;
         GetComponent<BasicPlayerController>().playerColor = colorNames[next];
 
+        PlayerData currentData =  GetComponent<PlayerNetworkData>().GetPlayerData(); // current data will be default on first iteration
         if (IsOwner)
         {
-            PlayerData preLobbyState = new PlayerData
+            PlayerData preLobbyState = new()
             {
                 playerID = OwnerClientId,
-                playerNum = (ulong) Array.IndexOf(_colors, next),
                 playerColor = colorNames[next],
                 currentHole = 0,
                 strokes = 0,
@@ -63,7 +63,11 @@ public class PlayerColor : NetworkBehaviour
                 score = 0
             };
 
-            GetComponent<PlayerNetworkData>().StorePlayerState(preLobbyState);
+            // don't update player number if this is the first iteration
+            if (currentData.playerColor == null) preLobbyState.playerNum = (ulong)Array.IndexOf(_colors, next);
+            else preLobbyState.playerNum = currentData.playerNum;
+
+            GetComponent<PlayerNetworkData>().StorePlayerState(preLobbyState); //send state to PlayerNetworkData
         }
 
         //find all objects owned by this player
@@ -81,11 +85,25 @@ public class PlayerColor : NetworkBehaviour
         else _renderer.material.color = _netColor.Value;
     }
 
+    public void CyclePlayerColor(){
+        if (IsOwner) CyclePlayerColorServerRpc();
+        else _renderer.material.color = _netColor.Value;
+    }
+
     [ServerRpc]
     private void CommitNetworkColorServerRpc(){
         int playerNum = GameManager.instance.GetNumberOfPlayers(); //1st player = 0, 2nd player = 1, etc.
         _netColor.Value = _colors[playerNum];
         Debug.Log("player num: " + playerNum + " - color: " + colorNames[_colors[playerNum]]);
+    }
+
+    [ServerRpc]
+    private void CyclePlayerColorServerRpc(){
+        int currentColorIndex = Array.IndexOf(_colors, _netColor.Value);
+        int newColorIndex = (currentColorIndex + 1) % _colors.Length;
+        _netColor.Value = _colors[newColorIndex];
+        Debug.Log($"Server updated client {OwnerClientId} to color {colorNames[_colors[newColorIndex]]}");
+
     }
 
 }
