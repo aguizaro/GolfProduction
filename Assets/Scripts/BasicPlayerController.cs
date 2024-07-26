@@ -37,6 +37,7 @@ public class BasicPlayerController : NetworkBehaviour
     // Animation
     private Animator _animator;
     private GameObject[] _flagPoles;
+    [SerializeField] private Animator _gateAnimator;
 
     // Spawning
     private bool _isSpawnedAtPos = false; // used to check if player has been spawned in correct position
@@ -179,8 +180,7 @@ public class BasicPlayerController : NetworkBehaviour
             _rb.useGravity = false;
             _rb.velocity = Vector3.zero;
 
-            if (!IsActive) SpawnInPreLobby();
-            else transform.position = new Vector3(390 + OwnerClientId * 2, 69.5f, 321); //spawn in first hole
+            SpawnInPreLobby();
 
             _rb.useGravity = true;
         }
@@ -217,17 +217,18 @@ public class BasicPlayerController : NetworkBehaviour
 
     public void Activate()
     {
-        // spawn players at first hole ------ remove on new map
-        //_rb.MovePosition(new Vector3(390 + OwnerClientId * 2, 69.5f, 321)); //space players out by 2 units each
-        //_rb.MoveRotation(Quaternion.Euler(0, -179f, 0)); //face flag pole
 
         IsActive = true;
 
         if (IsServer)
         {
             //activate spider
-            GameObject spider = Instantiate(spiderPrefab, new Vector3(391, 72.1f, 289), Quaternion.identity);
+            GameObject spider = Instantiate(spiderPrefab, new Vector3(-51.4f, 11.4f, 37.97f), Quaternion.identity);
             spider.GetComponent<NetworkObject>().Spawn();
+
+            // swing open lobby gates
+            _gateAnimator.Play("OpenGates");
+            Debug.Log("Open gates");
         }
 
         // activate flag poles - in scene placed network objects (server auth) -update this later to be dynamically spawned by server
