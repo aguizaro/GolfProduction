@@ -878,7 +878,6 @@ public class LobbyManager : MonoBehaviour
             Debug.Log($"NOTIF: Client {clientId} disconnected!");
             // Perform actions when a client disconnects, e.g., remove player, update UI, etc.
             if (NetworkManager.Singleton.IsServer){
-                Debug.Log("Server removing player data for client: " + clientId);
                 GameManager.instance.RemovePlayerData(clientId);
             }
         }

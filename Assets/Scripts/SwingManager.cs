@@ -138,7 +138,7 @@ public class SwingManager : NetworkBehaviour
                     playerAnimator.SetTrigger("Swing");
                     playerAnimator.ResetTrigger("Stance");
 
-                    Debug.Log("performing swing animation on ragdolled player");
+                    //Debug.Log("performing swing animation on ragdolled player");
 
                     //PerformSwingOnPlayer();
                 }
@@ -388,8 +388,6 @@ public class SwingManager : NetworkBehaviour
         // Play sound effect for swinging the ball
         AudioManager.instance.PlayOneShotForAllClients(FMODEvents.instance.playerGolfSwing, _playerController.transform.position, IsOwner);
 
-        Debug.Log("force dir: " + dir);
-        Debug.Log("force vector: " + swingForceVector);
         //ask the ragdolled player to add force on themselves
         if (ragdolled_player != null)
         {

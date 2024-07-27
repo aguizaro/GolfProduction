@@ -52,7 +52,7 @@ public class BasicPlayerController : NetworkBehaviour
 
     [Header("For Input System Only")]
     [SerializeField] private bool _canInput = true;
-    public bool canInput
+    public bool canInput // this is used to enable and disable input for the player (used for pause menu)
     {
         get
         {
@@ -64,7 +64,7 @@ public class BasicPlayerController : NetworkBehaviour
         }
     }
     [SerializeField] private bool _canMove = true;
-    public bool canMove
+    public bool canMove // enable and disable movement for the player (used for ragdoll mode)
     {
         get
         {
@@ -76,7 +76,7 @@ public class BasicPlayerController : NetworkBehaviour
         }
     }
     [SerializeField] private bool _canLook = true;
-    public bool canLook
+    public bool canLook // enable and disable looking for the player (used for ragdoll mode)
     {
         get
         {

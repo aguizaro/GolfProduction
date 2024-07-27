@@ -17,10 +17,8 @@ public class QuitHandler : MonoBehaviour
     private void OnEnable()
     {
 #if UNITY_EDITOR
-        Debug.Log("Using Editor");
         EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
 #else
-        Debug.Log("NOT Using Editor");
         Application.wantsToQuit += OnWantsToQuit;
 #endif
     }

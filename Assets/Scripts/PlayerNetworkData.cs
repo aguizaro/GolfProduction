@@ -128,7 +128,6 @@ public class PlayerNetworkData : NetworkBehaviour
     [ServerRpc]
     private void RemovePlayerDataFromGameManagerServerRpc(ulong clientID)
     {
-        Debug.Log("inside serverrpc removing player data");
         GameManager.instance.RemovePlayerData(clientID);
     }
 
