@@ -77,12 +77,23 @@ public class UIManager : MonoBehaviour
     [Header("Controls UI Elements")]
     [SerializeField] private GameObject _controlsScreenUI;
     [SerializeField] private Button _controlsBackButton;
+    
+    [Header("Scoreboard")]
+    [SerializeField] public GameObject scoreboardUI;
+
+    [SerializeField] public GameObject scoreboardEntry;
+
+    private Dictionary<ulong, PlayerData> ScoreboardData = new Dictionary<ulong, PlayerData>();
+    
     [Header("Other")]
+
     [SerializeField] private TMP_Text _holeCountText;
 
     [SerializeField] private TMP_Text _directionsTextP;
     [SerializeField] private TMP_Text _directionsTextL;
     [SerializeField] private TMP_Text _winnerText;
+
+
 
     // UIManager instance
     public static UIManager instance { get; private set; }

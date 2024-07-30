@@ -2715,6 +2715,10 @@ PrefabInstance:
       propertyPath: m_hasFontAssetChanged
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7235397403312309636, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7726233538996562752, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -2794,6 +2798,14 @@ PrefabInstance:
     - target: {fileID: 7726233538996562752, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7781385550747529487, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: _initialX
+      value: -500
+      objectReference: {fileID: 0}
+    - target: {fileID: 7781385550747529487, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: _initialY
+      value: -140
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
