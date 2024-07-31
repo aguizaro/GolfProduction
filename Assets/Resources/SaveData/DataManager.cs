@@ -44,17 +44,17 @@ public class DataManager : MonoBehaviour
             settingsData = JsonUtility.FromJson<SettingsData>(jsonData);
             if (settingsData == null)
             {
-                Debug.LogError("Failed to load settings data. Creating new data.");
+                //Debug.LogError("Failed to load settings data. Creating new data.");
                 NewSettingsData();
             }
             else
             {
-                Debug.Log("Settings data loaded successfully.");
+                //Debug.Log("Settings data loaded successfully.");
             }
         }
         else
         {
-            Debug.Log("No save data found, creating new data.");
+            //Debug.Log("No save data found, creating new data.");
             NewSettingsData();
         }
     }
@@ -76,7 +76,7 @@ public class DataManager : MonoBehaviour
 
         File.WriteAllText(filePath, jsonData);
 
-        Debug.Log("Settings data saved to: " + filePath);
+        //Debug.Log("Settings data saved to: " + filePath);
     }
 
     public SettingsData GetSettingsData()

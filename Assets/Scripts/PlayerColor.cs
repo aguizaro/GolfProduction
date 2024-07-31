@@ -68,6 +68,8 @@ public class PlayerColor : NetworkBehaviour
             else preLobbyState.playerNum = currentData.playerNum;
 
             GetComponent<PlayerNetworkData>().StorePlayerState(preLobbyState); //send state to PlayerNetworkData
+
+            Debug.Log($"Player {OwnerClientId} updated to color {colorNames[next]} and player number {preLobbyState.playerNum}");
         }
 
         //find all objects owned by this player
@@ -81,8 +83,11 @@ public class PlayerColor : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        if (IsOwner) CommitNetworkColorServerRpc();
-        else _renderer.material.color = _netColor.Value;
+        if (IsOwner){ CommitNetworkColorServerRpc();}
+        else{
+            _renderer.material.color = _netColor.Value;
+            GetComponent<BasicPlayerController>().playerColor = colorNames[_netColor.Value];
+        }
     }
 
     public void CyclePlayerColor(){
@@ -94,7 +99,6 @@ public class PlayerColor : NetworkBehaviour
     private void CommitNetworkColorServerRpc(){
         int playerNum = GameManager.instance.GetNumberOfPlayers(); //1st player = 0, 2nd player = 1, etc.
         _netColor.Value = _colors[playerNum];
-        Debug.Log("player num: " + playerNum + " - color: " + colorNames[_colors[playerNum]]);
     }
 
     [ServerRpc]
@@ -102,7 +106,7 @@ public class PlayerColor : NetworkBehaviour
         int currentColorIndex = Array.IndexOf(_colors, _netColor.Value);
         int newColorIndex = (currentColorIndex + 1) % _colors.Length;
         _netColor.Value = _colors[newColorIndex];
-        Debug.Log($"Server updated client {OwnerClientId} to color {colorNames[_colors[newColorIndex]]}");
+        //Debug.Log($"Server updated client {OwnerClientId} to color {colorNames[_colors[newColorIndex]]}");
 
     }
 

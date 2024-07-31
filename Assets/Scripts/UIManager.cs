@@ -211,7 +211,7 @@ public class UIManager : MonoBehaviour
     }
     public void DisplayCode(string code) => _lobbyJoinCodeText.text = code;
     public void DisplayLobbyName(string name) => _lobbyNameText.text = name;
-    public async void DisplaySignedIn() => _lobbySignedInText.text = await LobbyManager.Instance.GetPlayerName();
+    public async void DisplaySignedIn() => _lobbySignedInText.text = await LobbyManager.Instance.GetLocalPlayerName();
 
     public string GetInputText() { return _inputField.text; }
     public void DisableUIText()
@@ -534,6 +534,13 @@ public class UIManager : MonoBehaviour
     public void UpdateHoleCountText(int holeCount)
     {
         _holeCountText.text = holeCount.ToString();
+    }
+
+    // UI Notification Manager ------------------------------------------------
+
+    public void DisplayNotification(string message, float duration = 3f)
+    {
+        Debug.Log("Displaying Notification: " + message);
     }
 
 }

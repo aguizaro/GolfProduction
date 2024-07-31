@@ -146,7 +146,15 @@ public class BasicPlayerController : NetworkBehaviour
         #endregion
 
         GameObject.Find("Main Camera").GetComponent<StudioListener>().SetAttenuationObject(gameObject);
-        AudioManager.instance.PlayTimelineSoundForAllClients(FMODEvents.instance.playerFootsteps, gameObject);
+
+
+        // THIS LINE IS THROWING AN ERROR: --------------------------------------------------------------------------------------------------------------------------------
+            // - InvalidOperationException: An RPC called on a NetworkObject that is not in the spawned objects list. Please make sure the NetworkObject is spawned before calling RPCs.
+            // - This error occurs when a player leaves a game and attempts to host a new game 
+        //AudioManager.instance.PlayTimelineSoundForAllClients(FMODEvents.instance.playerFootsteps, gameObject);
+        // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
         //playerFootsteps = AudioManager.instance.CreateInstance(FMODEvents.instance.playerFootsteps, gameObject);
 
         // activate player controller - controller will activate the player movement, animations, shooting and ragdoll
@@ -245,6 +253,7 @@ public class BasicPlayerController : NetworkBehaviour
         }
 
         // set initial player state when game starts (after pre-lobby)
+        _currentPlayerState = _playerNetworkData.GetPlayerData();
         _currentPlayerState.currentHole = 1;
         UpdatePlayerState(_currentPlayerState);
     }
@@ -506,12 +515,12 @@ public class BasicPlayerController : NetworkBehaviour
     public void HandleScoreBoardStarted(InputAction.CallbackContext ctx)
     {
         //TODO: Turn on Score Board Panel 
-        Debug.Log("Tab pressed");
+        //Debug.Log("Tab pressed");
     }
     public void HandleScoreBoardCanceled(InputAction.CallbackContext ctx)
     {
         //TODO: Turn off Score Board Panel
-        Debug.Log("Tab released");
+        //Debug.Log("Tab released");
     }
     #endregion
 

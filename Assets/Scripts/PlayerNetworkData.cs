@@ -78,8 +78,12 @@ public class PlayerNetworkData : NetworkBehaviour
 
     private void OnPlayerDataChanged(PlayerData prevData, PlayerData newData)
     {
-        Debug.Log("Player data changed - isOwner:  " + IsOwner + " - playerColor: " + newData.playerColor + " - playerNum: " + newData.playerNum  + " - playerID: " + newData.playerID + " - currentHole: " + newData.currentHole + " - strokes: " + newData.strokes + " - enemiesDefeated: " + newData.enemiesDefeated + " - score: " + newData.score);
+        //Debug.Log("Player data changed - isOwner:  " + IsOwner + " - playerColor: " + newData.playerColor + " - playerNum: " + newData.playerNum  + " - playerID: " + newData.playerID + " - currentHole: " + newData.currentHole + " - strokes: " + newData.strokes + " - enemiesDefeated: " + newData.enemiesDefeated + " - score: " + newData.score);
         _currentPlayerData = newData;
+
+        string playerColor = GetComponent<BasicPlayerController>().playerColor;
+        string playerName = LobbyManager.Instance.FindPlayerNameInLobby(newData.playerID);
+        if (prevData.currentHole != newData.currentHole && prevData.currentHole >= 1) UIManager.instance.DisplayNotification($"{playerColor} - {playerName} made hole {prevData.currentHole} in {newData.strokes} strokes");
 
         if (IsOwner)
         {
@@ -97,7 +101,6 @@ public class PlayerNetworkData : NetworkBehaviour
                     DisplayWinnerServerRpc(winnerName);
                 }
 
-                //  MAYBE WE SHOULD MOVE THE BALL TO THE NEXT HOLE HERE
             }
 
             UIManager.instance.UpdateStrokesUI(newData.strokes);

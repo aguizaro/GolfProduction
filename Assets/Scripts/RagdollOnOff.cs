@@ -338,7 +338,6 @@ public class RagdollOnOff : NetworkBehaviour
     // helper functions -----------------------------------------
     private IEnumerator ResetBonesCoroutine()
     {
-        Debug.Log("ResetBonesCoroutine() Called - transform position: " + transform.position);
         _elapsedResetBonesTime = 0f;
         float elapsedPercentage = 0f;
 
@@ -373,7 +372,6 @@ public class RagdollOnOff : NetworkBehaviour
 
     private void AlignMainColliderToHips()
     {
-        Debug.Log("AlignMainColliderToHips() Called - transform position: " + transform.position);
         Vector3 originalHipsPosition = GameObject.FindWithTag("Hips").transform.position;
         //find dist between hips and pos
         float dist = Vector3.Distance(transform.position, originalHipsPosition);
@@ -401,7 +399,6 @@ public class RagdollOnOff : NetworkBehaviour
 
     private void AlignRotationToHips()
     {
-        Debug.Log("AlignRotationToHips() Called - transform position: " + transform.position);
         Vector3 originalHipsPosition = _hipsBone.position;
         Quaternion originalHipsRotation = _hipsBone.rotation;
 
@@ -423,7 +420,6 @@ public class RagdollOnOff : NetworkBehaviour
 
     private void PopulateBoneTransforms(BoneTransform[] boneTransforms)
     {
-        Debug.Log("PopulateBoneTransforms() Called - transform position: " + transform.position);
         for (int boneIndex = 0; boneIndex < _bones.Length; boneIndex++)
         {
             boneTransforms[boneIndex].Position = _bones[boneIndex].localPosition;
@@ -433,7 +429,6 @@ public class RagdollOnOff : NetworkBehaviour
 
     private void PopulateAnimationStartBoneTransforms(string clipName, BoneTransform[] boneTransforms)
     {
-        Debug.Log("PopulateAnimationStartBoneTransforms() Called - transform position: " + transform.position);
         Vector3 positionBeforeSampling = transform.position;
         Quaternion rotationBeforeSampling = transform.rotation;
 
@@ -455,7 +450,6 @@ public class RagdollOnOff : NetworkBehaviour
     //
     private IEnumerator WaitForAnimationAndExecuteLogic(string animationName)
     {
-        Debug.Log("WaitForAnimationAndExecuteLogic() Called - transform position: " + transform.position);
         AnimatorStateInfo animationState = _playerAnimator.GetCurrentAnimatorStateInfo(0);
 
         while (!animationState.IsName(animationName))

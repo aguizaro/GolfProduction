@@ -107,7 +107,7 @@ public class LobbyManager : MonoBehaviour
     // Player Operations --------------------------------------------------------------------------------------------------------------
 
     // returns name of currently signed in player
-    public async Task<string> GetPlayerName()
+    public async Task<string> GetLocalPlayerName()
     {
         try
         {
@@ -131,8 +131,8 @@ public class LobbyManager : MonoBehaviour
             {
                 Data = new Dictionary<string, PlayerDataObject> {
                 { playerNameKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, _playerName) },
-                { playerIdKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Private, _playerId) },
-                { localClientIdKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Private, _localClientId.ToString()) }
+                { playerIdKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, _playerId) },
+                { localClientIdKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, _localClientId.ToString()) }
             }
             };
         }
@@ -143,10 +143,31 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    private async void UpdatePlayerClientId()
+    {
+        try
+        {
+            _localClientId = NetworkManager.Singleton.LocalClientId;
+            await LobbyService.Instance.UpdatePlayerAsync(ConnectedLobby.Id, AuthenticationService.Instance.PlayerId, new UpdatePlayerOptions
+            {
+                Data = new Dictionary<string, PlayerDataObject>
+                {
+                    { localClientIdKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, NetworkManager.Singleton.LocalClientId.ToString()) }
+                }
+            });
+            
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogWarning($"Failed to update player clientID: {e.Message}");
+        }
+    }
+
     private async void UpdatePlayerName(string newName)
     {
         try
         {
+            _playerName = newName;
             await LobbyService.Instance.UpdatePlayerAsync(ConnectedLobby.Id, AuthenticationService.Instance.PlayerId, new UpdatePlayerOptions
             {
                 Data = new Dictionary<string, PlayerDataObject>
@@ -159,6 +180,27 @@ public class LobbyManager : MonoBehaviour
         catch (LobbyServiceException e)
         {
             Debug.LogWarning($"Failed to update player name: {e.Message}");
+        }
+    }
+
+    public string FindPlayerNameInLobby(ulong clientID)
+    {
+        try
+        {
+            string localClientID = clientID.ToString();
+            foreach (var player in ConnectedLobby.Players)
+            {
+                if (player.Data[localClientIdKey].Value == localClientID)
+                {
+                    return player.Data[playerNameKey].Value;
+                }
+            }
+            throw new LobbyServiceException(new LobbyExceptionReason(), "Player not found");
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogWarning($"Failed to find player name: {e.Message}");
+            return "Unknown";
         }
     }
 
@@ -347,7 +389,7 @@ public class LobbyManager : MonoBehaviour
                 Player = await CreatePlayer()
             };
 
-            ConnectedLobby = await LobbyService.Instance.QuickJoinLobbyAsync();
+            ConnectedLobby = await LobbyService.Instance.QuickJoinLobbyAsync(options);
             await SubscribeToLobbyEvents();
             if (ConnectedLobby == null) throw new LobbyServiceException(new LobbyExceptionReason(), "No Lobby Found");
 
@@ -495,8 +537,9 @@ public class LobbyManager : MonoBehaviour
 
         if (changes.IsLocked.Changed)
         {
-            // Do something specific due to this change
-            Debug.LogWarning("lobbyChanged: Lobby Locked: " + changes.IsLocked.Value);
+            // notify players that the lobby is locked
+            UIManager.instance.DisplayNotification("Game On! Lobby is now locked");
+
         }
 
         if (changes.AvailableSlots.Changed)
@@ -513,31 +556,37 @@ public class LobbyManager : MonoBehaviour
             }
         }
 
-        changes.ApplyToLobby(ConnectedLobby);
-
         if (changes.Name.Changed)
         {
             // Do something specific due to this change
         }
-        // Refresh the UI in some way
+       
+
+        if (changes.PlayerData.Changed){
+            // FIGURE OUT HOW TO UPDATE PLAYER DATA HERE - CURRENTLY BEING DONE IN HandleClientConnectionNotification On Client Connection (if client is this player) 
+        }
+
+        changes.ApplyToLobby(ConnectedLobby);
+
     }
 
     private void OnPlayerJoined(List<LobbyPlayerJoined> players)
     {
+        if (!NetworkManager.Singleton.IsServer) return;
+
         foreach (var playerEntry in players)
         {
-            Debug.Log($"player: {playerEntry.Player.Data[playerNameKey].Value} joined lobby {ConnectedLobby.Name} with join code {ConnectedLobby.Data[RelayJoinCodeKey]}");
+            UIManager.instance.DisplayNotification($"{playerEntry.Player.Data[playerNameKey].Value} is joining...");
         }
         // Refresh the UI in some way
     }
 
     private void OnPlayerLeft(List<int> playerNumbers)
     {
-        // foreach (var playerNumber in playerNumbers)
-        // {
-        //     //Debug.Log($"player: {playerNumber} left lobby");
-        // }
-        // Refresh the UI in some way
+        foreach (var playerNumber in playerNumbers)
+        {
+            // Display a notification that a player has left
+        }
     }
 
     private async void OnKickedFromLobby()
@@ -727,7 +776,6 @@ public class LobbyManager : MonoBehaviour
                 IsPrivate = true
             });
 
-            Debug.Log("Locked Lobby");
         }
         catch (LobbyServiceException e)
         {
@@ -866,16 +914,29 @@ public class LobbyManager : MonoBehaviour
     {
         if (status == ConnectionNotificationManager.ConnectionStatus.Connected)
         {
-            Debug.Log($"NOTIF: Client {clientId} connected!");
+            // if we are the new connected client, update LocalClientID in lobby player data and exit 
+            if(clientId == NetworkManager.Singleton.LocalClientId){
+                if (ConnectedLobby == null) return;
+                UpdatePlayerClientId();
+                
+                // Update local client ID in player data
+                foreach (var player in ConnectedLobby.Players)
+                {
+                    if (player.Data[playerIdKey].Value == _playerId)
+                    {
+                        player.Data[localClientIdKey].Value = NetworkManager.Singleton.LocalClientId.ToString();
+                        break;
+                    }
+                }
+                return;
+            }
 
-            if(clientId == NetworkManager.Singleton.LocalClientId) return; // exit if we are the new connected client
-
+            // Refresh hat config to sync with new player
             NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerHatController>().RefreshHatConfig();
-            // Perform actions when a client connects, e.g., update UI, spawn player, etc.
+
         }
         else if (status == ConnectionNotificationManager.ConnectionStatus.Disconnected)
         {
-            Debug.Log($"NOTIF: Client {clientId} disconnected!");
             // Perform actions when a client disconnects, e.g., remove player, update UI, etc.
             if (NetworkManager.Singleton.IsServer){
                 GameManager.instance.RemovePlayerData(clientId);

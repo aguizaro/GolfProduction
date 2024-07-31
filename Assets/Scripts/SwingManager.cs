@@ -298,12 +298,12 @@ public class SwingManager : NetworkBehaviour
         // }
         if (ragdolled_player == null && thisBall != null)
         {
-            Debug.Log("Perform Swing on Ball");
+            //Debug.Log("Perform Swing on Ball");
             PerformSwingOnBall();
         }
         else
         {
-            Debug.Log("Perform Swing on Player");
+            //Debug.Log("Perform Swing on Player");
             PerformSwingOnPlayer();
         }
     }
