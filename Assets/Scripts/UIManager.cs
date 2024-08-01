@@ -84,6 +84,9 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TMP_Text _directionsTextL;
     [SerializeField] private TMP_Text _winnerText;
 
+    //Notification Banner
+    [SerializeField] private NotificationBanner _notificationBanner;
+
     // UIManager instance
     public static UIManager instance { get; private set; }
 
@@ -538,9 +541,10 @@ public class UIManager : MonoBehaviour
 
     // UI Notification Manager ------------------------------------------------
 
-    public void DisplayNotification(string message, float duration = 3f)
+    public void DisplayNotification(string message, string highlightColor = null, int duration = 4)
     {
-        Debug.Log("Displaying Notification: " + message);
+        _notificationBanner.Show(message, highlightColor, duration);
+
     }
 
 }

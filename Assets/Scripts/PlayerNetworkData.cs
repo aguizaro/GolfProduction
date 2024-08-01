@@ -83,7 +83,7 @@ public class PlayerNetworkData : NetworkBehaviour
 
         string playerColor = GetComponent<BasicPlayerController>().playerColor;
         string playerName = LobbyManager.Instance.FindPlayerNameInLobby(newData.playerID);
-        if (prevData.currentHole != newData.currentHole && prevData.currentHole >= 1) UIManager.instance.DisplayNotification($"{playerColor} - {playerName} made hole {prevData.currentHole} in {newData.strokes} strokes");
+        if (prevData.currentHole != newData.currentHole && prevData.currentHole >= 1) UIManager.instance.DisplayNotification($"{playerName} made hole {prevData.currentHole} in {newData.strokes} strokes", playerColor);
 
         if (IsOwner)
         {

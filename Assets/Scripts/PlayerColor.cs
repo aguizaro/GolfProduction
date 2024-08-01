@@ -68,8 +68,6 @@ public class PlayerColor : NetworkBehaviour
             else preLobbyState.playerNum = currentData.playerNum;
 
             GetComponent<PlayerNetworkData>().StorePlayerState(preLobbyState); //send state to PlayerNetworkData
-
-            Debug.Log($"Player {OwnerClientId} updated to color {colorNames[next]} and player number {preLobbyState.playerNum}");
         }
 
         //find all objects owned by this player

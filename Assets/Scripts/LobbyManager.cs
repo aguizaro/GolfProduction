@@ -132,7 +132,7 @@ public class LobbyManager : MonoBehaviour
                 Data = new Dictionary<string, PlayerDataObject> {
                 { playerNameKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, _playerName) },
                 { playerIdKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, _playerId) },
-                { localClientIdKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, _localClientId.ToString()) }
+                { localClientIdKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, NetworkManager.Singleton.LocalClientId.ToString()) }
             }
             };
         }
@@ -188,6 +188,7 @@ public class LobbyManager : MonoBehaviour
         try
         {
             string localClientID = clientID.ToString();
+
             foreach (var player in ConnectedLobby.Players)
             {
                 if (player.Data[localClientIdKey].Value == localClientID)
@@ -199,7 +200,7 @@ public class LobbyManager : MonoBehaviour
         }
         catch (LobbyServiceException e)
         {
-            Debug.LogWarning($"Failed to find player name: {e.Message}");
+            Debug.Log($"Failed to find player name: {e.Message}");
             return "Unknown";
         }
     }
@@ -537,8 +538,6 @@ public class LobbyManager : MonoBehaviour
 
         if (changes.IsLocked.Changed)
         {
-            // notify players that the lobby is locked
-            UIManager.instance.DisplayNotification("Game On! Lobby is now locked");
 
         }
 
@@ -546,8 +545,7 @@ public class LobbyManager : MonoBehaviour
         {
             if (changes.AvailableSlots.Value == 0)
             {
-                Debug.LogWarning("lobbyChanged:: Lobby Full");
-                // Do something specific due to this change
+                UIManager.instance.DisplayNotification("Lobby is now full");
             }
             if (changes.AvailableSlots.Added)
             {

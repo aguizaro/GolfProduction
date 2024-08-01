@@ -232,7 +232,7 @@ public class BasicPlayerController : NetworkBehaviour
     public void Activate()
     {
         // spawn players at firt hole
-        _rb.MovePosition(new Vector3(390 + OwnerClientId * 2, 69.5f, 321)); //space players out by 2 units each
+        _rb.MovePosition(new Vector3(398.8902f + OwnerClientId * 2, 74.67442f, 258.1134f)); //space players out by 2 units each
         _rb.MoveRotation(Quaternion.Euler(0, -179f, 0)); //face flag pole
 
         IsActive = true;
@@ -256,6 +256,9 @@ public class BasicPlayerController : NetworkBehaviour
         _currentPlayerState = _playerNetworkData.GetPlayerData();
         _currentPlayerState.currentHole = 1;
         UpdatePlayerState(_currentPlayerState);
+
+        // notify players that the lobby is locked
+        UIManager.instance.DisplayNotification("Game On! Lobby is now locked");
     }
 
 
