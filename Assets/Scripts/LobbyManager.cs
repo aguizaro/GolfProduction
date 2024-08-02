@@ -99,7 +99,6 @@ public class LobbyManager : MonoBehaviour
         _localClientId = NetworkManager.Singleton.LocalClientId;
 
         UIManager.instance.DisplaySignedIn();
-        Debug.Log("Signed in as: " + _playerName);
 
         ConnectionNotificationManager.Singleton.OnClientConnectionNotification += HandleClientConnectionNotification;
 
@@ -107,18 +106,9 @@ public class LobbyManager : MonoBehaviour
     // Player Operations --------------------------------------------------------------------------------------------------------------
 
     // returns name of currently signed in player
-    public async Task<string> GetLocalPlayerName()
+    public string GetLocalPlayerName()
     {
-        try
-        {
-            await Authenticate();
-            return _playerName;
-        }
-        catch (AuthenticationException e)
-        {
-            Debug.LogWarning("Error Authenticating when getting player Name" + e.Message);
-            return null;
-        }
+        return _playerName;
     }
 
     // checks if the player has authenticated and creates a player object with the player's name, otherwise authenticates and returns player
@@ -143,7 +133,8 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    private async void UpdatePlayerClientId()
+    // Update lobby player data with current local clientID
+    private async void UpdatePlayerClientIdLobbyData()
     {
         try
         {
@@ -155,6 +146,7 @@ public class LobbyManager : MonoBehaviour
                     { localClientIdKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, NetworkManager.Singleton.LocalClientId.ToString()) }
                 }
             });
+
             
         }
         catch (LobbyServiceException e)
@@ -163,11 +155,19 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    private async void UpdatePlayerName(string newName)
+    public async Task<bool> UpdatePlayerName(string newName)
     {
         try
         {
+            // check if player name is valid
+            if (string.IsNullOrEmpty(newName) || !Regex.Match(newName, "^[a-zA-Z0-9_-]{1,30}$").Success) throw new LobbyServiceException(new LobbyExceptionReason(), "Invalid player name provided");
+            
+            // update player name in authentication service
             _playerName = newName;
+            await AuthenticationService.Instance.UpdatePlayerNameAsync(newName);
+
+            // update player name in lobby service
+            if (ConnectedLobby == null) return true;
             await LobbyService.Instance.UpdatePlayerAsync(ConnectedLobby.Id, AuthenticationService.Instance.PlayerId, new UpdatePlayerOptions
             {
                 Data = new Dictionary<string, PlayerDataObject>
@@ -176,10 +176,22 @@ public class LobbyManager : MonoBehaviour
                 }
             });
 
+            //manually update player name in lobby player data
+            foreach (var player in ConnectedLobby.Players)
+            {
+                if (player.Data[playerIdKey].Value == AuthenticationService.Instance.PlayerId)
+                {
+                    player.Data[playerNameKey].Value = newName;
+                    break;
+                }
+            }
+            
+            return true;
         }
-        catch (LobbyServiceException e)
+        catch (Exception e)
         {
-            Debug.LogWarning($"Failed to update player name: {e.Message}");
+            Debug.Log($"{e.Message}. Please try again.");
+            return false;
         }
     }
 
@@ -557,11 +569,13 @@ public class LobbyManager : MonoBehaviour
         if (changes.Name.Changed)
         {
             // Do something specific due to this change
+            Debug.Log("lobbyChanged: Name Changed to " + changes.Name.Value);
         }
        
 
         if (changes.PlayerData.Changed){
             // FIGURE OUT HOW TO UPDATE PLAYER DATA HERE - CURRENTLY BEING DONE IN HandleClientConnectionNotification On Client Connection (if client is this player) 
+            Debug.Log("lobbyChanged: Player Data Changed");
         }
 
         changes.ApplyToLobby(ConnectedLobby);
@@ -915,7 +929,7 @@ public class LobbyManager : MonoBehaviour
             // if we are the new connected client, update LocalClientID in lobby player data and exit 
             if(clientId == NetworkManager.Singleton.LocalClientId){
                 if (ConnectedLobby == null) return;
-                UpdatePlayerClientId();
+                UpdatePlayerClientIdLobbyData();
                 
                 // Update local client ID in player data
                 foreach (var player in ConnectedLobby.Players)

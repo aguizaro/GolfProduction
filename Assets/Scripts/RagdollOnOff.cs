@@ -228,11 +228,8 @@ public class RagdollOnOff : NetworkBehaviour
         await Task.Delay(500);
         if (!UnParentHips()) {Debug.LogError("Hips could not be unparented"); return;}
         transform.position = _hipsBone.position;
-        Debug.Log($"Unparented hips -- hips position: {_hipsBone.position} transform position: {transform.position}");
         await Task.Delay(500);
         if (!ReParentHips()) {Debug.LogError("Hips could not be reparented"); return;}
-        Debug.Log($"Reparented hips -- hips position: {_hipsBone.position} transform position: {transform.position}");
-
 
         _isFacingUp = _hipsBone.forward.y > 0;
 
