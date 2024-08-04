@@ -20,7 +20,6 @@ public class PlayerColor : NetworkBehaviour
         { Color.blue, "Blue" },
         { Color.clear, "Clear" },
         { Color.cyan, "Cyan" },
-        { Color.gray, "Gray" },
         { Color.green, "Green" },
         { Color.magenta, "Magenta" },
         { Color.red, "Red" },
@@ -29,7 +28,7 @@ public class PlayerColor : NetworkBehaviour
     };
 
     public readonly NetworkVariable<Color> _netColor = new(readPerm: NetworkVariableReadPermission.Everyone);
-    private readonly Color[] _colors = { Color.red, Color.blue, Color.green, Color.yellow, Color.cyan, Color.magenta, Color.gray };
+    private readonly Color[] _colors = { Color.red, Color.blue, Color.green, Color.yellow, Color.cyan, Color.magenta };
     public MeshRenderer _renderer;
     public Color CurrentColor;
 
@@ -56,7 +55,7 @@ public class PlayerColor : NetworkBehaviour
             PlayerData preLobbyState = new()
             {
                 playerID = OwnerClientId,
-                playerColor = colorNames[next],
+                playerName = LobbyManager.Instance.GetLocalPlayerName(),
                 currentHole = 0,
                 strokes = 0,
                 enemiesDefeated = 0,
@@ -64,11 +63,14 @@ public class PlayerColor : NetworkBehaviour
             };
 
             // don't update player number if this is the first iteration
-            if (currentData.playerColor == null) preLobbyState.playerNum = (ulong)Array.IndexOf(_colors, next);
+            if (currentData.playerName == null) preLobbyState.playerNum = (ulong)Array.IndexOf(_colors, next);
             else preLobbyState.playerNum = currentData.playerNum;
 
             GetComponent<PlayerNetworkData>().StorePlayerState(preLobbyState); //send state to PlayerNetworkData
         }
+
+        //Update color on player name tag
+        transform.Find("NameTagCanvas").Find("NameTag").GetComponent<NameTagRotator>().UpdateColor(next);
 
         //find all objects owned by this player
         GameObject[] BallObjects = GameObject.FindGameObjectsWithTag("Ball");
@@ -85,6 +87,8 @@ public class PlayerColor : NetworkBehaviour
         else{
             _renderer.material.color = _netColor.Value;
             GetComponent<BasicPlayerController>().playerColor = colorNames[_netColor.Value];
+            transform.Find("NameTagCanvas").Find("NameTag").GetComponent<NameTagRotator>().UpdateColor(_netColor.Value);
+            transform.Find("NameTagCanvas").Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(GetComponent<PlayerNetworkData>().GetPlayerData().playerName);
         }
     }
 

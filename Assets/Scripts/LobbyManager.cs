@@ -14,6 +14,8 @@ using Unity.Services.Relay.Models;
 using UnityEngine;
 using Unity.Networking.Transport.Relay;
 using System.Text.RegularExpressions;
+using Unity.VisualScripting;
+
 
 
 #if UNITY_EDITOR
@@ -134,26 +136,6 @@ public class LobbyManager : MonoBehaviour
     }
 
     // Update lobby player data with current local clientID
-    private async void UpdatePlayerClientIdLobbyData()
-    {
-        try
-        {
-            _localClientId = NetworkManager.Singleton.LocalClientId;
-            await LobbyService.Instance.UpdatePlayerAsync(ConnectedLobby.Id, AuthenticationService.Instance.PlayerId, new UpdatePlayerOptions
-            {
-                Data = new Dictionary<string, PlayerDataObject>
-                {
-                    { localClientIdKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, NetworkManager.Singleton.LocalClientId.ToString()) }
-                }
-            });
-
-            
-        }
-        catch (LobbyServiceException e)
-        {
-            Debug.LogWarning($"Failed to update player clientID: {e.Message}");
-        }
-    }
 
     public async Task<bool> UpdatePlayerName(string newName)
     {
@@ -172,19 +154,28 @@ public class LobbyManager : MonoBehaviour
             {
                 Data = new Dictionary<string, PlayerDataObject>
                 {
-                    { playerNameKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, newName) }
+                    { playerNameKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, newName) },
+                    { localClientIdKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, NetworkManager.Singleton.LocalClientId.ToString()) }
                 }
             });
 
-            //manually update player name in lobby player data
-            foreach (var player in ConnectedLobby.Players)
-            {
-                if (player.Data[playerIdKey].Value == AuthenticationService.Instance.PlayerId)
-                {
-                    player.Data[playerNameKey].Value = newName;
-                    break;
-                }
-            }
+            // //manually update player name in lobby player data
+            // foreach (var player in ConnectedLobby.Players)
+            // {
+            //     if (player.Data[playerIdKey].Value == AuthenticationService.Instance.PlayerId)
+            //     {
+            //         player.Data[playerNameKey].Value = newName;
+            //         break;
+            //     }
+            // }
+
+            // update player name in nameTagRotator
+            NetworkManager.Singleton.LocalClient.PlayerObject.transform.Find("NameTagCanvas").Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(newName);
+
+            // update player name in local player network data
+            PlayerData updatedData = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerNetworkData>().GetPlayerData();
+            updatedData.playerName = newName;
+            NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerNetworkData>().StorePlayerState(updatedData);
             
             return true;
         }
@@ -195,28 +186,37 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    public string FindPlayerNameInLobby(ulong clientID)
-    {
+    public async Task<bool> UpdateClientID(){
         try
         {
-            string localClientID = clientID.ToString();
-
-            foreach (var player in ConnectedLobby.Players)
+            Debug.Log($"Updating Client ID {NetworkManager.Singleton.LocalClientId} in Lobby Player Data for player: " + AuthenticationService.Instance.PlayerId);
+            if (ConnectedLobby == null) return false;
+            await LobbyService.Instance.UpdatePlayerAsync(ConnectedLobby.Id, AuthenticationService.Instance.PlayerId, new UpdatePlayerOptions
             {
-                if (player.Data[localClientIdKey].Value == localClientID)
+                Data = new Dictionary<string, PlayerDataObject>
                 {
-                    return player.Data[playerNameKey].Value;
+                    { localClientIdKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, NetworkManager.Singleton.LocalClientId.ToString()) }
                 }
-            }
-            throw new LobbyServiceException(new LobbyExceptionReason(), "Player not found");
+            });
+
+            // //manually update clientID in lobby player data
+            // foreach (var player in ConnectedLobby.Players)
+            // {
+            //     if (player.Data[playerIdKey].Value == AuthenticationService.Instance.PlayerId)
+            //     {
+            //         player.Data[localClientIdKey].Value = NetworkManager.Singleton.LocalClientId.ToString();
+            //         break;
+            //     }
+            // }
+
+            return true;
         }
-        catch (LobbyServiceException e)
+        catch (Exception e)
         {
-            Debug.Log($"Failed to find player name: {e.Message}");
-            return "Unknown";
+            Debug.Log($"{e.Message}. Please try again.");
+            return false;
         }
     }
-
 
     // Query Lobbies --------------------------------------------------------------------------------------------------------------
 
@@ -575,7 +575,11 @@ public class LobbyManager : MonoBehaviour
 
         if (changes.PlayerData.Changed){
             // FIGURE OUT HOW TO UPDATE PLAYER DATA HERE - CURRENTLY BEING DONE IN HandleClientConnectionNotification On Client Connection (if client is this player) 
-            Debug.Log("lobbyChanged: Player Data Changed");
+
+            //find clientID of player who changed data
+            var count = changes.PlayerData.Value.Count;
+
+            Debug.Log("lobbyChanged: Player Data made " + count + " changes");
         }
 
         changes.ApplyToLobby(ConnectedLobby);
@@ -584,14 +588,15 @@ public class LobbyManager : MonoBehaviour
 
     private void OnPlayerJoined(List<LobbyPlayerJoined> players)
     {
-        if (!NetworkManager.Singleton.IsServer) return;
-
         foreach (var playerEntry in players)
         {
-            UIManager.instance.DisplayNotification($"{playerEntry.Player.Data[playerNameKey].Value} is joining...");
+            UIManager.instance.DisplayNotification($"{playerEntry.Player.Data[playerNameKey].Value} is joining lobby");
         }
-        // Refresh the UI in some way
-    }
+
+        if (NetworkManager.Singleton.IsServer){
+
+        }
+    }   
 
     private void OnPlayerLeft(List<int> playerNumbers)
     {
@@ -922,24 +927,31 @@ public class LobbyManager : MonoBehaviour
     }
 
     // Connection Notifications --------------------------------------------------------------------------------------------------------------
-    private void HandleClientConnectionNotification(ulong clientId, ConnectionNotificationManager.ConnectionStatus status)
+    private async void HandleClientConnectionNotification(ulong clientId, ConnectionNotificationManager.ConnectionStatus status)
     {
+        Debug.Log($"ConnectNOTIF: New player connected: {clientId}");
+
         if (status == ConnectionNotificationManager.ConnectionStatus.Connected)
         {
-            // if we are the new connected client, update LocalClientID in lobby player data and exit 
+            // if we are the new connected client
             if(clientId == NetworkManager.Singleton.LocalClientId){
                 if (ConnectedLobby == null) return;
-                UpdatePlayerClientIdLobbyData();
+                // update LocalClientID in lobby player data and set my nameTag to my name
+                Debug.Log("ConnectNOTIF: I just connected with name: " + _playerName + " and ID: " + _playerId);
+                await UpdateClientID();
+                NetworkManager.Singleton.LocalClient.PlayerObject.transform.Find("NameTagCanvas").Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(_playerName);
                 
-                // Update local client ID in player data
-                foreach (var player in ConnectedLobby.Players)
+                //set other player's nameTags to their names
+                foreach (var player in GameObject.FindGameObjectsWithTag("Player"))
                 {
-                    if (player.Data[playerIdKey].Value == _playerId)
+                    if (player.GetComponent<NetworkObject>().OwnerClientId != clientId)
                     {
-                        player.Data[localClientIdKey].Value = NetworkManager.Singleton.LocalClientId.ToString();
-                        break;
+                        Debug.Log("I am updating NameTag for player: " + player.GetComponent<NetworkObject>().OwnerClientId + " with name: " + player.GetComponent<PlayerNetworkData>().GetPlayerData().playerName);
+                        player.transform.Find("NameTagCanvas").Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(player.GetComponent<PlayerNetworkData>().GetPlayerData().playerName);
+                        Debug.Log("Confirming NameTag for player: " + player.GetComponent<NetworkObject>().OwnerClientId + " is: " + player.transform.Find("NameTagCanvas").Find("NameTag").GetComponent<NameTagRotator>().GetName());
                     }
                 }
+                
                 return;
             }
 

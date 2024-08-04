@@ -23,7 +23,7 @@ TagManager:
   - Ground
   - Map
   - Map2
-  - 
+  - NameTagLayer
   - 
   - 
   - 
@@ -47,4 +47,7 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: NameTags
+    uniqueID: 1396949491
     locked: 0
