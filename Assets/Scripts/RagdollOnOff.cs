@@ -38,12 +38,19 @@ public class RagdollOnOff : NetworkBehaviour
 
     private bool nameTagParentedToHips = false;
 
+    private LoadingBar _loadingBar;
+
 
     private class BoneTransform
     {
         public Vector3 Position { get; set; }
 
         public Quaternion Rotation { get; set; }
+    }
+
+    void Start()
+    {
+        _loadingBar = transform.Find("NameTagCanvas").Find("NameTag").Find("RadialLoadingBar").GetComponent<LoadingBar>();
     }
 
 
@@ -96,7 +103,7 @@ public class RagdollOnOff : NetworkBehaviour
 
 
     // Update Loop -------------------------------------------------------------------------------------------------------------
-    void Update()
+    async void Update()
     {
         if (!isActive) return; //prevent updates until player is fully activated
 
@@ -113,6 +120,22 @@ public class RagdollOnOff : NetworkBehaviour
                 delay = getUpDelay;
                 ResetRagdoll();
             }
+
+            if (alreadyLaunched && _hipsBone.GetComponent<Rigidbody>().velocity.magnitude < 0.1f)
+            {
+                // prevent user from moving before transform is moved to hips position
+                _basicPlayerController.canMove = false;
+                _basicPlayerController.canLook = false;
+
+                await Task.Delay(500); // delay is needed to prevent player from having control when moving tranform to hips position (if this is removed, user movment takes priority over transform movement and may not work as expected)
+                transform.position = _hipsBone.position;
+                await Task.Delay(500); // delay is needed here to allow transform to move to hips position before parenting - 500 is the minimum delay that works
+
+                if (!ReParentHips()) {Debug.LogWarning("Hips could not be reparented"); return;}
+                alreadyLaunched = false; // this allows the camera to follow the main collider again (root transform)
+                _basicPlayerController.canLook = true; // allow player to look around
+                
+            }
         }
 
         if (Input.GetKeyDown(KeyCode.T))
@@ -124,27 +147,10 @@ public class RagdollOnOff : NetworkBehaviour
             ResetRagdoll();
         }
 
-
         if (Input.GetKeyDown(KeyCode.U))
         {
             PerformRagdoll();
             AddForceToSelf(Vector3.forward * 30);
-        }
-        if (Input.GetKeyDown(KeyCode.I))
-        {
-            UnParentHips();
-        }
-        if (Input.GetKeyDown(KeyCode.O))
-        {
-            ReParentHips();
-        }
-        if (Input.GetKeyDown(KeyCode.J))
-        {
-            StartCoroutine(ResetBonesCoroutine());
-        }
-        if (Input.GetKeyDown(KeyCode.H))
-        {
-            transform.position = _hipsBone.position;
         }
     }
     // Parenting Logic ------------------------------------------------------------------------------------------------------------
@@ -162,6 +168,7 @@ public class RagdollOnOff : NetworkBehaviour
     }
 
     private bool ReParentHips(){
+        if (_hipsBone.parent == transform) return true;
         _hipsBone.parent = transform;
         return _hipsBone.parent == transform;
     }
@@ -220,7 +227,7 @@ public class RagdollOnOff : NetworkBehaviour
 
         delay = getUpDelay; // reset delay every time ragdoll mode is activated - avoids instant reset
 
-        if (IsOwner) UIManager.instance.StartLoadingBar(getUpDelay); // start loading bar for local player
+        if (IsOwner) _loadingBar.StartLoadingBar(getUpDelay); // start loading bar for local player
 
         if (_swingManager.isInSwingState()) _swingManager.ExitSwingMode(); // exit swing mode if in swing state
 
@@ -254,12 +261,10 @@ public class RagdollOnOff : NetworkBehaviour
         _basicPlayerController.canMove = false;
         _basicPlayerController.canLook = false;
 
-        await Task.Delay(500);
-        if (!UnParentHips()) {Debug.LogWarning("Hips could not be unparented"); return;}
-
+        await Task.Delay(500); // delay is needed to prevent player from having control when moving tranform to hips position (if this is removed, user movment takes priority over transform movement and may not work as expected)
         transform.position = _hipsBone.position;
 
-        await Task.Delay(500);
+        await Task.Delay(500); // delay is needed here to allow transform to move to hips position before parenting - 500 is the minimum delay that works
         if (!ReParentHips()) {Debug.LogWarning("Hips could not be reparented"); return;}
         if (!RestoreNameTagParent()) {Debug.LogWarning("NameTag could not be reparented to player"); return;}
 
@@ -355,13 +360,13 @@ public class RagdollOnOff : NetworkBehaviour
     [ClientRpc]
     private void AddForceToSelfClientRpc(Vector3 force)
     {
+        if (!UnParentHips()) {Debug.LogWarning("Hips could not be unparented"); return;}
+
         foreach (Rigidbody limb in limbsRigidBodies)
         {
             if (limb != playerRB) limb.AddForce(force, ForceMode.Impulse);
         }
         alreadyLaunched = true;
-
-        //Debug.Log($"Already launched: {alreadyLaunched} for owner: {OwnerClientId} isOwner: {IsOwner}");
     }
 
     // helper functions -----------------------------------------
@@ -537,7 +542,7 @@ public class RagdollOnOff : NetworkBehaviour
         {
             delay = getUpDelay; //reset delay to avoid instant reset after force is applied
 
-            UIManager.instance.RestartLoadingBar(getUpDelay);
+            _loadingBar.RestartLoadingBar(getUpDelay);
 
             AddForceToSelfServerRpc(force * 2.5f);
             playerRB.useGravity = false;

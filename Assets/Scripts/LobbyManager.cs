@@ -159,16 +159,6 @@ public class LobbyManager : MonoBehaviour
                 }
             });
 
-            // //manually update player name in lobby player data
-            // foreach (var player in ConnectedLobby.Players)
-            // {
-            //     if (player.Data[playerIdKey].Value == AuthenticationService.Instance.PlayerId)
-            //     {
-            //         player.Data[playerNameKey].Value = newName;
-            //         break;
-            //     }
-            // }
-
             // update player name in nameTagRotator
             Transform NameTagCanvas = NetworkManager.Singleton.LocalClient.PlayerObject.transform.Find("NameTagCanvas");
             if (NameTagCanvas != null) NameTagCanvas.Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(newName);
@@ -190,7 +180,6 @@ public class LobbyManager : MonoBehaviour
     public async Task<bool> UpdateClientID(){
         try
         {
-            Debug.Log($"Updating Client ID {NetworkManager.Singleton.LocalClientId} in Lobby Player Data for player: " + AuthenticationService.Instance.PlayerId);
             if (ConnectedLobby == null) return false;
             await LobbyService.Instance.UpdatePlayerAsync(ConnectedLobby.Id, AuthenticationService.Instance.PlayerId, new UpdatePlayerOptions
             {
@@ -199,16 +188,6 @@ public class LobbyManager : MonoBehaviour
                     { localClientIdKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, NetworkManager.Singleton.LocalClientId.ToString()) }
                 }
             });
-
-            // //manually update clientID in lobby player data
-            // foreach (var player in ConnectedLobby.Players)
-            // {
-            //     if (player.Data[playerIdKey].Value == AuthenticationService.Instance.PlayerId)
-            //     {
-            //         player.Data[localClientIdKey].Value = NetworkManager.Singleton.LocalClientId.ToString();
-            //         break;
-            //     }
-            // }
 
             return true;
         }
@@ -253,7 +232,6 @@ public class LobbyManager : MonoBehaviour
             List<LobbyEntry> _foundLobbies = new List<LobbyEntry>();
             foreach (Lobby found in lobbies.Results)
             {
-                //Debug.Log($"Found:\nName: {found.Name}\n  ID: {found.Data[LobbyTypeKey].Value}\n  Available Slots: {found.AvailableSlots}\n Host ID:{found.HostId}");
                 _foundLobbies.Add(new LobbyEntry(found.Name, found.Id, found.Data[LobbyTypeKey].Value, found.AvailableSlots, found.Players));
             }
 
@@ -576,14 +554,14 @@ public class LobbyManager : MonoBehaviour
 
         if (changes.PlayerData.Changed){
             // FIGURE OUT HOW TO UPDATE PLAYER DATA HERE - CURRENTLY BEING DONE IN HandleClientConnectionNotification On Client Connection (if client is this player) 
-
-            //find clientID of player who changed data
-            var count = changes.PlayerData.Value.Count;
-
-            Debug.Log("lobbyChanged: Player Data made " + count + " changes");
         }
 
-        changes.ApplyToLobby(ConnectedLobby);
+        try{
+            changes.ApplyToLobby(ConnectedLobby);
+        }
+        catch (Exception e){
+            Debug.LogWarning($"Failed to apply changes to lobby: {e.Message}");
+        }
 
     }
 

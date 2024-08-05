@@ -48,10 +48,7 @@ public class QuitHandler : MonoBehaviour
     private IEnumerator HandlePlayModeQuit()
     {
         // Simulate async operation
-        Task asyncTask = LobbyManager.Instance.PlayerExit();
-
-        Debug.Log("Still waiting");
-        
+        Task asyncTask = LobbyManager.Instance.PlayerExit();        
         // Wait until async operation is complete
         yield return new WaitUntil(() => asyncTask.IsCompleted);
         Debug.Log("Done waiting");

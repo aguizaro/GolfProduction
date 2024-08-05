@@ -74,8 +74,6 @@ public class PlayerNetworkData : NetworkBehaviour
         base.OnNetworkSpawn();
         if (!IsOwner){
             _currentPlayerData = _networkPlayerData.Value;
-            Debug.Log($"playerDataSpawn: I am not the owner client {OwnerClientId} - CurrentPlayerData: name: " + _currentPlayerData.playerName + " - playerID: " + _currentPlayerData.playerID + " - playerNum: " + _currentPlayerData.playerNum);
-            Debug.Log("playerDataSpawn: Non owner setting name tag to " + _currentPlayerData.playerName);
             // set this players nameTag to playerName
             Transform NameTagCanvas = transform.Find("NameTagCanvas");
             if (NameTagCanvas != null) NameTagCanvas.Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(_currentPlayerData.playerName);
@@ -91,7 +89,7 @@ public class PlayerNetworkData : NetworkBehaviour
 
     private void OnPlayerDataChanged(PlayerData prevData, PlayerData newData)
     {
-        Debug.Log($"Player data changed for {newData.playerName} - Hole: {newData.currentHole} - Strokes: {newData.strokes} - PlayerID: {newData.playerID} - PlayerNum: {newData.playerNum}");
+        //Debug.Log($"Player data changed for {newData.playerName} - Hole: {newData.currentHole} - Strokes: {newData.strokes} - PlayerID: {newData.playerID} - PlayerNum: {newData.playerNum}");
         _currentPlayerData = newData;
 
         string playerColor = GetComponent<BasicPlayerController>().playerColor;
@@ -139,7 +137,6 @@ public class PlayerNetworkData : NetworkBehaviour
 
     public void RefreshPlayerData()
     {
-        Debug.Log("Refreshing Player Data");
         if (IsOwner) StorePlayerStateServerRpc(_currentPlayerData);
     }
 

@@ -54,7 +54,6 @@ public class UIManager : MonoBehaviour
     [Header("Game UI Elements")]
     [SerializeField] private TMP_Text _gamePlayerStrokesText;
     [SerializeField] private GameObject _minimapImage;
-    [SerializeField] private LoadingBar _loadingBar;
 
     // Pause UI Elements
     [Header("Pause UI Elements")]
@@ -609,19 +608,6 @@ public class UIManager : MonoBehaviour
 
         // clear input field text
         _nameChangeInputField.text = "";
-    }
-
-
-    // Loading bar Methods
-
-    public void StartLoadingBar(float duration)
-    {
-        _loadingBar.StartLoadingBar(duration);
-    }
-
-    public void RestartLoadingBar(float duration)
-    {
-        _loadingBar.RestartLoadingBar(duration);
     }
 
 }
