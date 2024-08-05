@@ -70,7 +70,8 @@ public class PlayerColor : NetworkBehaviour
         }
 
         //Update color on player name tag
-        transform.Find("NameTagCanvas").Find("NameTag").GetComponent<NameTagRotator>().UpdateColor(next);
+        Transform NameTagCanvas = transform.Find("NameTagCanvas");
+        if (NameTagCanvas != null) NameTagCanvas.Find("NameTag").GetComponent<NameTagRotator>().UpdateColor(next);
 
         //find all objects owned by this player
         GameObject[] BallObjects = GameObject.FindGameObjectsWithTag("Ball");
@@ -87,8 +88,11 @@ public class PlayerColor : NetworkBehaviour
         else{
             _renderer.material.color = _netColor.Value;
             GetComponent<BasicPlayerController>().playerColor = colorNames[_netColor.Value];
-            transform.Find("NameTagCanvas").Find("NameTag").GetComponent<NameTagRotator>().UpdateColor(_netColor.Value);
-            transform.Find("NameTagCanvas").Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(GetComponent<PlayerNetworkData>().GetPlayerData().playerName);
+            Transform NameTagCanvas = transform.Find("NameTagCanvas");
+            if (NameTagCanvas != null){
+                NameTagCanvas.Find("NameTag").GetComponent<NameTagRotator>().UpdateColor(_netColor.Value);
+                NameTagCanvas.Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(GetComponent<PlayerNetworkData>().GetPlayerData().playerName);
+            }
         }
     }
 

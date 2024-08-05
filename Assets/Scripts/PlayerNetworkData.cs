@@ -77,7 +77,8 @@ public class PlayerNetworkData : NetworkBehaviour
             Debug.Log($"playerDataSpawn: I am not the owner client {OwnerClientId} - CurrentPlayerData: name: " + _currentPlayerData.playerName + " - playerID: " + _currentPlayerData.playerID + " - playerNum: " + _currentPlayerData.playerNum);
             Debug.Log("playerDataSpawn: Non owner setting name tag to " + _currentPlayerData.playerName);
             // set this players nameTag to playerName
-            transform.Find("NameTagCanvas").Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(_currentPlayerData.playerName);
+            Transform NameTagCanvas = transform.Find("NameTagCanvas");
+            if (NameTagCanvas != null) NameTagCanvas.Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(_currentPlayerData.playerName);
         }
     }
 
@@ -95,7 +96,10 @@ public class PlayerNetworkData : NetworkBehaviour
 
         string playerColor = GetComponent<BasicPlayerController>().playerColor;
         if (prevData.currentHole != newData.currentHole && prevData.currentHole >= 1) UIManager.instance.DisplayNotification($"{newData.playerName} made hole {prevData.currentHole} in {newData.strokes} strokes", playerColor);
-        if (prevData.playerName != newData.playerName) transform.Find("NameTagCanvas").Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(newData.playerName);
+        if (prevData.playerName != newData.playerName){
+            Transform NameTagCanvas = transform.Find("NameTagCanvas");
+            if (NameTagCanvas != null) NameTagCanvas.Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(newData.playerName);
+        }
 
         if (IsOwner)
         {

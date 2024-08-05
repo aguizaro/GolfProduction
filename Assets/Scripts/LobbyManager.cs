@@ -170,7 +170,8 @@ public class LobbyManager : MonoBehaviour
             // }
 
             // update player name in nameTagRotator
-            NetworkManager.Singleton.LocalClient.PlayerObject.transform.Find("NameTagCanvas").Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(newName);
+            Transform NameTagCanvas = NetworkManager.Singleton.LocalClient.PlayerObject.transform.Find("NameTagCanvas");
+            if (NameTagCanvas != null) NameTagCanvas.Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(newName);
 
             // update player name in local player network data
             PlayerData updatedData = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerNetworkData>().GetPlayerData();
@@ -939,16 +940,17 @@ public class LobbyManager : MonoBehaviour
                 // update LocalClientID in lobby player data and set my nameTag to my name
                 Debug.Log("ConnectNOTIF: I just connected with name: " + _playerName + " and ID: " + _playerId);
                 await UpdateClientID();
-                NetworkManager.Singleton.LocalClient.PlayerObject.transform.Find("NameTagCanvas").Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(_playerName);
+
+                Transform NameTagCanvas = NetworkManager.Singleton.LocalClient.PlayerObject.transform.Find("NameTagCanvas");
+                if (NameTagCanvas != null) NameTagCanvas.Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(_playerName);
                 
                 //set other player's nameTags to their names
                 foreach (var player in GameObject.FindGameObjectsWithTag("Player"))
                 {
                     if (player.GetComponent<NetworkObject>().OwnerClientId != clientId)
                     {
-                        Debug.Log("I am updating NameTag for player: " + player.GetComponent<NetworkObject>().OwnerClientId + " with name: " + player.GetComponent<PlayerNetworkData>().GetPlayerData().playerName);
-                        player.transform.Find("NameTagCanvas").Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(player.GetComponent<PlayerNetworkData>().GetPlayerData().playerName);
-                        Debug.Log("Confirming NameTag for player: " + player.GetComponent<NetworkObject>().OwnerClientId + " is: " + player.transform.Find("NameTagCanvas").Find("NameTag").GetComponent<NameTagRotator>().GetName());
+                        Transform nametagcanvas = player.transform.Find("NameTagCanvas");
+                        if (nametagcanvas != null) nametagcanvas.Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(player.GetComponent<PlayerNetworkData>().GetPlayerData().playerName);
                     }
                 }
                 

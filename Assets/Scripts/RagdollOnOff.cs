@@ -6,7 +6,6 @@ using System;
 using Unity.VisualScripting;
 using UnityEditor.TerrainTools;
 using System.Threading.Tasks;
-
 public class RagdollOnOff : NetworkBehaviour
 {
     public CapsuleCollider mainCollider;
@@ -36,6 +35,8 @@ public class RagdollOnOff : NetworkBehaviour
     [SerializeField]
     private float _timeToResetBones = 0.5f;
     private float _elapsedResetBonesTime;
+
+    private bool nameTagParentedToHips = false;
 
 
     private class BoneTransform
@@ -98,6 +99,9 @@ public class RagdollOnOff : NetworkBehaviour
     void Update()
     {
         if (!isActive) return; //prevent updates until player is fully activated
+
+        if (nameTagParentedToHips) UpdateNameTagPositionOnHips(); // set nametag position to hover above hips (avoids nameTag rotation issues)
+
         if (!IsOwner) return;
 
         if (isRagdoll) //auto reset ragdoll after delay
@@ -162,8 +166,30 @@ public class RagdollOnOff : NetworkBehaviour
         return _hipsBone.parent == transform;
     }
 
+    private bool ParentNameTagToHips(){
+        Transform nameTag = transform.Find("NameTagCanvas");
+        if (nameTag == null) return false;
+        nameTag.parent = _hipsBone;
+        nameTag.localPosition = Vector3.zero;
+        nameTagParentedToHips = true; // might want to move this in case parenting fails
+        return nameTag.parent == _hipsBone;
+    }
 
+    private bool RestoreNameTagParent(){
+        Transform nameTag = _hipsBone.Find("NameTagCanvas");
+        if (nameTag == null) return false;
+        nameTag.parent = transform;
+        nameTag.localPosition = new Vector3(0, 15f, 0);
+        nameTagParentedToHips = false; // might want to move this in case parenting fails
+        return nameTag.parent == transform;
+    }
 
+    private void UpdateNameTagPositionOnHips(){
+        Transform nameTag = _hipsBone.Find("NameTagCanvas");
+        if (nameTag == null) return;
+        Vector3 worldPosition = _hipsBone.position + Vector3.up;
+        nameTag.position = worldPosition;
+    }
 
 
     // Ragdoll Logic ------------------------------------------------------------------------------------------------------------
@@ -193,12 +219,15 @@ public class RagdollOnOff : NetworkBehaviour
         if (isRagdoll) return; //don't activate if already in ragdoll mode
 
         delay = getUpDelay; // reset delay every time ragdoll mode is activated - avoids instant reset
-        if (_swingManager.isInSwingState())
-        {
-            _swingManager.ExitSwingMode();
-        }
+
+        if (IsOwner) UIManager.instance.StartLoadingBar(getUpDelay); // start loading bar for local player
+
+        if (_swingManager.isInSwingState()) _swingManager.ExitSwingMode(); // exit swing mode if in swing state
+
         _playerAnimator.enabled = false;
         _basicPlayerController.canMove = false; // it would be nice to disable input but still allow the player to move the camera (only allow input rotation)
+
+        if (!ParentNameTagToHips()) {Debug.LogWarning("NameTag could not be parented to hips"); return;} //parent nametag to hips
 
         foreach (Collider col in ragdollColliders)
         {
@@ -226,10 +255,13 @@ public class RagdollOnOff : NetworkBehaviour
         _basicPlayerController.canLook = false;
 
         await Task.Delay(500);
-        if (!UnParentHips()) {Debug.LogError("Hips could not be unparented"); return;}
+        if (!UnParentHips()) {Debug.LogWarning("Hips could not be unparented"); return;}
+
         transform.position = _hipsBone.position;
+
         await Task.Delay(500);
-        if (!ReParentHips()) {Debug.LogError("Hips could not be reparented"); return;}
+        if (!ReParentHips()) {Debug.LogWarning("Hips could not be reparented"); return;}
+        if (!RestoreNameTagParent()) {Debug.LogWarning("NameTag could not be reparented to player"); return;}
 
         _isFacingUp = _hipsBone.forward.y > 0;
 
@@ -504,6 +536,9 @@ public class RagdollOnOff : NetworkBehaviour
         if (IsOwner)
         {
             delay = getUpDelay; //reset delay to avoid instant reset after force is applied
+
+            UIManager.instance.RestartLoadingBar(getUpDelay);
+
             AddForceToSelfServerRpc(force * 2.5f);
             playerRB.useGravity = false;
             playerRB.isKinematic = false;
