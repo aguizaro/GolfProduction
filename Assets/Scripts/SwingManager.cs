@@ -250,7 +250,7 @@ public class SwingManager : NetworkBehaviour
         }
 
         // Define the duration over which to move the player
-        float duration = 2.3f; // Adjust as needed
+        float duration = 1f; // Adjust as needed
 
         // Store the initial position of the player
         Vector3 initialPosition = playerTransform.position;
