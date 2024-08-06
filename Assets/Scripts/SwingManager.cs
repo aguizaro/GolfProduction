@@ -53,15 +53,9 @@ public class SwingManager : NetworkBehaviour
 
     private Vector3[] holeStartPositions = new Vector3[]
     {
-        new Vector3(390f, 69.5f, 321f),
-        new Vector3(417.690155f, 79f, 234.9218f),
-        new Vector3(451.415436f, 80f, 172.0176f),
-        new Vector3(374.986023f, 93.3f, 99.01516f),
-        new Vector3(306.8986f, 103.3f, 89.0007248f),
-        new Vector3(235.689041f, 97.2f, 114.393f),
-        new Vector3(217.792923f, 86.5f, 163.657547f),
-        new Vector3(150.851669f, 90f, 163.362488f),
-        new Vector3(76.4118042f, 93.15f, 169.826523f)
+        new Vector3(-58.73f, 10.28f, 72.09f),
+        new Vector3(47.87f, 10.28f, 27.41f),
+        new Vector3(-100.62f, 10.28f, -69.2f)
     };
 
     private bool thisBallMoving = false;
@@ -256,7 +250,7 @@ public class SwingManager : NetworkBehaviour
         }
 
         // Define the duration over which to move the player
-        float duration = 2.3f; // Adjust as needed
+        float duration = 1f; // Adjust as needed
 
         // Store the initial position of the player
         Vector3 initialPosition = playerTransform.position;
