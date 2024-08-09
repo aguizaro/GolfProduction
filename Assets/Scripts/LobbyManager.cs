@@ -260,9 +260,6 @@ public class LobbyManager : MonoBehaviour
             ConnectedLobby = await TryQuick() ?? await Create(lobbyName, maxPeers); //redundant assignment of ConnectedLobby - this assignment is only to allow null coalescing operator
 
             if (ConnectedLobby == null) throw new LobbyServiceException(new LobbyExceptionReason(), "Lobby Error: No Lobby connected");
-
-            UIManager.instance.DeactivateUI();
-
         }
         catch (Exception e)
         {
@@ -301,8 +298,6 @@ public class LobbyManager : MonoBehaviour
             if (!joinedSuccessful) throw new LobbyServiceException(new LobbyExceptionReason(), "Join Lobby unsuccessful");
 
             if (ConnectedLobby == null) throw new LobbyServiceException(new LobbyExceptionReason(), "Lobby Error: No Lobby connected");
-
-            UIManager.instance.DeactivateUI();
 
             return true;
         }
@@ -411,8 +406,6 @@ public class LobbyManager : MonoBehaviour
 
             bool hostConnected = await StartHost();
             if (!hostConnected) throw new Exception("Failed to start host");
-
-            UIManager.instance.DeactivateUI();
 
             return ConnectedLobby;
 
@@ -675,7 +668,7 @@ public class LobbyManager : MonoBehaviour
 
             await Task.Yield();
         }
-        StartGame();
+        //StartGame(); // - this call was moved to BasicPlayerController.cs when the player is spawned in the correct position - this is to prevent the user from seeing the camera flying through world before spawn
     }
 
     private static IEnumerator HeartbeatLobbyCoroutine(string lobbyId, float waitTimeSeconds)
@@ -691,7 +684,7 @@ public class LobbyManager : MonoBehaviour
 
     // Gameplay --------------------------------------------------------------------------------------------------------------
 
-    private void StartGame()
+    public void StartGame()
     {
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -699,6 +692,7 @@ public class LobbyManager : MonoBehaviour
         gameIsActive = true;
         isQuitting = false;
 
+        Debug.Log("Game is starting");
         UIManager.instance.DeactivateUI();
         UIManager.instance.ActivateHUD();
         UIManager.instance.DisplaySignedIn();
@@ -708,15 +702,15 @@ public class LobbyManager : MonoBehaviour
 
 
         // find player object and spawn in prelobby
-        GameObject[] playersfound = GameObject.FindGameObjectsWithTag("Player");
-        foreach (GameObject player in playersfound)
-        {
-            if (player.GetComponent<NetworkObject>().OwnerClientId == NetworkManager.Singleton.LocalClientId)
-            {
+        // GameObject[] playersfound = GameObject.FindGameObjectsWithTag("Player");
+        // foreach (GameObject player in playersfound)
+        // {
+        //     if (player.GetComponent<NetworkObject>().OwnerClientId == NetworkManager.Singleton.LocalClientId)
+        //     {
 
-                player.GetComponent<BasicPlayerController>().SpawnInPreLobby();
-            }
-        }
+        //         player.GetComponent<BasicPlayerController>().SpawnInPreLobby();
+        //     }
+        // }
     }
 
     private void EndGame()
@@ -830,6 +824,9 @@ public class LobbyManager : MonoBehaviour
         {
             if (ConnectedLobby == null) return;
 
+            // delete game manager data
+            GameManager.instance.ClearPlayersData();
+
             if (ConnectedLobby.HostId == _playerId) await LobbyService.Instance.DeleteLobbyAsync(ConnectedLobby.Id);
             ConnectedLobby = null;
         }
@@ -908,7 +905,7 @@ public class LobbyManager : MonoBehaviour
     // Connection Notifications --------------------------------------------------------------------------------------------------------------
     private async void HandleClientConnectionNotification(ulong clientId, ConnectionNotificationManager.ConnectionStatus status)
     {
-        Debug.Log($"ConnectNOTIF: New player connected: {clientId}");
+        Debug.Log($"con NOTIF: Client {clientId} is {status}");
 
         if (status == ConnectionNotificationManager.ConnectionStatus.Connected)
         {
@@ -916,7 +913,7 @@ public class LobbyManager : MonoBehaviour
             if(clientId == NetworkManager.Singleton.LocalClientId){
                 if (ConnectedLobby == null) return;
                 // update LocalClientID in lobby player data and set my nameTag to my name
-                Debug.Log("ConnectNOTIF: I just connected with name: " + _playerName + " and ID: " + _playerId);
+                //Debug.Log("ConnectNOTIF: I just connected with name: " + _playerName + " and ID: " + _playerId);
                 await UpdateClientID();
 
                 Transform NameTagCanvas = NetworkManager.Singleton.LocalClient.PlayerObject.transform.Find("NameTagCanvas");
@@ -941,10 +938,7 @@ public class LobbyManager : MonoBehaviour
         }
         else if (status == ConnectionNotificationManager.ConnectionStatus.Disconnected)
         {
-            // Perform actions when a client disconnects, e.g., remove player, update UI, etc.
-            if (NetworkManager.Singleton.IsServer){
-                GameManager.instance.RemovePlayerData(clientId);
-            }
+            // REMEMBER: This function is unreliable when host changes, so RemovePlayerData has been moved to OnClientDisconnect NetManager event
         }
     }
 
@@ -1026,6 +1020,10 @@ public class LobbyManager : MonoBehaviour
         //Debug.LogWarning("NetManagerEvent: Client Disconnected: " + clientId);
         // only disconnect if the client is the local client (since this function runs simultaneously on all clients)
         if (clientId == NetworkManager.Singleton.LocalClientId) await PlayerExit();
+        else if (NetworkManager.Singleton.IsServer){
+            Debug.Log("NetManagerEvent: Player Disconnected: " + clientId + " - server removing player data");
+            GameManager.instance.RemovePlayerData(clientId); // server removes player data for a client when they disconnect - this needs to be called here because HandleClientConnectionNotification is not reliable when host keeps changing
+        }
     }
 
 

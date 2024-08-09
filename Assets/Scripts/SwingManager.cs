@@ -441,7 +441,20 @@ public class SwingManager : NetworkBehaviour
     [ServerRpc]
     void SpawnBallOnServerRpc(ulong ownerId)
     {
-        Vector3 spawnPosition = new Vector3(94.2144241f + OwnerClientId * 2, 102.18f, -136.345001f + 1f); // spawn ball in front of player
+        //find player's transform
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        Transform playerT;
+        foreach (GameObject player in players)
+        {
+            if (player.GetComponent<NetworkObject>().OwnerClientId == ownerId)
+            {
+                playerT = player.transform;
+                break;
+            }
+        }
+
+        // spawn ball in front of player
+        var spawnPosition = playerTransform.position + playerTransform.forward * 1f + playerTransform.up / 2;
         thisBall = Instantiate(ballPrefab, spawnPosition, Quaternion.identity);
         thisBallRb = thisBall.GetComponent<Rigidbody>();
         //thisBallRb.velocity = playerTransform.forward * 10f; // Example velocity
@@ -449,7 +462,6 @@ public class SwingManager : NetworkBehaviour
         if (ballNetworkObject != null)
         {
             ballNetworkObject.SpawnWithOwnership(ownerId);
-
         }
 
         //RemoveForces(); //  prevent ball from rolling

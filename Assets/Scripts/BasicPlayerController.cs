@@ -8,6 +8,7 @@ using UnityEngine.Video;
 using UnityEngine.Events;
 using FMODUnity;
 using FMOD.Studio;
+using System.Threading.Tasks;
 
 // Needs: simple way to deactivate everything on game over / game exit, so players can play again without having to re-launch the game
 public class BasicPlayerController : NetworkBehaviour
@@ -51,7 +52,7 @@ public class BasicPlayerController : NetworkBehaviour
     public bool IsActive = false;
 
     [Header("For Input System Only")]
-    [SerializeField] private bool _canInput = true;
+    [SerializeField] private bool _canInput = false; // FALSE BY DEFAULT - THIS IS SET TO TRUE AFTER PLAYER HAS SPAWNED IN PRE LOBBY
     public bool canInput // this is used to enable and disable input for the player (used for pause menu)
     {
         get
@@ -114,7 +115,7 @@ public class BasicPlayerController : NetworkBehaviour
         _playerNetworkData = GetComponent<PlayerNetworkData>();
         _flagPoles = GameObject.FindGameObjectsWithTag("HoleFlagPole");
 
-        _swingManager.Activate(); // activate swing mode
+        //_swingManager.Activate(); // activate swing mode
         _ragdollOnOff.Activate(); // activate ragdoll
         //_playerHat.RandomizeHatTexture();
         if (!IsOwner) return;
@@ -182,13 +183,15 @@ public class BasicPlayerController : NetworkBehaviour
         if (!IsOwner) return;
 
         //handle player falling through the map
-        if (transform.position.y < 40)
+        if (transform.position.y < -10)
         {
             _rb.useGravity = false;
             _rb.velocity = Vector3.zero;
 
-            if (!IsActive) SpawnInPreLobby();
-            else transform.position = new Vector3(390 + OwnerClientId * 2, 69.5f, 321); //spawn in first hole
+            int playerNum = (int)_playerNetworkData.GetPlayerData().playerNum;
+
+            if (!IsActive) SpawnInPreLobby(playerNum);
+            else transform.position = new Vector3(390 + playerNum * 2, 69.5f, 321); //spawn in first hole
 
             _rb.useGravity = true;
         }
@@ -232,7 +235,8 @@ public class BasicPlayerController : NetworkBehaviour
     public void Activate()
     {
         // spawn players at firt hole
-        _rb.MovePosition(new Vector3(398.8902f + OwnerClientId * 2, 74.67442f, 258.1134f)); //space players out by 2 units each
+        int playerNum = (int)_playerNetworkData.GetPlayerData().playerNum;
+        _rb.MovePosition(new Vector3(398.8902f +  playerNum * 2, 74.67442f, 258.1134f)); //space players out by 2 units each
         _rb.MoveRotation(Quaternion.Euler(0, -179f, 0)); //face flag pole
 
         IsActive = true;
@@ -551,10 +555,33 @@ public class BasicPlayerController : NetworkBehaviour
     }
 
     // spawn functions -------------------------------------------------------------------------------------------------------------
-    public void SpawnInPreLobby()
+    public void SpawnInPreLobby(int playerNumber)
     {
         if (!IsOwner) return;
 
-        _rb.MovePosition(new Vector3(94.2f + OwnerClientId * 2, 100.5f, -136.3f));//space players out by 2 units each
+        var spawnPos = new Vector3(94.2f + playerNumber * 2, 100.5f, -136.3f);
+        _rb.MovePosition(spawnPos);//space players out by 2 units each
+        StartCoroutine(WaitForSpawnPosition(spawnPos));
     }
+
+    // coroutine that waits for player to be spawned in pre-lobby
+    private IEnumerator WaitForSpawnPosition(Vector3 spawnPos)
+    {
+        if (Vector3.Distance(transform.position, spawnPos) > 0.01f){
+            yield return new WaitForSeconds(0.1f);
+        }
+
+        _isSpawnedAtPos = true;
+        GetComponent<StartCameraFollow>().Activate();
+        DelayedActivation();
+    }
+
+    private async void DelayedActivation()
+    {
+        await Task.Delay(1000); // slight delay to allow player to actually spwan in correct position before spawning ball ( 1000 ms is good bc we also have to wait for camera to reach player)
+        GetComponent<SwingManager>().Activate();
+        LobbyManager.Instance.StartGame();
+        GetComponent<BasicPlayerController>().canInput = true;
+    }
+
 }

@@ -8,6 +8,7 @@ using UnityEngine.Localization.Settings;
 using Unity.Netcode;
 using UnityEngine.Events;
 using Unity.Services.Lobbies.Models;
+using System.Threading.Tasks;
 
 public enum UIState
 {
@@ -500,6 +501,7 @@ public class UIManager : MonoBehaviour
 
         if (!success) Debug.LogWarning("Failed to join lobby");
         isJoining = false;
+        await Task.Delay(6000); // delay to allow UI to deactivate properly (only want to enable buttons after UI is fully deactivated -> LobbyManager.StartGame())
         EnableAllLobbyButtons();
 
     }

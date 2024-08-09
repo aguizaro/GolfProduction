@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityTimer;
 using Unity.Netcode;
+using System;
 
 public class GameManager : NetworkBehaviour
 {
@@ -17,26 +18,41 @@ public class GameManager : NetworkBehaviour
 
     // Network variables
     private NetworkVariable<float> _networkStrokeTime = new NetworkVariable<float>(10.0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private NetworkVariable<ulong> _numPlayers = new NetworkVariable<ulong>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    private ulong NumPlayers;
 
     // Hole data
     int currentHole = 1;
 
     public override void OnNetworkSpawn()
     {
+        base.OnNetworkSpawn();
         instance = this;
 
         if (IsServer)
         {
             SetStrokeTimerCheckpoint();
             StartStrokeTimer();
+        }else{
+            NumPlayers = _numPlayers.Value;
         }
 
         _networkStrokeTime.OnValueChanged += OnStrokeTimeChanged;
+        _numPlayers.OnValueChanged += OnNumPlayersChanged;
     }
 
     public override void OnDestroy()
     {
         _networkStrokeTime.OnValueChanged -= OnStrokeTimeChanged;
+        _numPlayers.OnValueChanged -= OnNumPlayersChanged;
+        base.OnDestroy();
+    }
+
+    private void OnNumPlayersChanged(ulong prevNumPlayers, ulong newNumPlayers)
+    {
+        NumPlayers = newNumPlayers;
+        Debug.Log($"Number of players changed to {NumPlayers}");
     }
 
     private void OnStrokeTimeChanged(float prevTime, float newTime)
@@ -97,6 +113,11 @@ public class GameManager : NetworkBehaviour
 
     private Dictionary<ulong, PlayerData> playersData = new Dictionary<ulong, PlayerData>();
 
+    public void ClearPlayersData()
+    {
+        playersData.Clear();
+    }
+
     public void UpdatePlayerData(PlayerData data)
     {
         if (!IsServer) { Debug.LogWarning("Game Manager is not the server. Use a ServerRpc to call this function"); return; }
@@ -112,19 +133,28 @@ public class GameManager : NetworkBehaviour
     private void UpdateData(PlayerData playerData)
     {
         if (playersData.ContainsKey(playerData.playerID)) playersData[playerData.playerID] = playerData;
-        else playersData.Add(playerData.playerID, playerData);
+        else{
+            playersData.Add(playerData.playerID, playerData);
+            _numPlayers.Value = (ulong)playersData.Count;
+        }
 
         UpdateScoreboard();
     }
 
     private void RemoveData(ulong playerID)
     {
-        if (playersData.ContainsKey(playerID))
-        {
-            playersData.Remove(playerID);
-        }
+        try{
+            if (playersData.ContainsKey(playerID))
+            {
+                playersData.Remove(playerID);
+                _numPlayers.Value = (ulong)playersData.Count;
+            }
+            Debug.Log($"Player {playerID} removed from GameManager - playersData count: {playersData.Count}");
 
-        UpdateScoreboard();
+            UpdateScoreboard();
+        }catch (NullReferenceException){
+            Debug.Log($"Error removing player {playerID} from GameManager - _numPlayers.Value is desynced");
+        }
     }
 
     private void UpdateScoreboard()
@@ -141,8 +171,7 @@ public class GameManager : NetworkBehaviour
         RemoveData(playerID);
     }
 
-    public int GetNumberOfPlayers(){
-        return playersData.Count;
+    public ulong GetNumberOfPlayers(){
+        return NumPlayers;
     }
-
 }

@@ -6,7 +6,7 @@ public class StartCameraFollow : NetworkBehaviour
     public float followSpeed = 100f;
     public float xCamRotation = 15f;
     public Vector3 camOffset = new(0f, -2f, 5f);
-    private bool isActive = true;
+    private bool isActive = false;
     private bool isSwingState = false;
 
     private bool transitioning = false;
@@ -31,8 +31,6 @@ public class StartCameraFollow : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        if (!IsOwner) isActive = false;
-
         // Initialize camera to regular position and rotation
         regularPosition = transform.position - (Quaternion.Euler(xCamRotation, transform.eulerAngles.y, 0f) * camOffset);
         regularRotation = Quaternion.Euler(xCamRotation, transform.eulerAngles.y, 0f);
@@ -44,6 +42,16 @@ public class StartCameraFollow : NetworkBehaviour
         if (ragdollOnOff != null)
         {
             currentFollowTarget = ragdollOnOff.mainCollider.transform; // Start with mainCollider as the target
+        }
+    }
+
+
+    // Camera will only follow player when Active = true
+    public void Activate()
+    {
+        if (IsOwner){
+            isActive = true;
+            Debug.Log("Camera Follow Activated");
         }
     }
 

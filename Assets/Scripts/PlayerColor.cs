@@ -76,9 +76,9 @@ public class PlayerColor : NetworkBehaviour
         //find all objects owned by this player
         GameObject[] BallObjects = GameObject.FindGameObjectsWithTag("Ball");
 
-        foreach (GameObject playerObject in BallObjects)
+        foreach (GameObject ball in BallObjects)
         {
-            playerObject.GetComponent<BallColor>().Activate();
+            ball.GetComponent<BallColor>().Activate();
         }
     }
 
@@ -94,6 +94,7 @@ public class PlayerColor : NetworkBehaviour
                 NameTagCanvas.Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(GetComponent<PlayerNetworkData>().GetPlayerData().playerName);
             }
         }
+        
     }
 
     public void CyclePlayerColor(){
@@ -103,8 +104,19 @@ public class PlayerColor : NetworkBehaviour
 
     [ServerRpc]
     private void CommitNetworkColorServerRpc(){
-        int playerNum = GameManager.instance.GetNumberOfPlayers(); //1st player = 0, 2nd player = 1, etc.
+        int playerNum = (int)GameManager.instance.GetNumberOfPlayers(); //1st player = 0, 2nd player = 1, etc.
         _netColor.Value = _colors[playerNum];
+
+        //Debug.Log($"Server assigning playerNum: {playerNum} & color {colorNames[_colors[playerNum]]} to client {OwnerClientId}");
+        NetworkManager.Singleton.ConnectedClients.TryGetValue(OwnerClientId, out var networkClient);
+        if (networkClient.PlayerObject == null) return;
+        
+        SpawnInPreLobbyClientRpc(playerNum);
+    }
+
+    [ClientRpc]
+    private void SpawnInPreLobbyClientRpc(int playerNumber){
+        if (IsOwner) GetComponent<BasicPlayerController>().SpawnInPreLobby(playerNumber);
     }
 
     [ServerRpc]
