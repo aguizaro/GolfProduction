@@ -9,6 +9,7 @@ using UnityEngine.Events;
 using FMODUnity;
 using FMOD.Studio;
 using System.Threading.Tasks;
+using Unity.Services.Lobbies.Models;
 
 // Needs: simple way to deactivate everything on game over / game exit, so players can play again without having to re-launch the game
 public class BasicPlayerController : NetworkBehaviour
@@ -235,11 +236,6 @@ public class BasicPlayerController : NetworkBehaviour
 
     public void Activate()
     {
-        // spawn players at firt hole
-        int playerNum = (int)_playerNetworkData.GetPlayerData().playerNum;
-        _rb.MovePosition(new Vector3(398.8902f +  playerNum * 2, 74.67442f, 258.1134f)); //space players out by 2 units each
-        _rb.MoveRotation(Quaternion.Euler(0, -179f, 0)); //face flag pole
-
         IsActive = true;
 
         if (IsServer)
@@ -247,12 +243,9 @@ public class BasicPlayerController : NetworkBehaviour
             //activate spider
             //GameObject spider = Instantiate(spiderPrefab, new Vector3(-51.4f, 11.4f, 37.97f), Quaternion.identity);
             //spider.GetComponent<NetworkObject>().Spawn();
-
-            // swing open lobby gates
-            _gateAnimator = GameObject.FindWithTag("Gates").GetComponent<Animator>();
-            _gateAnimator.SetTrigger("OpenGate");
-            Debug.Log("Open gates");
         }
+
+        if (IsOwner) OpenGate();
 
         // activate flag poles - in scene placed network objects (server auth) -update this later to be dynamically spawned by server
         foreach (GameObject flagPole in _flagPoles)
@@ -283,6 +276,8 @@ public class BasicPlayerController : NetworkBehaviour
         _ragdollOnOff.Deactivate();
         _swingManager.Deactivate();
 
+        if (IsOwner) CloseGate();
+
         if (!IsOwner) return;
         UIManager.instance.onEnablePause.RemoveListener(DisableInput);
         UIManager.instance.onDisablePause.RemoveListener(EnableInput);
@@ -302,6 +297,27 @@ public class BasicPlayerController : NetworkBehaviour
     {
         Deactivate();
         base.OnDestroy();
+    }
+
+
+    void OpenGate()
+    {
+        Debug.Log("openGate called for player " + OwnerClientId + " - isOwner: " + IsOwner);
+
+        _gateAnimator = GameObject.FindWithTag("Gates").GetComponent<Animator>();
+        _gateAnimator.SetTrigger("OpenGate");
+
+        // play gate open sound
+    }
+
+    void CloseGate()
+    {
+        if (!IsOwner) return;
+
+        _gateAnimator = GameObject.FindWithTag("Gates").GetComponent<Animator>();
+        _gateAnimator.SetTrigger("CloseGate"); // this animation does not exist yet - DELETE THIS COMMENT WHEN ANIMATION IS CREATED
+
+        // play gate close sound
     }
 
 
@@ -566,7 +582,7 @@ public class BasicPlayerController : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        var spawnPos = new Vector3(94.2f + playerNumber * 2, 100.5f, -136.3f);
+        var spawnPos = new Vector3(-80f + playerNumber * 2, 10f, 64.25f);
         _rb.MovePosition(spawnPos);//space players out by 2 units each
         StartCoroutine(WaitForSpawnPosition(spawnPos));
     }

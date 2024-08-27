@@ -119,11 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!224 &2946650 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 4884301940579690370, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
-  m_PrefabInstance: {fileID: 4300147152962470402}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &3160328
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5295,7 +5290,7 @@ RectTransform:
   m_LocalScale: {x: 1.3504936, y: 0.21022972, z: 0.98232}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2946650}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -6244,7 +6239,6 @@ GameObject:
   - component: {fileID: 1606576231}
   - component: {fileID: 1606576230}
   - component: {fileID: 1606576233}
-  - component: {fileID: 1606576234}
   m_Layer: 0
   m_Name: NetManager
   m_TagString: Untagged
@@ -7406,7 +7400,7 @@ Camera:
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 1015
+    m_Bits: 3063
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -7430,8 +7424,7 @@ Transform:
   m_LocalPosition: {x: 75.74, y: 13.93, z: -79.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 553288869}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 6.369, y: 85.032, z: 0.366}
 --- !u!114 &1963442868
@@ -8261,7 +8254,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7476103473688415914, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1185050484}
   m_SourcePrefab: {fileID: 100100000, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
 --- !u!33 &4816176388156945111
 MeshFilter:
@@ -8429,3 +8425,4 @@ SceneRoots:
   - {fileID: 4300147152962470402}
   - {fileID: 1234363860}
   - {fileID: 503854490}
+  - {fileID: 1285988143}
