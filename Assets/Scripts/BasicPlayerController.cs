@@ -147,7 +147,7 @@ public class BasicPlayerController : NetworkBehaviour
         #endregion
 
         GameObject.Find("Main Camera").GetComponent<StudioListener>().SetAttenuationObject(gameObject);
-        AudioManager.instance.PlayTimelineSoundForAllClients(FMODEvents.instance.playerFootsteps, gameObject);
+        //AudioManager.instance.PlayTimelineSoundForAllClients(FMODEvents.instance.playerFootsteps, gameObject);
         //playerFootsteps = AudioManager.instance.CreateInstance(FMODEvents.instance.playerFootsteps, gameObject);
 
         // activate player controller - controller will activate the player movement, animations, shooting and ragdoll
@@ -223,8 +223,8 @@ public class BasicPlayerController : NetworkBehaviour
         if (IsServer)
         {
             //activate spider
-            GameObject spider = Instantiate(spiderPrefab, new Vector3(-51.4f, 11.4f, 37.97f), Quaternion.identity);
-            spider.GetComponent<NetworkObject>().Spawn();
+            //GameObject spider = Instantiate(spiderPrefab, new Vector3(-51.4f, 11.4f, 37.97f), Quaternion.identity);
+            //spider.GetComponent<NetworkObject>().Spawn();
 
             // swing open lobby gates
             _gateAnimator = GameObject.FindWithTag("Gates").GetComponent<Animator>();
