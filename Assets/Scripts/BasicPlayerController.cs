@@ -567,15 +567,16 @@ public class BasicPlayerController : NetworkBehaviour
     // coroutine that waits for player to be spawned in pre-lobby
     private IEnumerator WaitForSpawnPosition(Vector3 spawnPos)
     {
-        if (Vector3.Distance(transform.position, spawnPos) > 0.01f){
+        if (Vector3.Distance(transform.position, spawnPos) > 0.001f){
             yield return new WaitForSeconds(0.1f);
         }
 
         _isSpawnedAtPos = true;
         GetComponent<StartCameraFollow>().Activate();
-        DelayedActivation();
+        DelayedActivation(); 
     }
 
+    // spawns ball after slight delay then calls LobbyManager StartGame() and enables player input
     private async void DelayedActivation()
     {
         await Task.Delay(1000); // slight delay to allow player to actually spwan in correct position before spawning ball ( 1000 ms is good bc we also have to wait for camera to reach player)

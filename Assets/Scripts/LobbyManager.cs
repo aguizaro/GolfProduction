@@ -694,6 +694,7 @@ public class LobbyManager : MonoBehaviour
 
         Debug.Log("Game is starting");
         UIManager.instance.DeactivateUI();
+        UIManager.instance.EnableAllLobbyButtons();
         UIManager.instance.ActivateHUD();
         UIManager.instance.DisplaySignedIn();
         UIManager.instance.DisplayCode(ConnectedLobby.LobbyCode);

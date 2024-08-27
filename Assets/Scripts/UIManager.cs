@@ -190,7 +190,6 @@ public class UIManager : MonoBehaviour
         //await LobbyManager.Instance.PlayNow();
         await LobbyManager.Instance.PlayNow(_inputField.text);
         _inputField.text = "";
-        EnableAllLobbyButtons();
     }
     private async void CreateLobby()
     {
@@ -199,7 +198,6 @@ public class UIManager : MonoBehaviour
         //await LobbyManager.Instance.Create(_inputField.text, 5);
         await LobbyManager.Instance.Create(_inputField.text);
         _inputField.text = "";
-        EnableAllLobbyButtons();
     }
     private async void JoinLobby()
     {
@@ -207,7 +205,6 @@ public class UIManager : MonoBehaviour
         PlayUISelectSFX();
         await LobbyManager.Instance.Join(joinCode: _inputField.text);
         _inputField.text = "";
-        EnableAllLobbyButtons();
     }
 
 
@@ -501,9 +498,6 @@ public class UIManager : MonoBehaviour
 
         if (!success) Debug.LogWarning("Failed to join lobby");
         isJoining = false;
-        await Task.Delay(6000); // delay to allow UI to deactivate properly (only want to enable buttons after UI is fully deactivated -> LobbyManager.StartGame())
-        EnableAllLobbyButtons();
-
     }
 
     public void ClearDisplayList()
@@ -531,7 +525,7 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    private void EnableAllLobbyButtons()
+    public void EnableAllLobbyButtons()
     {
         _createButton.enabled = true;
         _joinButton.enabled = true;
