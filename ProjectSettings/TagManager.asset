@@ -11,6 +11,7 @@ TagManager:
   - HoleFlagPole
   - Hips
   - Game Manager
+  - Gates
   layers:
   - Default
   - TransparentFX

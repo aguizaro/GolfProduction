@@ -38,6 +38,7 @@ public class BasicPlayerController : NetworkBehaviour
     // Animation
     private Animator _animator;
     private GameObject[] _flagPoles;
+    private Animator _gateAnimator;
 
     // Spawning
     private bool _isSpawnedAtPos = false; // used to check if player has been spawned in correct position
@@ -244,8 +245,13 @@ public class BasicPlayerController : NetworkBehaviour
         if (IsServer)
         {
             //activate spider
-            GameObject spider = Instantiate(spiderPrefab, new Vector3(391, 72.1f, 289), Quaternion.identity);
-            spider.GetComponent<NetworkObject>().Spawn();
+            //GameObject spider = Instantiate(spiderPrefab, new Vector3(-51.4f, 11.4f, 37.97f), Quaternion.identity);
+            //spider.GetComponent<NetworkObject>().Spawn();
+
+            // swing open lobby gates
+            _gateAnimator = GameObject.FindWithTag("Gates").GetComponent<Animator>();
+            _gateAnimator.SetTrigger("OpenGate");
+            Debug.Log("Open gates");
         }
 
         // activate flag poles - in scene placed network objects (server auth) -update this later to be dynamically spawned by server
@@ -521,6 +527,7 @@ public class BasicPlayerController : NetworkBehaviour
 
     public void HandleScoreBoardStarted(InputAction.CallbackContext ctx)
     {
+        UIManager.instance.scoreboardUI.SetActive(true);
         //TODO: Turn on Score Board Panel 
         //Debug.Log("Tab pressed");
     }
