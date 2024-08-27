@@ -132,7 +132,7 @@ public class SwingManager : NetworkBehaviour
                     playerAnimator.SetTrigger("Swing");
                     playerAnimator.ResetTrigger("Stance");
 
-                    Debug.Log("performing swing animation on ragdolled player");
+                    //Debug.Log("performing swing animation on ragdolled player");
 
                     //PerformSwingOnPlayer();
                 }
@@ -283,7 +283,7 @@ public class SwingManager : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        Debug.Log($"PerformSwing() called from player: {OwnerClientId}, is ragdolled player null? {ragdolled_player == null}");
+        //Debug.Log($"PerformSwing() called from player: {OwnerClientId}, is ragdolled player null? {ragdolled_player == null}");
         // if (ragdolled_player != null)
         // {
         //     // still need to reset triggers since performSwingonPlayer does not exit swing mode (swing on player is handled in Update())
@@ -292,12 +292,12 @@ public class SwingManager : NetworkBehaviour
         // }
         if (ragdolled_player == null && thisBall != null)
         {
-            Debug.Log("Perform Swing on Ball");
+            //Debug.Log("Perform Swing on Ball");
             PerformSwingOnBall();
         }
         else
         {
-            Debug.Log("Perform Swing on Player");
+            //Debug.Log("Perform Swing on Player");
             PerformSwingOnPlayer();
         }
     }
@@ -382,8 +382,6 @@ public class SwingManager : NetworkBehaviour
         // Play sound effect for swinging the ball
         AudioManager.instance.PlayOneShotForAllClients(FMODEvents.instance.playerGolfSwing, _playerController.transform.position, IsOwner);
 
-        Debug.Log("force dir: " + dir);
-        Debug.Log("force vector: " + swingForceVector);
         //ask the ragdolled player to add force on themselves
         if (ragdolled_player != null)
         {
@@ -437,7 +435,20 @@ public class SwingManager : NetworkBehaviour
     [ServerRpc]
     void SpawnBallOnServerRpc(ulong ownerId)
     {
-        Vector3 spawnPosition = new Vector3(94.2144241f + OwnerClientId * 2, 102.18f, -136.345001f + 1f); // spawn ball in front of player
+        //find player's transform
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        Transform playerT;
+        foreach (GameObject player in players)
+        {
+            if (player.GetComponent<NetworkObject>().OwnerClientId == ownerId)
+            {
+                playerT = player.transform;
+                break;
+            }
+        }
+
+        // spawn ball in front of player
+        var spawnPosition = playerTransform.position + playerTransform.forward * 1f + playerTransform.up / 2;
         thisBall = Instantiate(ballPrefab, spawnPosition, Quaternion.identity);
         thisBallRb = thisBall.GetComponent<Rigidbody>();
         //thisBallRb.velocity = playerTransform.forward * 10f; // Example velocity
@@ -445,7 +456,6 @@ public class SwingManager : NetworkBehaviour
         if (ballNetworkObject != null)
         {
             ballNetworkObject.SpawnWithOwnership(ownerId);
-
         }
 
         //RemoveForces(); //  prevent ball from rolling
@@ -672,7 +682,7 @@ public class SwingManager : NetworkBehaviour
         {
             ExitSwingMode();
         }
-        else if (thisBall != null)
+        else if (thisBall != null && !_ragdollOnOff.IsRagdoll())
         {
             ReturnBallToPlayer();
 

@@ -2,7 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
-
+using System;
+using Unity.VisualScripting;
+using UnityEditor.TerrainTools;
+using System.Threading.Tasks;
 public class RagdollOnOff : NetworkBehaviour
 {
     public CapsuleCollider mainCollider;
@@ -33,12 +36,21 @@ public class RagdollOnOff : NetworkBehaviour
     private float _timeToResetBones = 0.5f;
     private float _elapsedResetBonesTime;
 
+    private bool nameTagParentedToHips = false;
+
+    private LoadingBar _loadingBar;
+
 
     private class BoneTransform
     {
         public Vector3 Position { get; set; }
 
         public Quaternion Rotation { get; set; }
+    }
+
+    void Start()
+    {
+        _loadingBar = transform.Find("NameTagCanvas").Find("NameTag").Find("RadialLoadingBar").GetComponent<LoadingBar>();
     }
 
 
@@ -53,15 +65,7 @@ public class RagdollOnOff : NetworkBehaviour
         _swingManager = GetComponentInChildren<SwingManager>();
         delay = getUpDelay;
 
-        // Find and reference the players hips bone
-        foreach (Transform child in transform)
-        {
-            if (child.CompareTag("Hips"))
-            {
-                _hipsBone = child;
-                break;
-            }
-        }
+        _hipsBone = playerRig.transform;
 
         _bones = _hipsBone.GetComponentsInChildren<Transform>();
         _standUpBoneTransforms = new BoneTransform[_bones.Length];
@@ -99,9 +103,12 @@ public class RagdollOnOff : NetworkBehaviour
 
 
     // Update Loop -------------------------------------------------------------------------------------------------------------
-    void Update()
+    async void Update()
     {
         if (!isActive) return; //prevent updates until player is fully activated
+
+        if (nameTagParentedToHips) UpdateNameTagPositionOnHips(); // set nametag position to hover above hips (avoids nameTag rotation issues)
+
         if (!IsOwner) return;
 
         if (isRagdoll) //auto reset ragdoll after delay
@@ -113,6 +120,22 @@ public class RagdollOnOff : NetworkBehaviour
                 delay = getUpDelay;
                 ResetRagdoll();
             }
+
+            if (alreadyLaunched && _hipsBone.GetComponent<Rigidbody>().velocity.magnitude < 0.1f)
+            {
+                // prevent user from moving before transform is moved to hips position
+                _basicPlayerController.canMove = false;
+                _basicPlayerController.canLook = false;
+
+                await Task.Delay(500); // delay is needed to prevent player from having control when moving tranform to hips position (if this is removed, user movment takes priority over transform movement and may not work as expected)
+                transform.position = _hipsBone.position;
+                await Task.Delay(500); // delay is needed here to allow transform to move to hips position before parenting - 500 is the minimum delay that works
+
+                if (!ReParentHips()) {Debug.LogWarning("Hips could not be reparented"); return;}
+                alreadyLaunched = false; // this allows the camera to follow the main collider again (root transform)
+                _basicPlayerController.canLook = true; // allow player to look around
+                
+            }
         }
 
         if (Input.GetKeyDown(KeyCode.T))
@@ -123,6 +146,56 @@ public class RagdollOnOff : NetworkBehaviour
         {
             ResetRagdoll();
         }
+
+        if (Input.GetKeyDown(KeyCode.U))
+        {
+            PerformRagdoll();
+            AddForceToSelf(Vector3.forward * 30);
+        }
+    }
+    // Parenting Logic ------------------------------------------------------------------------------------------------------------
+
+    private bool UnParentHips(){
+        
+        Vector3 hipsPosition = _hipsBone.position;
+        Quaternion hipsRotation = _hipsBone.rotation;
+        _hipsBone.parent = null;
+
+        _hipsBone.position = hipsPosition;
+        _hipsBone.rotation = hipsRotation;
+
+        return _hipsBone.parent == null;
+    }
+
+    private bool ReParentHips(){
+        if (_hipsBone.parent == transform) return true;
+        _hipsBone.parent = transform;
+        return _hipsBone.parent == transform;
+    }
+
+    private bool ParentNameTagToHips(){
+        Transform nameTag = transform.Find("NameTagCanvas");
+        if (nameTag == null) return false;
+        nameTag.parent = _hipsBone;
+        nameTag.localPosition = Vector3.zero;
+        nameTagParentedToHips = true; // might want to move this in case parenting fails
+        return nameTag.parent == _hipsBone;
+    }
+
+    private bool RestoreNameTagParent(){
+        Transform nameTag = _hipsBone.Find("NameTagCanvas");
+        if (nameTag == null) return false;
+        nameTag.parent = transform;
+        nameTag.localPosition = new Vector3(0, 15f, 0);
+        nameTagParentedToHips = false; // might want to move this in case parenting fails
+        return nameTag.parent == transform;
+    }
+
+    private void UpdateNameTagPositionOnHips(){
+        Transform nameTag = _hipsBone.Find("NameTagCanvas");
+        if (nameTag == null) return;
+        Vector3 worldPosition = _hipsBone.position + Vector3.up;
+        nameTag.position = worldPosition;
     }
 
 
@@ -153,12 +226,15 @@ public class RagdollOnOff : NetworkBehaviour
         if (isRagdoll) return; //don't activate if already in ragdoll mode
 
         delay = getUpDelay; // reset delay every time ragdoll mode is activated - avoids instant reset
-        if (_swingManager.isInSwingState())
-        {
-            _swingManager.ExitSwingMode();
-        }
+
+        if (IsOwner) _loadingBar.StartLoadingBar(getUpDelay); // start loading bar for local player
+
+        if (_swingManager.isInSwingState()) _swingManager.ExitSwingMode(); // exit swing mode if in swing state
+
         _playerAnimator.enabled = false;
         _basicPlayerController.canMove = false; // it would be nice to disable input but still allow the player to move the camera (only allow input rotation)
+
+        if (!ParentNameTagToHips()) {Debug.LogWarning("NameTag could not be parented to hips"); return;} //parent nametag to hips
 
         foreach (Collider col in ragdollColliders)
         {
@@ -178,9 +254,19 @@ public class RagdollOnOff : NetworkBehaviour
 
     }
     // Dev Note: Don't call this function directly. Use the RPCs instead. - this will only exectute locally
-    void RagdollModeOff()
+    async void RagdollModeOff()
     {
         if (!isRagdoll) return; //don't deactivate if not in ragdoll mode
+
+        _basicPlayerController.canMove = false;
+        _basicPlayerController.canLook = false;
+
+        await Task.Delay(500); // delay is needed to prevent player from having control when moving tranform to hips position (if this is removed, user movment takes priority over transform movement and may not work as expected)
+        transform.position = _hipsBone.position;
+
+        await Task.Delay(500); // delay is needed here to allow transform to move to hips position before parenting - 500 is the minimum delay that works
+        if (!ReParentHips()) {Debug.LogWarning("Hips could not be reparented"); return;}
+        if (!RestoreNameTagParent()) {Debug.LogWarning("NameTag could not be reparented to player"); return;}
 
         _isFacingUp = _hipsBone.forward.y > 0;
 
@@ -194,8 +280,8 @@ public class RagdollOnOff : NetworkBehaviour
         }
 
         // Update the main colliders position to the hips using helper function
-        AlignRotationToHips();
-        AlignMainColliderToHips();
+        //AlignRotationToHips();
+        //AlignMainColliderToHips();
         PopulateBoneTransforms(_ragdollBoneTransforms);
 
         _elapsedResetBonesTime = 0;
@@ -274,13 +360,13 @@ public class RagdollOnOff : NetworkBehaviour
     [ClientRpc]
     private void AddForceToSelfClientRpc(Vector3 force)
     {
+        if (!UnParentHips()) {Debug.LogWarning("Hips could not be unparented"); return;}
+
         foreach (Rigidbody limb in limbsRigidBodies)
         {
             if (limb != playerRB) limb.AddForce(force, ForceMode.Impulse);
         }
         alreadyLaunched = true;
-
-        Debug.Log($"Already launched: {alreadyLaunched} for owner: {OwnerClientId} isOwner: {IsOwner}");
     }
 
     // helper functions -----------------------------------------
@@ -308,7 +394,7 @@ public class RagdollOnOff : NetworkBehaviour
                     elapsedPercentage);
             }
 
-            Debug.Log(elapsedPercentage + " elapsedPercentage");
+            //Debug.Log(elapsedPercentage + " elapsedPercentage");
             yield return null; // Wait for the next frame
         }
 
@@ -320,8 +406,13 @@ public class RagdollOnOff : NetworkBehaviour
 
     private void AlignMainColliderToHips()
     {
-        Vector3 originalHipsPosition = _hipsBone.position;
-        transform.position = _hipsBone.position;
+        Vector3 originalHipsPosition = GameObject.FindWithTag("Hips").transform.position;
+        //find dist between hips and pos
+        float dist = Vector3.Distance(transform.position, originalHipsPosition);
+        if (dist < 100) 
+        {
+            transform.position = originalHipsPosition;
+        }
 
         /*
         // This section is meant to put the hips in the right spot to prevent the little amount of sliding that happens \
@@ -363,7 +454,6 @@ public class RagdollOnOff : NetworkBehaviour
 
     private void PopulateBoneTransforms(BoneTransform[] boneTransforms)
     {
-        Debug.Log("PopulateBoneTransforms() Called");
         for (int boneIndex = 0; boneIndex < _bones.Length; boneIndex++)
         {
             boneTransforms[boneIndex].Position = _bones[boneIndex].localPosition;
@@ -373,7 +463,6 @@ public class RagdollOnOff : NetworkBehaviour
 
     private void PopulateAnimationStartBoneTransforms(string clipName, BoneTransform[] boneTransforms)
     {
-        Debug.Log("PopulateAnimationStartBoneTransforms() Called");
         Vector3 positionBeforeSampling = transform.position;
         Quaternion rotationBeforeSampling = transform.rotation;
 
@@ -387,15 +476,14 @@ public class RagdollOnOff : NetworkBehaviour
             }
         }
 
-        transform.position = positionBeforeSampling;
-        transform.rotation = rotationBeforeSampling;
+        //transform.position = positionBeforeSampling;
+        //transform.rotation = rotationBeforeSampling;
     }
 
 
     //
     private IEnumerator WaitForAnimationAndExecuteLogic(string animationName)
     {
-        Debug.Log("Waitforanim coroutine called");
         AnimatorStateInfo animationState = _playerAnimator.GetCurrentAnimatorStateInfo(0);
 
         while (!animationState.IsName(animationName))
@@ -411,11 +499,12 @@ public class RagdollOnOff : NetworkBehaviour
         }
         // Animation finished, execute further logic
         _basicPlayerController.canMove = true;
+        _basicPlayerController.canLook = true;
+
         mainCollider.enabled = true;
         playerRB.isKinematic = false;
         isRagdoll = false;
         alreadyLaunched = false;
-        Debug.Log($"Already launched: {alreadyLaunched} for owner: {OwnerClientId} isOwner: {IsOwner}");
         StartCoroutine(DelayedGravityActivation());
     }
 
@@ -452,6 +541,9 @@ public class RagdollOnOff : NetworkBehaviour
         if (IsOwner)
         {
             delay = getUpDelay; //reset delay to avoid instant reset after force is applied
+
+            _loadingBar.RestartLoadingBar(getUpDelay);
+
             AddForceToSelfServerRpc(force * 2.5f);
             playerRB.useGravity = false;
             playerRB.isKinematic = false;

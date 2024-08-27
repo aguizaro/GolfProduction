@@ -8,6 +8,8 @@ using UnityEngine.Video;
 using UnityEngine.Events;
 using FMODUnity;
 using FMOD.Studio;
+using System.Threading.Tasks;
+using Unity.Services.Lobbies.Models;
 
 // Needs: simple way to deactivate everything on game over / game exit, so players can play again without having to re-launch the game
 public class BasicPlayerController : NetworkBehaviour
@@ -52,8 +54,8 @@ public class BasicPlayerController : NetworkBehaviour
     public bool IsActive = false;
 
     [Header("For Input System Only")]
-    [SerializeField] private bool _canInput = true;
-    public bool canInput
+    [SerializeField] private bool _canInput = false; // FALSE BY DEFAULT - THIS IS SET TO TRUE AFTER PLAYER HAS SPAWNED IN PRE LOBBY
+    public bool canInput // this is used to enable and disable input for the player (used for pause menu)
     {
         get
         {
@@ -65,7 +67,7 @@ public class BasicPlayerController : NetworkBehaviour
         }
     }
     [SerializeField] private bool _canMove = true;
-    public bool canMove
+    public bool canMove // enable and disable movement for the player (used for ragdoll mode)
     {
         get
         {
@@ -77,7 +79,7 @@ public class BasicPlayerController : NetworkBehaviour
         }
     }
     [SerializeField] private bool _canLook = true;
-    public bool canLook
+    public bool canLook // enable and disable looking for the player (used for ragdoll mode)
     {
         get
         {
@@ -115,7 +117,7 @@ public class BasicPlayerController : NetworkBehaviour
         _playerNetworkData = GetComponent<PlayerNetworkData>();
         _flagPoles = GameObject.FindGameObjectsWithTag("HoleFlagPole");
 
-        _swingManager.Activate(); // activate swing mode
+        //_swingManager.Activate(); // activate swing mode
         _ragdollOnOff.Activate(); // activate ragdoll
         //_playerHat.RandomizeHatTexture();
         if (!IsOwner) return;
@@ -147,7 +149,15 @@ public class BasicPlayerController : NetworkBehaviour
         #endregion
 
         GameObject.Find("Main Camera").GetComponent<StudioListener>().SetAttenuationObject(gameObject);
+
+
+        // THIS LINE IS THROWING AN ERROR: --------------------------------------------------------------------------------------------------------------------------------
+            // - InvalidOperationException: An RPC called on a NetworkObject that is not in the spawned objects list. Please make sure the NetworkObject is spawned before calling RPCs.
+            // - This error occurs when a player leaves a game and attempts to host a new game 
         //AudioManager.instance.PlayTimelineSoundForAllClients(FMODEvents.instance.playerFootsteps, gameObject);
+        // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
         //playerFootsteps = AudioManager.instance.CreateInstance(FMODEvents.instance.playerFootsteps, gameObject);
 
         // activate player controller - controller will activate the player movement, animations, shooting and ragdoll
@@ -175,12 +185,15 @@ public class BasicPlayerController : NetworkBehaviour
         if (!IsOwner) return;
 
         //handle player falling through the map
-        if (transform.position.y < 0)
+        if (transform.position.y < -10)
         {
             _rb.useGravity = false;
             _rb.velocity = Vector3.zero;
 
-            SpawnInPreLobby();
+            int playerNum = (int)_playerNetworkData.GetPlayerData().playerNum;
+
+            if (!IsActive) SpawnInPreLobby(playerNum);
+            else transform.position = new Vector3(390 + playerNum * 2, 69.5f, 321); //spawn in first hole
 
             _rb.useGravity = true;
         }
@@ -202,10 +215,16 @@ public class BasicPlayerController : NetworkBehaviour
 
             }
 
-            // Randomize player's hat config
+            // Cycle player's hat config
             if (IsOwner && Input.GetKeyDown(KeyCode.L))
             {
-                _playerHat.RandomizeHatConfig();
+                _playerHat.CycleHatConfig();
+            }
+
+            // Cycle player's color config
+            if (IsOwner && Input.GetKeyDown(KeyCode.K))
+            {
+                GetComponent<PlayerColor>().CyclePlayerColor();
             }
         }
 
@@ -217,7 +236,6 @@ public class BasicPlayerController : NetworkBehaviour
 
     public void Activate()
     {
-
         IsActive = true;
 
         if (IsServer)
@@ -225,12 +243,9 @@ public class BasicPlayerController : NetworkBehaviour
             //activate spider
             //GameObject spider = Instantiate(spiderPrefab, new Vector3(-51.4f, 11.4f, 37.97f), Quaternion.identity);
             //spider.GetComponent<NetworkObject>().Spawn();
-
-            // swing open lobby gates
-            _gateAnimator = GameObject.FindWithTag("Gates").GetComponent<Animator>();
-            _gateAnimator.SetTrigger("OpenGate");
-            Debug.Log("Open gates");
         }
+
+        if (IsOwner) OpenGate();
 
         // activate flag poles - in scene placed network objects (server auth) -update this later to be dynamically spawned by server
         foreach (GameObject flagPole in _flagPoles)
@@ -241,10 +256,12 @@ public class BasicPlayerController : NetworkBehaviour
         }
 
         // set initial player state when game starts (after pre-lobby)
+        _currentPlayerState = _playerNetworkData.GetPlayerData();
         _currentPlayerState.currentHole = 1;
-        _currentPlayerState.playerColor = playerColor;
-        _currentPlayerState.playerID = OwnerClientId;
         UpdatePlayerState(_currentPlayerState);
+
+        // notify players that the lobby is locked
+        UIManager.instance.DisplayNotification("Game On! Lobby is now locked");
     }
 
 
@@ -258,6 +275,8 @@ public class BasicPlayerController : NetworkBehaviour
         }
         _ragdollOnOff.Deactivate();
         _swingManager.Deactivate();
+
+        if (IsOwner) CloseGate();
 
         if (!IsOwner) return;
         UIManager.instance.onEnablePause.RemoveListener(DisableInput);
@@ -278,6 +297,27 @@ public class BasicPlayerController : NetworkBehaviour
     {
         Deactivate();
         base.OnDestroy();
+    }
+
+
+    void OpenGate()
+    {
+        Debug.Log("openGate called for player " + OwnerClientId + " - isOwner: " + IsOwner);
+
+        _gateAnimator = GameObject.FindWithTag("Gates").GetComponent<Animator>();
+        _gateAnimator.SetTrigger("OpenGate");
+
+        // play gate open sound
+    }
+
+    void CloseGate()
+    {
+        if (!IsOwner) return;
+
+        _gateAnimator = GameObject.FindWithTag("Gates").GetComponent<Animator>();
+        _gateAnimator.SetTrigger("CloseGate"); // this animation does not exist yet - DELETE THIS COMMENT WHEN ANIMATION IS CREATED
+
+        // play gate close sound
     }
 
 
@@ -505,13 +545,12 @@ public class BasicPlayerController : NetworkBehaviour
     {
         UIManager.instance.scoreboardUI.SetActive(true);
         //TODO: Turn on Score Board Panel 
-        Debug.Log("Tab pressed");
+        //Debug.Log("Tab pressed");
     }
     public void HandleScoreBoardCanceled(InputAction.CallbackContext ctx)
     {
         //TODO: Turn off Score Board Panel
-         UIManager.instance.scoreboardUI.SetActive(false);
-        Debug.Log("Tab released");
+        //Debug.Log("Tab released");
     }
     #endregion
 
@@ -539,10 +578,34 @@ public class BasicPlayerController : NetworkBehaviour
     }
 
     // spawn functions -------------------------------------------------------------------------------------------------------------
-    public void SpawnInPreLobby()
+    public void SpawnInPreLobby(int playerNumber)
     {
         if (!IsOwner) return;
 
-        _rb.MovePosition(new Vector3(-80f + OwnerClientId * 2, 10f, 64.25f)); //space players out by 2 units each
+        var spawnPos = new Vector3(-80f + playerNumber * 2, 10f, 64.25f);
+        _rb.MovePosition(spawnPos);//space players out by 2 units each
+        StartCoroutine(WaitForSpawnPosition(spawnPos));
     }
+
+    // coroutine that waits for player to be spawned in pre-lobby
+    private IEnumerator WaitForSpawnPosition(Vector3 spawnPos)
+    {
+        if (Vector3.Distance(transform.position, spawnPos) > 0.001f){
+            yield return new WaitForSeconds(0.1f);
+        }
+
+        _isSpawnedAtPos = true;
+        GetComponent<StartCameraFollow>().Activate();
+        DelayedActivation(); 
+    }
+
+    // spawns ball after slight delay then calls LobbyManager StartGame() and enables player input
+    private async void DelayedActivation()
+    {
+        await Task.Delay(1000); // slight delay to allow player to actually spwan in correct position before spawning ball ( 1000 ms is good bc we also have to wait for camera to reach player)
+        GetComponent<SwingManager>().Activate();
+        LobbyManager.Instance.StartGame();
+        GetComponent<BasicPlayerController>().canInput = true;
+    }
+
 }
