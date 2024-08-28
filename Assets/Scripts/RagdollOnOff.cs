@@ -103,6 +103,8 @@ public class RagdollOnOff : NetworkBehaviour
 
 
     // Update Loop -------------------------------------------------------------------------------------------------------------
+
+    private bool waitingOnTask = false;
     async void Update()
     {
         if (!isActive) return; //prevent updates until player is fully activated
@@ -121,8 +123,17 @@ public class RagdollOnOff : NetworkBehaviour
                 ResetRagdoll();
             }
 
-            if (alreadyLaunched && _hipsBone.GetComponent<Rigidbody>().velocity.magnitude < 0.1f)
+            if (!waitingOnTask && alreadyLaunched && _hipsBone.GetComponent<Rigidbody>().velocity.magnitude < 0.01f)
             {
+                waitingOnTask = true;
+                await Task.Delay(100);
+                if (_hipsBone.GetComponent<Rigidbody>().velocity.magnitude > 0.01f){
+                    waitingOnTask = false;
+                    return;
+                }
+
+                Debug.Log("Veloity reached " + _hipsBone.GetComponent<Rigidbody>().velocity.magnitude);
+
                 // prevent user from moving before transform is moved to hips position
                 _basicPlayerController.canMove = false;
                 _basicPlayerController.canLook = false;
@@ -133,6 +144,7 @@ public class RagdollOnOff : NetworkBehaviour
 
                 if (!ReParentHips()) {Debug.LogWarning("Hips could not be reparented"); return;}
                 alreadyLaunched = false; // this allows the camera to follow the main collider again (root transform)
+                waitingOnTask = false;
                 _basicPlayerController.canLook = true; // allow player to look around
                 
             }

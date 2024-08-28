@@ -302,8 +302,6 @@ public class BasicPlayerController : NetworkBehaviour
 
     void OpenGate()
     {
-        Debug.Log("openGate called for player " + OwnerClientId + " - isOwner: " + IsOwner);
-
         _gateAnimator = GameObject.FindWithTag("Gates").GetComponent<Animator>();
         _gateAnimator.SetTrigger("OpenGate");
 
@@ -315,7 +313,7 @@ public class BasicPlayerController : NetworkBehaviour
         if (!IsOwner) return;
 
         _gateAnimator = GameObject.FindWithTag("Gates").GetComponent<Animator>();
-        _gateAnimator.SetTrigger("CloseGate"); // this animation does not exist yet - DELETE THIS COMMENT WHEN ANIMATION IS CREATED
+        //_gateAnimator.SetTrigger("CloseGate"); // this animation does not exist yet - DELETE THIS COMMENT WHEN ANIMATION IS CREATED
 
         // play gate close sound
     }

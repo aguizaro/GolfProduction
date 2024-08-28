@@ -304,6 +304,7 @@ public class LobbyManager : MonoBehaviour
         catch (Exception e)
         {
             Debug.LogWarning($"Failed to join lobby: {e.Message}");
+            UIManager.instance.EnableAllLobbyButtons();
             return false;
         }
 
@@ -686,32 +687,24 @@ public class LobbyManager : MonoBehaviour
 
     public void StartGame()
     {
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        try{
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
 
-        gameIsActive = true;
-        isQuitting = false;
+            gameIsActive = true;
+            isQuitting = false;
 
-        Debug.Log("Game is starting");
-        UIManager.instance.DeactivateUI();
-        UIManager.instance.EnableAllLobbyButtons();
-        UIManager.instance.ActivateHUD();
-        UIManager.instance.DisplaySignedIn();
-        UIManager.instance.DisplayCode(ConnectedLobby.LobbyCode);
-        UIManager.instance.DisplayLobbyName(ConnectedLobby.Name);
-        UIManager.instance.ResetHUD();
-
-
-        // find player object and spawn in prelobby
-        // GameObject[] playersfound = GameObject.FindGameObjectsWithTag("Player");
-        // foreach (GameObject player in playersfound)
-        // {
-        //     if (player.GetComponent<NetworkObject>().OwnerClientId == NetworkManager.Singleton.LocalClientId)
-        //     {
-
-        //         player.GetComponent<BasicPlayerController>().SpawnInPreLobby();
-        //     }
-        // }
+            UIManager.instance.DeactivateUI();
+            UIManager.instance.EnableAllLobbyButtons();
+            UIManager.instance.ActivateHUD();
+            UIManager.instance.DisplaySignedIn();
+            UIManager.instance.DisplayCode(ConnectedLobby.LobbyCode);
+            UIManager.instance.DisplayLobbyName(ConnectedLobby.Name);
+            UIManager.instance.ResetHUD();
+        }
+        catch (Exception e){
+            Debug.LogWarning($"Failed to start game: {e.Message}");
+        }
     }
 
     private void EndGame()

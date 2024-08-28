@@ -52,7 +52,6 @@ public class GameManager : NetworkBehaviour
     private void OnNumPlayersChanged(ulong prevNumPlayers, ulong newNumPlayers)
     {
         NumPlayers = newNumPlayers;
-        Debug.Log($"Number of players changed to {NumPlayers}");
     }
 
     private void OnStrokeTimeChanged(float prevTime, float newTime)
@@ -149,7 +148,6 @@ public class GameManager : NetworkBehaviour
                 playersData.Remove(playerID);
                 _numPlayers.Value = (ulong)playersData.Count;
             }
-            Debug.Log($"Player {playerID} removed from GameManager - playersData count: {playersData.Count}");
 
             UpdateScoreboard();
         }catch (NullReferenceException){

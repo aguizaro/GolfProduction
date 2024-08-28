@@ -23,7 +23,7 @@ public class StartCameraFollow : NetworkBehaviour
     private Transform targetTransform;
 
     private Transform currentFollowTarget;
-    private Transform newFollowTarget;
+    public Transform newFollowTarget;
     private bool isFollowTransitioning = false;
     private float followTransitionProgress = 0f;
     [SerializeField]
@@ -51,7 +51,6 @@ public class StartCameraFollow : NetworkBehaviour
     {
         if (IsOwner){
             isActive = true;
-            Debug.Log("Camera Follow Activated");
         }
     }
 

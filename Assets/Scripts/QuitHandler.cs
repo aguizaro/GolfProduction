@@ -10,10 +10,6 @@ using UnityEditor;
 
 public class QuitHandler : MonoBehaviour
 {
-    private bool playerExitDone = false;
-
-
- // Playmode Quit Handler ----------------------------------------------------------------------------
     private void OnEnable()
     {
 #if UNITY_EDITOR
@@ -33,6 +29,9 @@ public class QuitHandler : MonoBehaviour
     }
 
 
+ // Playmode Quit Handler ----------------------------------------------------------------------------
+    private bool playerExitDone = false;
+
     private void OnPlayModeStateChanged(PlayModeStateChange state)
     {
         if (state == PlayModeStateChange.ExitingPlayMode)
@@ -47,11 +46,10 @@ public class QuitHandler : MonoBehaviour
 
     private IEnumerator HandlePlayModeQuit()
     {
-        // Simulate async operation
-        Task asyncTask = LobbyManager.Instance.PlayerExit();        
-        // Wait until async operation is complete
+        Task asyncTask = Quit();       
         yield return new WaitUntil(() => asyncTask.IsCompleted);
-        Debug.Log("Done waiting");
+
+        Debug.Log("Done waiting for playmode exit...");
         playerExitDone = true;
         EditorApplication.isPlaying = false;
     }
@@ -73,18 +71,15 @@ public class QuitHandler : MonoBehaviour
 
     private IEnumerator HandleApplicationQuit()
     {
-        // Run the async operation
-        Task asyncTask = LobbyManager.Instance.PlayerExit();
-
-        // Wait until the async operation is completed
+        Task asyncTask = Quit();
         yield return new WaitUntil(() => asyncTask.IsCompleted);
 
-        // Ensure the application quits after async operation
         isQuitting = true;
+        Debug.Log("Done waiting for application quit...");
         Application.Quit();
     }
 
-    private async void OnApplicationQuit()
+    private async Task Quit()
     {
         // failsafe if application quits before PlayerExit() can finish
         // dont need to bother to quit gracefully if the applicaiton is shutting down, 

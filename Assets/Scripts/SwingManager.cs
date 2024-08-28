@@ -508,21 +508,28 @@ public class SwingManager : NetworkBehaviour
     // returns -1 if no win, returns playerID if win
     public int CheckForWin(PlayerData data)
     {
-        if (data.currentHole > holeStartPositions.Length)
-        {
-            thisBallRb.gameObject.SetActive(false);
-            return (int)data.playerID;
+        try{
+            if (data.currentHole > holeStartPositions.Length)
+            {
+                thisBallRb.gameObject.SetActive(false);
+                return (int)data.playerID;
+            }
+
+            thisBallRb.velocity = Vector3.zero;
+            thisBallRb.angularVelocity = Vector3.zero; // maybe get rid of this ? sometimes get a warning
+            Vector3 randStartPos;
+            // if on first hole, space balls out by 2 units to match player start positions, otherwise spawn them only 1 unit apart
+            if (data.currentHole == 1) randStartPos = holeStartPositions[0] + new Vector3(OwnerClientId * 2, 0, -1);
+            else randStartPos = holeStartPositions[data.currentHole - 1] + new Vector3(OwnerClientId, 0, 0);
+
+            MoveProjectileToPosition(randStartPos);
+            return -1;
         }
-
-        thisBallRb.velocity = Vector3.zero;
-        thisBallRb.angularVelocity = Vector3.zero; // maybe get rid of this ? sometimes get a warning
-        Vector3 randStartPos;
-        // if on first hole, space balls out by 2 units to match player start positions, otherwise spawn them only 1 unit apart
-        if (data.currentHole == 1) randStartPos = holeStartPositions[0] + new Vector3(OwnerClientId * 2, 0, -1);
-        else randStartPos = holeStartPositions[data.currentHole - 1] + new Vector3(OwnerClientId, 0, 0);
-
-        MoveProjectileToPosition(randStartPos);
-        return -1;
+        catch (Exception e)
+        {
+            Debug.Log(e);
+            return -1;
+        }
 
     }
 
