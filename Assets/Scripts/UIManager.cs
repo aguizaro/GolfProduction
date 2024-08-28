@@ -7,7 +7,6 @@ using UnityEngine.UI;
 using UnityEngine.Localization.Settings;
 using Unity.Netcode;
 using UnityEngine.Events;
-using Unity.Services.Lobbies.Models;
 using System.Threading.Tasks;
 
 public enum UIState
@@ -33,7 +32,6 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button _titleStartButton;
     [SerializeField] private Button _titleSettingsButton;
     [SerializeField] private Button _titleQuitButton;
-    [SerializeField] private Camera _mainCamera;
 
     // Lobby UI Elements
     [Header("Lobby UI Elements")]
@@ -119,7 +117,8 @@ public class UIManager : MonoBehaviour
     public bool titleScreenMode = true;
     public static bool isPaused { get; set; } = false;
     private bool localeActive = false;
-    private Transform _cameraStartTransform;
+    private Vector3 _cameraStartPos;
+    private Quaternion _cameraStartRot;
     private MenuState menuState = MenuState.None;
 
     public UnityEvent onEnablePause;
@@ -153,7 +152,8 @@ public class UIManager : MonoBehaviour
         // Controls Button Events
         _controlsBackButton.onClick.AddListener(DisableControls);
         //Camera Start Position
-        _cameraStartTransform = _mainCamera.transform;
+        _cameraStartPos = Camera.main.transform.position;
+        _cameraStartRot = Camera.main.transform.rotation;
 
         // Name Change Dialog Events
         _nameChangeOpenButton.onClick.AddListener(OpenNameChangeDialog);
@@ -286,15 +286,13 @@ public class UIManager : MonoBehaviour
     // IN THE FUTURE: USE "await LobbyManager.Instance.PlayerExit()" - then ReturnToTitle() will not be necessary here
     private async void QuitLobbyReturnToTitle()
     {
-        await LobbyManager.Instance.TryQuitLobby();
-        ReturnToTitle();
+        await LobbyManager.Instance.PlayerExit();
     }
 
-    // returns to title screen
-    public void ReturnToTitle()
+    public async void ReturnToTitle()
     {
-        _mainCamera.transform.position = _cameraStartTransform.position;
-        _mainCamera.transform.rotation = _cameraStartTransform.rotation;
+        await Task.Delay(1000); // wait for the player to exit the lobby (wait for cam follow to be deactivated before attempting to set camera position)
+        Camera.main.transform.SetPositionAndRotation(_cameraStartPos, _cameraStartRot);
         titleScreenMode = true;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;

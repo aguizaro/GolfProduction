@@ -29,13 +29,24 @@ public class StartCameraFollow : NetworkBehaviour
     [SerializeField]
     private float followTransitionSpeed = 3f; // Adjust the speed of transition between follow targets
 
-    public override void OnNetworkSpawn()
+
+    public override void OnDestroy()
     {
+        Deactivate();
+        base.OnDestroy();
+    }
+
+
+    // Camera will only follow player when Active = true
+    public void Activate()
+    {
+        if (!IsOwner) return;
+        
+        isActive = true;
         // Initialize camera to regular position and rotation
         regularPosition = transform.position - (Quaternion.Euler(xCamRotation, transform.eulerAngles.y, 0f) * camOffset);
         regularRotation = Quaternion.Euler(xCamRotation, transform.eulerAngles.y, 0f);
-        Camera.main.transform.position = regularPosition;
-        Camera.main.transform.rotation = regularRotation;
+        Camera.main.transform.SetPositionAndRotation(regularPosition, regularRotation);
 
         // Get the RagdollOnOff component
         ragdollOnOff = GetComponent<RagdollOnOff>();
@@ -45,14 +56,11 @@ public class StartCameraFollow : NetworkBehaviour
         }
     }
 
-
-    // Camera will only follow player when Active = true
-    public void Activate()
+    public void Deactivate()
     {
-        if (IsOwner){
-            isActive = true;
-        }
+        if (IsOwner) isActive = false;
     }
+
 
     private void LateUpdate()
     {

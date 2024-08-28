@@ -30,8 +30,8 @@ public class QuitHandler : MonoBehaviour
 
 
  // Playmode Quit Handler ----------------------------------------------------------------------------
+ #if UNITY_EDITOR
     private bool playerExitDone = false;
-
     private void OnPlayModeStateChanged(PlayModeStateChange state)
     {
         if (state == PlayModeStateChange.ExitingPlayMode)
@@ -53,6 +53,7 @@ public class QuitHandler : MonoBehaviour
         playerExitDone = true;
         EditorApplication.isPlaying = false;
     }
+#endif
 
     // Application Quit Handler ----------------------------------------------------------------------------
     private bool isQuitting = false;
