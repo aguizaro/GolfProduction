@@ -336,14 +336,26 @@ public class RagdollOnOff : NetworkBehaviour
     [ServerRpc]
     public void RagdollModeOnServerRpc()
     {
+        try{
+            RagdollModeOnClientRpc();
 
-        RagdollModeOnClientRpc();
+        }
+        catch (System.Exception e){
+            Debug.LogError("Error in RagdollModeOnServerRpc: " + e.Message);
+        }
+
+        
     }
 
     [ServerRpc]
     public void RagdollModeOffServerRpc()
     {
-        RagdollModeOffClientRpc();
+        try{
+            RagdollModeOffClientRpc();
+        }
+        catch (System.Exception e){
+            Debug.LogError("Error in RagdollModeOffServerRpc: " + e.Message);
+        }
     }
 
     [ClientRpc]
