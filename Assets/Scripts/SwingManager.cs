@@ -85,7 +85,6 @@ public class SwingManager : NetworkBehaviour
         _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
 
         _ragdollOnOff = GetComponent<RagdollOnOff>();
-
         _playerNetworkData = GetComponent<PlayerNetworkData>();
         _playerController = GetComponent<BasicPlayerController>();
         if (!IsOwner) return;
@@ -209,7 +208,7 @@ public class SwingManager : NetworkBehaviour
         stopRotation();
 
         // Enable line renderer on ball
-        if (ragdolled_player == null && thisBall != null)
+        if (IsCloseToBall() && thisBall != null)
         {
             thisBallTrajectoryPredictor.SetDirection(transform.forward);
             thisBallTrajectoryPredictor.SetTrajectoryVisible(true);
