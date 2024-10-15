@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -19,7 +20,6 @@ public class PlayerColor : NetworkBehaviour
         { Color.blue, "Blue" },
         { Color.clear, "Clear" },
         { Color.cyan, "Cyan" },
-        { Color.gray, "Gray" },
         { Color.green, "Green" },
         { Color.magenta, "Magenta" },
         { Color.red, "Red" },
@@ -28,8 +28,7 @@ public class PlayerColor : NetworkBehaviour
     };
 
     public readonly NetworkVariable<Color> _netColor = new(readPerm: NetworkVariableReadPermission.Everyone);
-    private readonly Color[] _colors = { Color.red, Color.blue, Color.green, Color.yellow, Color.cyan, Color.magenta, Color.gray };
-    private int _index;
+    private readonly Color[] _colors = { Color.red, Color.blue, Color.green, Color.yellow, Color.cyan, Color.magenta };
     public MeshRenderer _renderer;
     public Color CurrentColor;
 
@@ -50,55 +49,83 @@ public class PlayerColor : NetworkBehaviour
         CurrentColor = next;
         GetComponent<BasicPlayerController>().playerColor = colorNames[next];
 
+        PlayerData currentData =  GetComponent<PlayerNetworkData>().GetPlayerData(); // current data will be default on first iteration
         if (IsOwner)
         {
-            PlayerData preLobbyState = new PlayerData
+            PlayerData preLobbyState = new()
             {
                 playerID = OwnerClientId,
-                playerColor = colorNames[next],
+                playerName = LobbyManager.Instance.GetLocalPlayerName(),
                 currentHole = 0,
                 strokes = 0,
                 enemiesDefeated = 0,
                 score = 0
             };
 
-            GetComponent<PlayerNetworkData>().StorePlayerState(preLobbyState);
+            // don't update player number if this is the first iteration
+            if (currentData.playerName == null) preLobbyState.playerNum = (ulong)Array.IndexOf(_colors, next);
+            else preLobbyState.playerNum = currentData.playerNum;
+
+            GetComponent<PlayerNetworkData>().StorePlayerState(preLobbyState); //send state to PlayerNetworkData
         }
+
+        //Update color on player name tag
+        Transform NameTagCanvas = transform.Find("NameTagCanvas");
+        if (NameTagCanvas != null) NameTagCanvas.Find("NameTag").GetComponent<NameTagRotator>().UpdateColor(next);
 
         //find all objects owned by this player
         GameObject[] BallObjects = GameObject.FindGameObjectsWithTag("Ball");
 
-        foreach (GameObject playerObject in BallObjects)
+        foreach (GameObject ball in BallObjects)
         {
-            playerObject.GetComponent<BallColor>().Activate();
+            ball.GetComponent<BallColor>().Activate();
         }
     }
 
     public override void OnNetworkSpawn()
     {
-        // Take note, RPCs are queued up to run.
-        // If we tried to immediately set our color locally after calling this RPC it wouldn't have propagated
-        if (IsOwner)
-        {
-            _index = (int)OwnerClientId;
-            Color nextColor = GetNextColor();
-            CommitNetworkColorServerRpc(nextColor);
-        }
-        else
-        {
+        if (IsOwner){ CommitNetworkColorServerRpc();}
+        else{
             _renderer.material.color = _netColor.Value;
+            GetComponent<BasicPlayerController>().playerColor = colorNames[_netColor.Value];
+            Transform NameTagCanvas = transform.Find("NameTagCanvas");
+            if (NameTagCanvas != null){
+                NameTagCanvas.Find("NameTag").GetComponent<NameTagRotator>().UpdateColor(_netColor.Value);
+                NameTagCanvas.Find("NameTag").GetComponent<NameTagRotator>().UpdateNameTag(GetComponent<PlayerNetworkData>().GetPlayerData().playerName);
+            }
         }
+        
+    }
+
+    public void CyclePlayerColor(){
+        if (IsOwner) CyclePlayerColorServerRpc();
+        else _renderer.material.color = _netColor.Value;
     }
 
     [ServerRpc]
-    private void CommitNetworkColorServerRpc(Color color)
-    {
-        _netColor.Value = color;
+    private void CommitNetworkColorServerRpc(){
+        int playerNum = (int)GameManager.instance.GetNumberOfPlayers(); //1st player = 0, 2nd player = 1, etc.
+        _netColor.Value = _colors[playerNum];
+
+        //Debug.Log($"Server assigning playerNum: {playerNum} & color {colorNames[_colors[playerNum]]} to client {OwnerClientId}");
+        NetworkManager.Singleton.ConnectedClients.TryGetValue(OwnerClientId, out var networkClient);
+        if (networkClient.PlayerObject == null) return;
+        
+        SpawnInPreLobbyClientRpc(playerNum);
     }
 
-    private Color GetNextColor()
-    {
-        return _colors[_index++ % _colors.Length];
+    [ClientRpc]
+    private void SpawnInPreLobbyClientRpc(int playerNumber){
+        if (IsOwner) GetComponent<BasicPlayerController>().SpawnInPreLobby(playerNumber);
+    }
+
+    [ServerRpc]
+    private void CyclePlayerColorServerRpc(){
+        int currentColorIndex = Array.IndexOf(_colors, _netColor.Value);
+        int newColorIndex = (currentColorIndex + 1) % _colors.Length;
+        _netColor.Value = _colors[newColorIndex];
+        //Debug.Log($"Server updated client {OwnerClientId} to color {colorNames[_colors[newColorIndex]]}");
+
     }
 
 }

@@ -5,6 +5,7 @@ using UnityEngine;
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnitySerializedDictionary;
+using UnityEditor;
 
 public struct PlayerHatConfig : INetworkSerializable
 {
@@ -47,8 +48,6 @@ public class PlayerHatController : NetworkBehaviour
         // Deserialize the texture dictionary
         meshes = serializedMeshDictionary.ToDictionary();
         textures = serializedTextureDictionary.ToDictionary();
-
-        //SetHatConfig(GetRandomHatMeshID(), GetRandomHatTextureID());
     }
     public override void OnDestroy()
     {
@@ -57,17 +56,20 @@ public class PlayerHatController : NetworkBehaviour
     }
     private void OnHatConfigChanged(PlayerHatConfig prevData, PlayerHatConfig newData)
     {
+        //Debug.Log($"Owner: {OwnerClientId} hat config changed: {prevData.meshID}, {prevData.textureID} -> {newData.meshID}, {newData.textureID}");
         _currentHatConfig = newData;
-        ApplyCurrentHatConfig();
+        ApplyCurrentHatConfig(_currentHatConfig);
     }
 
-    public void ApplyCurrentHatConfig()
+    public void ApplyCurrentHatConfig(PlayerHatConfig hatconfig)
     {
         // TODO: Update player mesh
-        hatMesh.mesh = meshes[_currentHatConfig.meshID];
+        hatMesh.mesh = meshes[hatconfig.meshID];
 
         // Update player texture
-        hatMaterial.mainTexture = textures[_currentHatConfig.textureID];
+        hatMaterial.mainTexture = textures[hatconfig.textureID];
+
+        //Debug.Log($"Owner: {OwnerClientId} applied hat config: {hatconfig.meshID}, {_currentHatConfig.textureID}");
     }
 
     // Takes ulong arg which represents the texture ID
@@ -98,25 +100,79 @@ public class PlayerHatController : NetworkBehaviour
                 textureID = textureID
             };
             _currentHatConfig = newPlayerConfig;
+            //Debug.Log($"Owner: {OwnerClientId} setting hat config: {meshID}, {textureID}");
             CommitNetworkHatConfigServerRpc(_currentHatConfig);
         }
         else
         {
             // Apply config from network variable
             _currentHatConfig = _networkPlayerHatConfig.Value;
-            ApplyCurrentHatConfig();
+            //Debug.Log($"non-owner: {OwnerClientId} reading hat config: {meshID}, {textureID}");
+            ApplyCurrentHatConfig(_currentHatConfig);
         }
     }
 
     [ServerRpc]
     private void CommitNetworkHatConfigServerRpc(PlayerHatConfig config)
     {
-        _networkPlayerHatConfig.Value = config;
+        _networkPlayerHatConfig.Value = new PlayerHatConfig()
+        {
+            meshID = config.meshID,
+            textureID = config.textureID
+        };
+        //Debug.Log("server set hat config: " + config.meshID + ", " + config.textureID + "for OwnerClientId " + OwnerClientId);
     }
 
-    public void RandomizeHatConfig()
+    public void CycleHatConfig()
     {
-        SetHatConfig(GetRandomHatMeshID(), GetRandomHatTextureID());
+        // Mesh id:1 (default mesh), Mesh id:0 (no mesh), 11 textures (index 0-10)
+        ulong[] textureKeys = new List<ulong>(textures.Keys).ToArray();
+        int textureIndex = Array.IndexOf(textureKeys, _currentHatConfig.textureID);
+
+        // cycle back to no hat if at the end of the texture list
+        if (textureIndex == textureKeys.Length - 1)
+        {
+            RemoveHatConfig();
+            return;
+        }
+
+        textureIndex = (textureIndex + 1) % textureKeys.Length;
+        SetHatConfig(1, textureKeys[textureIndex]);
+    }
+
+    // [ServerRpc]
+    // public void GetEveryonesHatConfigServerRpc()
+    // {
+    //     GameObject[] playerObjects = GameObject.FindGameObjectsWithTag("Player");
+    //     foreach (GameObject playerObject in playerObjects)
+    //     {
+    //         PlayerHatConfig playerConfig = playerObject.GetComponent<PlayerHatController>()._networkPlayerHatConfig.Value;
+    //         Debug.Log("SERVERRPC: Player " + playerObject.GetComponent<NetworkObject>().OwnerClientId + " has hat config: " + playerConfig.meshID + ", " + playerConfig.textureID);
+    //         //UpdateConfigClientRpc(playerConfig, playerObject.GetComponent<NetworkObject>().OwnerClientId);
+    //     }
+    // }
+
+    // re-sends current hat config over network
+    public void RefreshHatConfig()
+    {
+        if (IsOwner) ApplyCurrentHatConfigServerRpc(_currentHatConfig);
+    }
+
+    [ServerRpc]
+    private void ApplyCurrentHatConfigServerRpc(PlayerHatConfig hatconfig){
+        ApplyCurrentHatConfigClientRpc(hatconfig);
+    }
+
+    [ClientRpc]
+    private void ApplyCurrentHatConfigClientRpc(PlayerHatConfig hatconfig){
+        ApplyCurrentHatConfig(hatconfig);
+    }
+
+
+
+    public void RemoveHatConfig()
+    {
+        SetHatConfig(0, 0);
     }
 
     public ulong GetRandomHatMeshID()
