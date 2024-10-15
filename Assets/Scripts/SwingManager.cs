@@ -484,6 +484,7 @@ public class SwingManager : NetworkBehaviour
         thisBall = NetworkManager.Singleton.SpawnManager.SpawnedObjects[ballId].gameObject;
         thisBallRb = thisBall.GetComponent<Rigidbody>();
         thisBallTrajectoryPredictor = thisBall.GetComponent<TrajectoryPredictor>();
+        thisBallTrajectoryPredictor.SetPowerMeterRef(meterCanvas.GetComponent<PowerMeter>());
     }
 
     [ServerRpc]
