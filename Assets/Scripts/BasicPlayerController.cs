@@ -232,6 +232,17 @@ public class BasicPlayerController : NetworkBehaviour
         Movement();
     }
 
+    // Trail Renderer ---------------------------------------------------------------------------------------------------------
+    public void EnableTrajectoryRenderer()
+    {
+        _swingManager.EnableTrajectoryRenderer();
+    }
+
+    public void DisableTrajectoryRenderer()
+    {
+        _swingManager.DisableTrajectoryRenderer();
+    }
+
     // Activation -------------------------------------------------------------------------------------------------------------
 
     public void Activate()

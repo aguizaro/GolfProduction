@@ -344,6 +344,16 @@ public class SwingManager : NetworkBehaviour
         ExitSwingMode();
     }
 
+    public void EnableTrajectoryRenderer()
+    {
+        thisBallTrajectoryPredictor.SetTrajectoryVisible(true);
+    }
+
+    public void DisableTrajectoryRenderer()
+    {
+        thisBallTrajectoryPredictor.SetTrajectoryVisible(false);
+    }
+
     IEnumerator FrameFrozen(float duration)
     {
         float ffTimeer = duration;
