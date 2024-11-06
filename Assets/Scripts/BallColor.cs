@@ -23,6 +23,12 @@ public class BallColor : NetworkBehaviour
         _renderer.material.color = next;
     }
 
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        Activate();
+    }
+
     public void Activate()
     {
         if (IsOwner)

@@ -6,7 +6,7 @@ public class StartCameraFollow : NetworkBehaviour
     public float followSpeed = 100f;
     public float xCamRotation = 15f;
     public Vector3 camOffset = new(0f, -2f, 5f);
-    private bool isActive = true;
+    private bool isActive = false;
     private bool isSwingState = false;
 
     private bool transitioning = false;
@@ -23,21 +23,30 @@ public class StartCameraFollow : NetworkBehaviour
     private Transform targetTransform;
 
     private Transform currentFollowTarget;
-    private Transform newFollowTarget;
+    public Transform newFollowTarget;
     private bool isFollowTransitioning = false;
     private float followTransitionProgress = 0f;
     [SerializeField]
     private float followTransitionSpeed = 3f; // Adjust the speed of transition between follow targets
 
-    public override void OnNetworkSpawn()
-    {
-        if (!IsOwner) isActive = false;
 
+    public override void OnDestroy()
+    {
+        Deactivate();
+        base.OnDestroy();
+    }
+
+
+    // Camera will only follow player when Active = true
+    public void Activate()
+    {
+        if (!IsOwner) return;
+        
+        isActive = true;
         // Initialize camera to regular position and rotation
         regularPosition = transform.position - (Quaternion.Euler(xCamRotation, transform.eulerAngles.y, 0f) * camOffset);
         regularRotation = Quaternion.Euler(xCamRotation, transform.eulerAngles.y, 0f);
-        Camera.main.transform.position = regularPosition;
-        Camera.main.transform.rotation = regularRotation;
+        Camera.main.transform.SetPositionAndRotation(regularPosition, regularRotation);
 
         // Get the RagdollOnOff component
         ragdollOnOff = GetComponent<RagdollOnOff>();
@@ -46,6 +55,12 @@ public class StartCameraFollow : NetworkBehaviour
             currentFollowTarget = ragdollOnOff.mainCollider.transform; // Start with mainCollider as the target
         }
     }
+
+    public void Deactivate()
+    {
+        if (IsOwner) isActive = false;
+    }
+
 
     private void LateUpdate()
     {

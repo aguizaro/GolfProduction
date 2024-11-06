@@ -7,6 +7,7 @@ using UnityEngine.UI;
 using UnityEngine.Localization.Settings;
 using Unity.Netcode;
 using UnityEngine.Events;
+using System.Threading.Tasks;
 
 public enum UIState
 {
@@ -31,7 +32,6 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button _titleStartButton;
     [SerializeField] private Button _titleSettingsButton;
     [SerializeField] private Button _titleQuitButton;
-    [SerializeField] private Camera _mainCamera;
 
     // Lobby UI Elements
     [Header("Lobby UI Elements")]
@@ -69,6 +69,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button _settingsApplyButton;
     [SerializeField] private Button _settingsBackButton;
     [SerializeField] private Button _settingsControlButton;
+    [SerializeField] private Button _settingsDisplayNameButton;
     [SerializeField] private Slider _settingsSensitivitySlider;
     [SerializeField] private TMP_Dropdown _settingsLanguageDropdown;
 
@@ -77,12 +78,33 @@ public class UIManager : MonoBehaviour
     [Header("Controls UI Elements")]
     [SerializeField] private GameObject _controlsScreenUI;
     [SerializeField] private Button _controlsBackButton;
+    
+    [Header("Scoreboard")]
+    [SerializeField] public GameObject scoreboardUI;
+
+    [SerializeField] public GameObject scoreboardEntry;
+
+    private Dictionary<ulong, PlayerData> ScoreboardData = new Dictionary<ulong, PlayerData>();
+    
     [Header("Other")]
+
     [SerializeField] private TMP_Text _holeCountText;
 
     [SerializeField] private TMP_Text _directionsTextP;
     [SerializeField] private TMP_Text _directionsTextL;
     [SerializeField] private TMP_Text _winnerText;
+
+    //Notification Banner
+    [Header("Notification Banner")]
+    [SerializeField] private NotificationBanner _notificationBanner;
+
+    // Name Change Dialog
+    [Header("Name Change Dialog")]
+    [SerializeField] private GameObject _nameChangeDialog;
+    [SerializeField] private TMP_InputField _nameChangeInputField;
+    [SerializeField] private Button _nameChangeSubmitButton;
+    [SerializeField] private Button _nameChangeCancelButton;
+    [SerializeField] private Button _nameChangeOpenButton;
 
     // UIManager instance
     public static UIManager instance { get; private set; }
@@ -95,7 +117,8 @@ public class UIManager : MonoBehaviour
     public bool titleScreenMode = true;
     public static bool isPaused { get; set; } = false;
     private bool localeActive = false;
-    private Transform _cameraStartTransform;
+    private Vector3 _cameraStartPos;
+    private Quaternion _cameraStartRot;
     private MenuState menuState = MenuState.None;
 
     public UnityEvent onEnablePause;
@@ -124,11 +147,18 @@ public class UIManager : MonoBehaviour
         _settingsBackButton.onClick.AddListener(DisableSettings);
         _settingsLanguageDropdown.onValueChanged.AddListener(ApplyLanguage);
         _settingsControlButton.onClick.AddListener(GotoControls);
+        _settingsDisplayNameButton.onClick.AddListener(OpenNameChangeDialog);
 
         // Controls Button Events
         _controlsBackButton.onClick.AddListener(DisableControls);
         //Camera Start Position
-        _cameraStartTransform = _mainCamera.transform;
+        _cameraStartPos = Camera.main.transform.position;
+        _cameraStartRot = Camera.main.transform.rotation;
+
+        // Name Change Dialog Events
+        _nameChangeOpenButton.onClick.AddListener(OpenNameChangeDialog);
+        _nameChangeSubmitButton.onClick.AddListener(CloseNameChangeDialog);
+        _nameChangeCancelButton.onClick.AddListener(CancelNameChangeDialog);
 
         instance = this;
 
@@ -167,9 +197,10 @@ public class UIManager : MonoBehaviour
         PlayUISelectSFX();
         //await LobbyManager.Instance.PlayNow();
         await LobbyManager.Instance.PlayNow(_inputField.text);
-        EnableAllLobbyButtons();
+        //EnableAllLobbyButtons();
         // Change current player's music to lobby music
         AudioManager.instance.ChangeMusic("Lobby");
+        _inputField.text = "";
     }
     private async void CreateLobby()
     {
@@ -177,18 +208,20 @@ public class UIManager : MonoBehaviour
         PlayUISelectSFX();
         //await LobbyManager.Instance.Create(_inputField.text, 5);
         await LobbyManager.Instance.Create(_inputField.text);
-        EnableAllLobbyButtons();
+        //EnableAllLobbyButtons();
         // Change current player's music to lobby music
         AudioManager.instance.ChangeMusic("Lobby");
+        _inputField.text = "";
     }
     private async void JoinLobby()
     {
         DisableAllLobbyButtons();
         PlayUISelectSFX();
         await LobbyManager.Instance.Join(joinCode: _inputField.text);
-        EnableAllLobbyButtons();
+        //EnableAllLobbyButtons();
         // Change current player's music to lobby music
         AudioManager.instance.ChangeMusic("Lobby");
+        _inputField.text = "";
     }
 
 
@@ -216,7 +249,7 @@ public class UIManager : MonoBehaviour
     }
     public void DisplayCode(string code) => _lobbyJoinCodeText.text = code;
     public void DisplayLobbyName(string name) => _lobbyNameText.text = name;
-    public async void DisplaySignedIn() => _lobbySignedInText.text = await LobbyManager.Instance.GetPlayerName();
+    public void DisplaySignedIn() => _lobbySignedInText.text = LobbyManager.Instance.GetLocalPlayerName();
 
     public string GetInputText() { return _inputField.text; }
     public void DisableUIText()
@@ -261,15 +294,13 @@ public class UIManager : MonoBehaviour
     // IN THE FUTURE: USE "await LobbyManager.Instance.PlayerExit()" - then ReturnToTitle() will not be necessary here
     private async void QuitLobbyReturnToTitle()
     {
-        await LobbyManager.Instance.TryQuitLobby();
-        ReturnToTitle();
+        await LobbyManager.Instance.PlayerExit();
     }
 
-    // returns to title screen
-    public void ReturnToTitle()
+    public async void ReturnToTitle()
     {
-        _mainCamera.transform.position = _cameraStartTransform.position;
-        _mainCamera.transform.rotation = _cameraStartTransform.rotation;
+        await Task.Delay(1000); // wait for the player to exit the lobby (wait for cam follow to be deactivated before attempting to set camera position)
+        Camera.main.transform.SetPositionAndRotation(_cameraStartPos, _cameraStartRot);
         titleScreenMode = true;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -485,7 +516,7 @@ public class UIManager : MonoBehaviour
 
         if (!success) Debug.LogWarning("Failed to join lobby");
         isJoining = false;
-        EnableAllLobbyButtons();
+        //EnableAllLobbyButtons();
         AudioManager.instance.ChangeMusic("Lobby");
 
     }
@@ -515,7 +546,7 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    private void EnableAllLobbyButtons()
+    public void EnableAllLobbyButtons()
     {
         _createButton.enabled = true;
         _joinButton.enabled = true;
@@ -543,6 +574,57 @@ public class UIManager : MonoBehaviour
     public void UpdateHoleCountText(int holeCount)
     {
         _holeCountText.text = holeCount.ToString();
+    }
+
+    // UI Notification Manager ------------------------------------------------
+
+    public void DisplayNotification(string message, string highlightColor = null, int duration = 4)
+    {
+        _notificationBanner.Show(message, highlightColor, duration);
+
+    }
+
+    // Name Change Methods ----------------------------------------------------
+
+    public void OpenNameChangeDialog()
+    {
+        // enable name change screen
+        _nameChangeDialog.SetActive(true);
+
+        // Add placeholder text as current name
+        _nameChangeInputField.placeholder.GetComponent<TextMeshProUGUI>().text = _lobbySignedInText.text;
+    }
+
+    public async void CloseNameChangeDialog()
+    {
+        // Update name in lobby
+        var success = await LobbyManager.Instance.UpdatePlayerName(_nameChangeInputField.text);
+        
+        // Clear placeholder text
+        _nameChangeInputField.placeholder.GetComponent<TextMeshProUGUI>().text = "";
+        // Clear input field text
+        _nameChangeInputField.text = "";
+
+        if (!success)
+        {
+            _nameChangeInputField.placeholder.GetComponent<TextMeshProUGUI>().text = "Try a different name.";
+            return;
+        }
+
+        DisplaySignedIn();
+
+        // disable name change screen
+        _nameChangeDialog.SetActive(false);
+        
+    }
+
+    public void CancelNameChangeDialog()
+    {
+        // disable name change screen
+        _nameChangeDialog.SetActive(false);
+
+        // clear input field text
+        _nameChangeInputField.text = "";
     }
 
 }

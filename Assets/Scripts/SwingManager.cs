@@ -53,15 +53,9 @@ public class SwingManager : NetworkBehaviour
 
     private Vector3[] holeStartPositions = new Vector3[]
     {
-        new Vector3(390f, 69.5f, 321f),
-        new Vector3(417.690155f, 79f, 234.9218f),
-        new Vector3(451.415436f, 80f, 172.0176f),
-        new Vector3(374.986023f, 93.3f, 99.01516f),
-        new Vector3(306.8986f, 103.3f, 89.0007248f),
-        new Vector3(235.689041f, 97.2f, 114.393f),
-        new Vector3(217.792923f, 86.5f, 163.657547f),
-        new Vector3(150.851669f, 90f, 163.362488f),
-        new Vector3(76.4118042f, 93.15f, 169.826523f)
+        new Vector3(-58.73f, 10.28f, 72.09f),
+        new Vector3(47.87f, 10.28f, 27.41f),
+        new Vector3(-100.62f, 10.28f, -69.2f)
     };
 
     private bool thisBallMoving = false;
@@ -138,7 +132,7 @@ public class SwingManager : NetworkBehaviour
                     playerAnimator.SetTrigger("Swing");
                     playerAnimator.ResetTrigger("Stance");
 
-                    Debug.Log("performing swing animation on ragdolled player");
+                    //Debug.Log("performing swing animation on ragdolled player");
 
                     //PerformSwingOnPlayer();
                 }
@@ -256,7 +250,7 @@ public class SwingManager : NetworkBehaviour
         }
 
         // Define the duration over which to move the player
-        float duration = 2.3f; // Adjust as needed
+        float duration = 1f; // Adjust as needed
 
         // Store the initial position of the player
         Vector3 initialPosition = playerTransform.position;
@@ -289,7 +283,7 @@ public class SwingManager : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        Debug.Log($"PerformSwing() called from player: {OwnerClientId}, is ragdolled player null? {ragdolled_player == null}");
+        //Debug.Log($"PerformSwing() called from player: {OwnerClientId}, is ragdolled player null? {ragdolled_player == null}");
         // if (ragdolled_player != null)
         // {
         //     // still need to reset triggers since performSwingonPlayer does not exit swing mode (swing on player is handled in Update())
@@ -298,12 +292,12 @@ public class SwingManager : NetworkBehaviour
         // }
         if (ragdolled_player == null && thisBall != null)
         {
-            Debug.Log("Perform Swing on Ball");
+            //Debug.Log("Perform Swing on Ball");
             PerformSwingOnBall();
         }
         else
         {
-            Debug.Log("Perform Swing on Player");
+            //Debug.Log("Perform Swing on Player");
             PerformSwingOnPlayer();
         }
     }
@@ -388,8 +382,6 @@ public class SwingManager : NetworkBehaviour
         // Play sound effect for swinging the ball
         AudioManager.instance.PlayOneShotForAllClients(FMODEvents.instance.playerGolfSwing, _playerController.transform.position, IsOwner);
 
-        Debug.Log("force dir: " + dir);
-        Debug.Log("force vector: " + swingForceVector);
         //ask the ragdolled player to add force on themselves
         if (ragdolled_player != null)
         {
@@ -443,7 +435,20 @@ public class SwingManager : NetworkBehaviour
     [ServerRpc]
     void SpawnBallOnServerRpc(ulong ownerId)
     {
-        Vector3 spawnPosition = new Vector3(94.2144241f + OwnerClientId * 2, 102.18f, -136.345001f + 1f); // spawn ball in front of player
+        //find player's transform
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        Transform playerT;
+        foreach (GameObject player in players)
+        {
+            if (player.GetComponent<NetworkObject>().OwnerClientId == ownerId)
+            {
+                playerT = player.transform;
+                break;
+            }
+        }
+
+        // spawn ball in front of player
+        var spawnPosition = playerTransform.position + playerTransform.forward * 1f + playerTransform.up / 2;
         thisBall = Instantiate(ballPrefab, spawnPosition, Quaternion.identity);
         thisBallRb = thisBall.GetComponent<Rigidbody>();
         //thisBallRb.velocity = playerTransform.forward * 10f; // Example velocity
@@ -451,7 +456,6 @@ public class SwingManager : NetworkBehaviour
         if (ballNetworkObject != null)
         {
             ballNetworkObject.SpawnWithOwnership(ownerId);
-
         }
 
         //RemoveForces(); //  prevent ball from rolling
@@ -504,21 +508,28 @@ public class SwingManager : NetworkBehaviour
     // returns -1 if no win, returns playerID if win
     public int CheckForWin(PlayerData data)
     {
-        if (data.currentHole > holeStartPositions.Length)
-        {
-            thisBallRb.gameObject.SetActive(false);
-            return (int)data.playerID;
+        try{
+            if (data.currentHole > holeStartPositions.Length)
+            {
+                thisBallRb.gameObject.SetActive(false);
+                return (int)data.playerID;
+            }
+
+            thisBallRb.velocity = Vector3.zero;
+            thisBallRb.angularVelocity = Vector3.zero; // maybe get rid of this ? sometimes get a warning
+            Vector3 randStartPos;
+            // if on first hole, space balls out by 2 units to match player start positions, otherwise spawn them only 1 unit apart
+            if (data.currentHole == 1) randStartPos = holeStartPositions[0] + new Vector3(OwnerClientId * 2, 0, -1);
+            else randStartPos = holeStartPositions[data.currentHole - 1] + new Vector3(OwnerClientId, 0, 0);
+
+            MoveProjectileToPosition(randStartPos);
+            return -1;
         }
-
-        thisBallRb.velocity = Vector3.zero;
-        thisBallRb.angularVelocity = Vector3.zero; // maybe get rid of this ? sometimes get a warning
-        Vector3 randStartPos;
-        // if on first hole, space balls out by 2 units to match player start positions, otherwise spawn them only 1 unit apart
-        if (data.currentHole == 1) randStartPos = holeStartPositions[0] + new Vector3(OwnerClientId * 2, 0, -1);
-        else randStartPos = holeStartPositions[data.currentHole - 1] + new Vector3(OwnerClientId, 0, 0);
-
-        MoveProjectileToPosition(randStartPos);
-        return -1;
+        catch (Exception e)
+        {
+            Debug.Log(e);
+            return -1;
+        }
 
     }
 
@@ -678,7 +689,7 @@ public class SwingManager : NetworkBehaviour
         {
             ExitSwingMode();
         }
-        else if (thisBall != null)
+        else if (thisBall != null && !_ragdollOnOff.IsRagdoll())
         {
             ReturnBallToPlayer();
 

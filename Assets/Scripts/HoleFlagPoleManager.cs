@@ -60,7 +60,10 @@ public class HoleFlagPoleManager : NetworkBehaviour
         if (NetworkManager.Singleton.LocalClientId != playerID) return; //only the player that scored should handle this
 
         PlayerData currentPlayerData = playerNetworkData.GetPlayerData();
+        currentPlayerData.score += currentPlayerData.strokes;
         currentPlayerData.currentHole++;
+        currentPlayerData.strokes = 0;
+        
         playerNetworkData.StorePlayerState(currentPlayerData);
 
         //maybe we can check for win here since we have a reference to the player network data - currently being done in PlayerNetworkData
