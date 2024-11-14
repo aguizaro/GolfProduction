@@ -43,6 +43,7 @@ public class SwingManager : NetworkBehaviour
     private bool _isActive;
     private GameObject thisBall;    // Reference to this player's ball
     private Rigidbody thisBallRb;
+    private TrajectoryPredictor thisBallTrajectoryPredictor;
     private BasicPlayerController _playerController;
     private PlayerNetworkData _playerNetworkData;
     private float swingForce = 50f;
@@ -80,10 +81,10 @@ public class SwingManager : NetworkBehaviour
     {
         powerMeter = GetComponentInChildren<Slider>();
         powerMeterRef = meterCanvas.GetComponent<PowerMeter>();
+
         _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
 
         _ragdollOnOff = GetComponent<RagdollOnOff>();
-
         _playerNetworkData = GetComponent<PlayerNetworkData>();
         _playerController = GetComponent<BasicPlayerController>();
         if (!IsOwner) return;
@@ -122,7 +123,6 @@ public class SwingManager : NetworkBehaviour
             {
                 if (!ragdolled_player.GetComponent<RagdollOnOff>().IsRagdoll())
                 {
-
                     setRagdolledPlayerServerRpc(-1);
                     ExitSwingMode();
                 }
@@ -206,6 +206,13 @@ public class SwingManager : NetworkBehaviour
 
         RemoveForces(); //  prevent ball from rolling
         stopRotation();
+
+        // Enable line renderer on ball
+        if (IsCloseToBall() && thisBall != null)
+        {
+            thisBallTrajectoryPredictor.SetDirection(transform.forward);
+            thisBallTrajectoryPredictor.SetTrajectoryVisible(true);
+        }
 
         // Enable power meter
         // meterCanvas.GetComponent<Canvas>().enabled = true;
@@ -308,6 +315,9 @@ public class SwingManager : NetworkBehaviour
         // set to false to exit swing mode after animations finished
         waitingForSwing = false;
 
+        // Remove line renderer from ball
+        thisBallTrajectoryPredictor.SetTrajectoryVisible(false);
+
         // Add forces
         var dir = transform.forward + new Vector3(0, verticalAngle, 0);
         thisBallRb.AddForce(dir * swingForce * meterCanvas.GetComponent<PowerMeter>().GetPowerValue(), ForceMode.Impulse);
@@ -331,6 +341,16 @@ public class SwingManager : NetworkBehaviour
         }
 
         ExitSwingMode();
+    }
+
+    public void EnableTrajectoryRenderer()
+    {
+        thisBallTrajectoryPredictor.SetTrajectoryVisible(true);
+    }
+
+    public void DisableTrajectoryRenderer()
+    {
+        thisBallTrajectoryPredictor.SetTrajectoryVisible(false);
     }
 
     IEnumerator FrameFrozen(float duration)
@@ -451,6 +471,8 @@ public class SwingManager : NetworkBehaviour
         var spawnPosition = playerTransform.position + playerTransform.forward * 1f + playerTransform.up / 2;
         thisBall = Instantiate(ballPrefab, spawnPosition, Quaternion.identity);
         thisBallRb = thisBall.GetComponent<Rigidbody>();
+        thisBallTrajectoryPredictor = thisBall.GetComponent<TrajectoryPredictor>();
+        thisBallTrajectoryPredictor.SetPowerMeterRef(meterCanvas.GetComponent<PowerMeter>());
         //thisBallRb.velocity = playerTransform.forward * 10f; // Example velocity
         NetworkObject ballNetworkObject = thisBall.GetComponent<NetworkObject>();
         if (ballNetworkObject != null)
@@ -470,6 +492,8 @@ public class SwingManager : NetworkBehaviour
     {
         thisBall = NetworkManager.Singleton.SpawnManager.SpawnedObjects[ballId].gameObject;
         thisBallRb = thisBall.GetComponent<Rigidbody>();
+        thisBallTrajectoryPredictor = thisBall.GetComponent<TrajectoryPredictor>();
+        thisBallTrajectoryPredictor.SetPowerMeterRef(meterCanvas.GetComponent<PowerMeter>());
     }
 
     [ServerRpc]
@@ -687,6 +711,7 @@ public class SwingManager : NetworkBehaviour
             return;
         if (inSwingMode)
         {
+            thisBallTrajectoryPredictor.SetTrajectoryVisible(false);
             ExitSwingMode();
         }
         else if (thisBall != null && !_ragdollOnOff.IsRagdoll())

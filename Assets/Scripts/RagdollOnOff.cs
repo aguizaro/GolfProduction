@@ -257,6 +257,11 @@ public class RagdollOnOff : NetworkBehaviour
         playerRB.isKinematic = true;
         isRagdoll = true;
 
+        if (IsOwner)
+        {
+            _basicPlayerController.DisableTrajectoryRenderer();
+        }
+
         // dont send rotation updates while in ragdoll mode
         GetComponent<CustomClientNetworkTransform>().SyncRotAngleY = false;
 
