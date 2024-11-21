@@ -178,10 +178,13 @@
 			<value>-80</value>
 		</property>
 		<property name="attackTime">
-			<value>44.8717918</value>
+			<value>134.615387</value>
 		</property>
 		<property name="attackShape">
 			<value>-0.485502422</value>
+		</property>
+		<property name="peakValue">
+			<value>0.577777863</value>
 		</property>
 		<property name="releaseTime">
 			<value>955.128113</value>
