@@ -212,7 +212,6 @@ public class BasicPlayerController : NetworkBehaviour
                 {
                     player.PlayerObject.GetComponent<BasicPlayerController>().ActivateClientRpc();
                 }
-
             }
 
             // Cycle player's hat config
@@ -236,6 +235,13 @@ public class BasicPlayerController : NetworkBehaviour
 
     public void Activate()
     {
+        // spawn players at firt hole
+        //_rb.MovePosition(new Vector3(390 + OwnerClientId * 2, 69.5f, 321)); //space players out by 2 units each
+        //_rb.MoveRotation(Quaternion.Euler(0, -179f, 0)); //face flag pole
+
+        // Play level music
+        AudioManager.instance.ChangeMusic("Silence");
+
         IsActive = true;
 
         if (IsServer)
@@ -400,6 +406,12 @@ public class BasicPlayerController : NetworkBehaviour
                 _animator.SetBool("isRight", false);
             }
         }
+    }
+
+    // Sound Effects -------------------------------------------------------------------------------------------------------------
+    public void PlayFootstepSound()
+    {
+        AudioManager.instance.PlayOneShotForAllClients(FMODEvents.instance.playerFootsteps, this.transform.position, IsOwner);
     }
 
 

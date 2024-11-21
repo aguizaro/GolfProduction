@@ -17,9 +17,14 @@ public static class ListExtenstions
 
 public class FMODEvents : MonoBehaviour
 {
+    // Music
+    [field: Header("Music")]
+    [field: SerializeField] public EventReference music { get; private set; }
+
     // Ambience sounds
     [field: Header("Title Screen Ambience")]
     [field: SerializeField] public EventReference titleScreenAmbience { get; private set; }
+    
     // Assign Event References
     [field: Header("Golf Swing")]
     [field: SerializeField] public EventReference playerGolfSwing { get; private set; }

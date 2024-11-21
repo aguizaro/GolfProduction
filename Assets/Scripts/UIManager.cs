@@ -178,7 +178,6 @@ public class UIManager : MonoBehaviour
         AudioManager.instance.PlayTimelineSoundForOwner(FMODEvents.instance.titleScreenAmbience);
     }
 
-
     // Title Screen Methods
     private void TitleStart()
     {
@@ -198,6 +197,9 @@ public class UIManager : MonoBehaviour
         PlayUISelectSFX();
         //await LobbyManager.Instance.PlayNow();
         await LobbyManager.Instance.PlayNow(_inputField.text);
+        //EnableAllLobbyButtons();
+        // Change current player's music to lobby music
+        AudioManager.instance.ChangeMusic("Lobby");
         _inputField.text = "";
     }
     private async void CreateLobby()
@@ -206,6 +208,9 @@ public class UIManager : MonoBehaviour
         PlayUISelectSFX();
         //await LobbyManager.Instance.Create(_inputField.text, 5);
         await LobbyManager.Instance.Create(_inputField.text);
+        //EnableAllLobbyButtons();
+        // Change current player's music to lobby music
+        AudioManager.instance.ChangeMusic("Lobby");
         _inputField.text = "";
     }
     private async void JoinLobby()
@@ -213,6 +218,9 @@ public class UIManager : MonoBehaviour
         DisableAllLobbyButtons();
         PlayUISelectSFX();
         await LobbyManager.Instance.Join(joinCode: _inputField.text);
+        //EnableAllLobbyButtons();
+        // Change current player's music to lobby music
+        AudioManager.instance.ChangeMusic("Lobby");
         _inputField.text = "";
     }
 
@@ -299,6 +307,9 @@ public class UIManager : MonoBehaviour
         DisablePause();
         EnableUI(UIState.Title);
         DeactivateHUD();
+        
+        // Change current player's music to title screen music
+        AudioManager.instance.ChangeMusic("Title Screen");
     }
 
     // Settings UI Methods
@@ -505,6 +516,9 @@ public class UIManager : MonoBehaviour
 
         if (!success) Debug.LogWarning("Failed to join lobby");
         isJoining = false;
+        //EnableAllLobbyButtons();
+        AudioManager.instance.ChangeMusic("Lobby");
+
     }
 
     public void ClearDisplayList()

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="ParameterPreset" id="{cb412691-088c-4936-ba62-61d6c762e814}">
+		<property name="name">
+			<value>Title Screen Volume</value>
+		</property>
+		<relationship name="folder">
+			<destination>{afa0cbe7-14cc-41bd-83c7-e3ad7ef02bbe}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{55482394-765d-422d-9b03-cb9adf02d4cd}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{55482394-765d-422d-9b03-cb9adf02d4cd}">
+		<property name="maximum">
+			<value>10</value>
+		</property>
+		<property name="initialValue">
+			<value>0</value>
+		</property>
+	</object>
+</objects>
