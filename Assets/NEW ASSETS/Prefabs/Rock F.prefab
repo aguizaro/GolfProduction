@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 3224367053796983557}
   - component: {fileID: 4862305215296927714}
   - component: {fileID: 4405245064883039553}
-  - component: {fileID: -2487140819374434963}
   - component: {fileID: -5421765272613641862}
+  - component: {fileID: 7256811854565594580}
   m_Layer: 0
   m_Name: Rock F
   m_TagString: Untagged
@@ -87,27 +87,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &-2487140819374434963
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3201386104890149081}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.0034050422, y: 0.003394261, z: 0.0033215464}
-  m_Center: {x: -0.00009749596, y: -0.000034920053, z: 0.00007127743}
 --- !u!205 &-5421765272613641862
 LODGroup:
   m_ObjectHideFlags: 0
@@ -127,3 +106,26 @@ LODGroup:
     renderers:
     - renderer: {fileID: 4405245064883039553}
   m_Enabled: 1
+--- !u!136 &7256811854565594580
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3201386104890149081}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.0017025211
+  m_Height: 0.003394261
+  m_Direction: 1
+  m_Center: {x: -0.00009749596, y: -0.000034920053, z: 0.00007127743}
