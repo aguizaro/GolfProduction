@@ -58,7 +58,7 @@ Material:
     - _Wind_Strength: 0.5
     m_Colors:
     - _BotGrass: {r: 0.31999996, g: 0.58, b: 0.04, a: 0}
-    - _Gradient1: {r: 0.59007204, g: 0.59119487, b: 0.16174191, a: 0}
+    - _Gradient1: {r: 0.34058085, g: 0.54088044, b: 0.17178902, a: 0}
     - _Gradient2: {r: 0.31999996, g: 0.58, b: 0.04, a: 0}
     - _TopGrass: {r: 0.69, g: 0.74, b: 0.12999997, a: 0}
     - _Wind_Direction: {r: 1, g: 0.5, b: 0, a: 0}

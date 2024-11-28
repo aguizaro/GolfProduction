@@ -58,8 +58,8 @@ Material:
     - _Wind_Strength: 0.5
     m_Colors:
     - _BotGrass: {r: 0.31999996, g: 0.58, b: 0.04, a: 0}
-    - _Gradient1: {r: 0.69, g: 0.74, b: 0.12999997, a: 0}
-    - _Gradient2: {r: 0.31999996, g: 0.58, b: 0.04, a: 0}
+    - _Gradient1: {r: 0.3855944, g: 0.64779866, b: 0.10796638, a: 1}
+    - _Gradient2: {r: 0.16672511, g: 0.2578616, b: 0.067303486, a: 0}
     - _TopGrass: {r: 0.69, g: 0.74, b: 0.12999997, a: 0}
     - _Wind_Direction: {r: 1, g: 0.5, b: 0, a: 0}
   m_BuildTextureStacks: []
