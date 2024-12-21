@@ -15,6 +15,7 @@ public static class ListExtenstions
     }
 }
 
+// FMODEvents tracks all the 
 public class FMODEvents : MonoBehaviour
 {
     // Music
@@ -34,6 +35,8 @@ public class FMODEvents : MonoBehaviour
     [field: SerializeField] public EventReference golfHoleEnter { get; private set; }
     [field: Header("Golf Clap")]
     [field: SerializeField] public EventReference golfClap { get; private set; }
+    [field: Header("Player Hit")]
+    [field: SerializeField] public EventReference playerHit { get; private set; }
 
     // UI Sounds
     [field: Header("UI Select")]
@@ -63,7 +66,7 @@ public class FMODEvents : MonoBehaviour
         }
         instance = this;
 
-        events.AddMany(playerGolfSwing, playerGolfStrike, golfHoleEnter, golfClap, uiSelect, playerFootsteps);
+        events.AddMany(playerGolfSwing, playerGolfStrike, golfHoleEnter, golfClap, playerHit, uiSelect, playerFootsteps);
 
         // Use the event list to construct the lookup table
         for (ulong i=0; i < (ulong)events.Count; i++)

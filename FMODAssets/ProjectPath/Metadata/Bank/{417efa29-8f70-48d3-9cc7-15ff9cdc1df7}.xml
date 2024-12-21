@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="Bank" id="{417efa29-8f70-48d3-9cc7-15ff9cdc1df7}">
+		<property name="name">
+			<value>map_shipwreck</value>
+		</property>
+		<relationship name="folder">
+			<destination>{8dd743cc-a181-4936-ad73-19425abadba9}</destination>
+		</relationship>
+	</object>
+</objects>

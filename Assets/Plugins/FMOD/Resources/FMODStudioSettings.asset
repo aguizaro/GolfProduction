@@ -707,6 +707,7 @@ MonoBehaviour:
   MasterBanks:
   - Master
   Banks:
+  - map_shipwreck
   - Music
   - SFX
   BanksToLoad: []
@@ -721,7 +722,7 @@ MonoBehaviour:
   SharedLibraryUpdateStage: 0
   SharedLibraryTimeSinceStart: 0
   CurrentVersion: 131618
-  HideSetupWizard: 0
+  HideSetupWizard: 1
   LastEventReferenceScanVersion: 131618
   Platforms:
   - {fileID: -3448678864934210553}

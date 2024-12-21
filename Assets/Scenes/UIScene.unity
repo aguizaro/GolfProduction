@@ -609,13 +609,20 @@ MonoBehaviour:
       Data3: -1081775457
       Data4: 18981420
     Path: event:/GolfClap
+  <playerHit>k__BackingField:
+    Guid:
+      Data1: 1534481566
+      Data2: 1080378409
+      Data3: -1132490319
+      Data4: 913969130
+    Path: event:/PlayerHit
   <uiSelect>k__BackingField:
     Guid:
       Data1: -745326855
       Data2: 1115671520
       Data3: 1846445224
       Data4: -451220163
-    Path: event:/UISelect
+    Path: event:/UI Elements/UISelect
   <playerFootsteps>k__BackingField:
     Guid:
       Data1: 1457570406
@@ -1345,7 +1352,13 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7643653114072979129, guid: 27243fe933b7a4848853268b2c17e5f7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1999946777}
+    - targetCorrespondingSourceObject: {fileID: 7643653114072979129, guid: 27243fe933b7a4848853268b2c17e5f7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1999946779}
   m_SourcePrefab: {fileID: 100100000, guid: 27243fe933b7a4848853268b2c17e5f7, type: 3}
 --- !u!4 &286486083 stripped
 Transform:
@@ -4042,8 +4055,8 @@ GameObject:
   m_Component:
   - component: {fileID: 769673134}
   - component: {fileID: 769673137}
-  - component: {fileID: 769673136}
   - component: {fileID: 769673135}
+  - component: {fileID: 769673138}
   m_Layer: 0
   m_Name: OverlayCam
   m_TagString: Untagged
@@ -4110,14 +4123,6 @@ MonoBehaviour:
     mipBias: 0
     varianceClampScale: 0.9
     contrastAdaptiveSharpening: 0
---- !u!81 &769673136
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 769673133}
-  m_Enabled: 0
 --- !u!20 &769673137
 Camera:
   m_ObjectHideFlags: 0
@@ -4169,6 +4174,19 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
+--- !u!114 &769673138
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 769673133}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86c6556701af9e04380698b89f691b6e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attenuationObject: {fileID: 0}
 --- !u!1 &806799363
 GameObject:
   m_ObjectHideFlags: 0
@@ -7643,6 +7661,42 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   attenuationObject: {fileID: 0}
+--- !u!1 &1999946775 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7643653114072979129, guid: 27243fe933b7a4848853268b2c17e5f7, type: 3}
+  m_PrefabInstance: {fileID: 275033674}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1999946777
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1999946775}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e99242b60b60fe47a33526e372e66bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  soundEvent:
+    Guid:
+      Data1: 522214712
+      Data2: 1316240899
+      Data3: -1081775457
+      Data4: 18981420
+    Path: event:/GolfClap
+--- !u!114 &1999946779
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1999946775}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16458e74a7ae7c342b4b6d35ed0e021b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2019504816
 GameObject:
   m_ObjectHideFlags: 0
@@ -8281,6 +8335,10 @@ PrefabInstance:
     - target: {fileID: 6944651533274186436, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_hasFontAssetChanged
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7021248378149805513, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
+      propertyPath: m_Enabled
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7120536301810092284, guid: 016e8184f31654bada28e9c23b9a8b07, type: 3}
       propertyPath: m_sharedMaterial

@@ -15,6 +15,7 @@ public class BallCollision : NetworkBehaviour
     // Start is called before the first frame update
     private void OnCollisionEnter(Collision collision)
     {
+        Debug.Log(collision.gameObject.layer);
         if (collision.gameObject.layer == 3)
         {
             if (IsOwner)

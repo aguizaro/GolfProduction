@@ -253,6 +253,8 @@ public class RagdollOnOff : NetworkBehaviour
             if (rb != playerRB) rb.isKinematic = false;
         }
 
+        AudioManager.instance.PlayOneShotForAllClients(FMODEvents.instance.playerHit, this.transform.position, true); // plays KO sound effect
+
         mainCollider.enabled = false;
         playerRB.isKinematic = true;
         isRagdoll = true;
@@ -361,7 +363,6 @@ public class RagdollOnOff : NetworkBehaviour
     [ClientRpc]
     public void RagdollModeOnClientRpc()
     {
-
         RagdollModeOn();
     }
 
